@@ -1,29 +1,37 @@
 import math
 
-from core import Animation, BLACK_BG, RESET, density_char, gray_fg, smoothstep
+from ..core import Animation, clamp, render_field, smoothstep
 
 
-FLARE_CHAR_THRESHOLDS = [(0.13, " "), (0.22, "."), (0.31, ":"), (0.42, "-"), (0.54, "="), (0.67, "+"), (0.80, "*"), (0.92, "#"), (1.01, "%")]
+PLUMES = (
+  (0.2, 0.47, 1.38, 0.055),
+  (1.6, -0.31, 1.22, 0.045),
+  (2.8, 0.22, 1.50, 0.060),
+  (4.3, -0.18, 1.32, 0.050),
+  (5.2, 0.36, 1.18, 0.040),
+)
 
-
-def flare_char(level):
-  return density_char(level, FLARE_CHAR_THRESHOLDS)
+LOOPS = ((0.8, 0.20, 0.34), (2.4, -0.16, 0.28), (3.7, 0.13, 0.42))
 
 
 class FlaresAnimation(Animation):
+  thresholds = [
+    (0.13, " "), (0.22, "."), (0.31, ":"), (0.42, "-"), (0.54, "="),
+    (0.67, "+"), (0.80, "*"), (0.92, "#"), (1.01, "%"),
+  ]
+
   def render(self, width, height, elapsed, phase, options):
     radius = max(1.0, min(width, height * 2) * 0.34)
     t = elapsed * 0.9
-    rows = []
+    sin_t023 = 0.10 * math.sin(t * 0.23)
+    grid = []
     for row in range(height):
-      line = [BLACK_BG]
-      last_color = None
       py = ((row - (height - 1) * 0.5) * 2.0) / radius
+      line = []
       for col in range(width):
         px = (col - (width - 1) * 0.5) / radius
         r = math.hypot(px, py)
-        angle = math.atan2(py, px)
-        theta = angle + 0.10 * math.sin(t * 0.23)
+        theta = math.atan2(py, px) + sin_t023
         limb = smoothstep(1.04, 0.90, r)
         corona = max(0.0, math.exp(-3.3 * max(0.0, r - 0.92)) - 0.12)
         surface = limb * (
@@ -33,13 +41,7 @@ class FlaresAnimation(Animation):
         )
         radial = max(0.0, r - 0.72)
         plume = 0.0
-        for offset, speed, reach, width_factor in (
-          (0.2, 0.47, 1.38, 0.055),
-          (1.6, -0.31, 1.22, 0.045),
-          (2.8, 0.22, 1.50, 0.060),
-          (4.3, -0.18, 1.32, 0.050),
-          (5.2, 0.36, 1.18, 0.040),
-        ):
+        for offset, speed, reach, width_factor in PLUMES:
           center = offset + speed * t + 0.28 * math.sin(1.7 * radial + t * 0.33 + offset)
           angular_delta = math.atan2(math.sin(theta - center), math.cos(theta - center))
           strand = math.exp(-(angular_delta * angular_delta) / width_factor)
@@ -47,7 +49,7 @@ class FlaresAnimation(Animation):
           texture = 0.60 + 0.40 * abs(math.sin(18.0 * radial - 2.4 * t + offset))
           plume += strand * height_gate * texture
         loops = 0.0
-        for offset, speed, arch_height in ((0.8, 0.20, 0.34), (2.4, -0.16, 0.28), (3.7, 0.13, 0.42)):
+        for offset, speed, arch_height in LOOPS:
           center = offset + speed * t
           angular_delta = math.atan2(math.sin(theta - center), math.cos(theta - center))
           arch = 1.00 + arch_height * math.sin(max(0.0, 1.0 - abs(angular_delta) / 0.55) * math.pi)
@@ -59,13 +61,6 @@ class FlaresAnimation(Animation):
         exterior = smoothstep(0.82, 1.02, r)
         texture = surface + exterior * (0.22 * corona + 0.56 * plume + 0.52 * loops + sparks)
         vignette = max(0.0, 1.0 - 0.07 * (abs(px) + abs(py)))
-        level = max(0.0, min(1.0, texture * vignette * options.contrast))
-        char = flare_char(level)
-        color = gray_fg(level)
-        if last_color != color:
-          line.append(f"\x1b[38;5;{color}m")
-          last_color = color
-        line.append(char)
-      line.append(RESET)
-      rows.append("".join(line))
-    return "\n".join(rows)
+        line.append(clamp(texture * vignette * options.contrast))
+      grid.append(line)
+    return render_field(width, height, grid, options, self)

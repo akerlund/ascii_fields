@@ -1,44 +1,36 @@
 import math
 
-from core import Animation, BLACK_BG, RESET, gray_fg
+from ..core import Animation, clamp, render_field
+
+
+RAMP = "  ..::--==++**##%%"
+_TOP = len(RAMP) - 1
 
 
 class FlowerSphereAnimation(Animation):
-  uses_elapsed_time = False
+  thresholds = [(min(1.01, (i + 1) / len(RAMP)), RAMP[i]) for i in range(len(RAMP))]
 
   def render(self, width, height, elapsed, phase, options):
-    ramp = "  ..::--==++**##%%"
     radius = max(1.0, min(width, height * 2) * 0.5)
-    rows = []
+    grid = []
     for row in range(height):
-      line = [BLACK_BG]
-      last_color = None
+      py = ((row - (height - 1) * 0.5) * 2.0) / radius
+      line = []
       for col in range(width):
         px = (col - (width - 1) * 0.5) / radius
-        py = ((row - (height - 1) * 0.5) * 2.0) / radius
         r = math.hypot(px, py)
         if r >= 1.0:
-          if last_color != 233:
-            line.append("\x1b[38;5;233m")
-            last_color = 233
-          line.append(" ")
+          line.append(0.0)
           continue
-
-        u = (math.atan2(py, px) / (2.0 * math.pi) + 0.5 + 0.025 * math.sin(2.0 * math.pi * phase)) % 1.0
-        v = (math.asin(max(-1.0, min(1.0, py))) / math.pi) + 0.5
+        u = (math.atan2(py, px) / (2.0 * math.pi) + 0.5
+             + 0.025 * math.sin(2.0 * math.pi * phase)) % 1.0
+        v = (math.asin(clamp(py, -1.0, 1.0)) / math.pi) + 0.5
         texture = self.texture(u, v, phase, options.scale)
         edge_fade = max(0.0, 1.0 - r ** 2.8)
         center_dip = 1.0 - 0.18 * math.exp(-7.0 * r * r)
-        level = max(0.0, min(1.0, texture * edge_fade * center_dip * options.contrast))
-        char = ramp[round(level * (len(ramp) - 1))]
-        color = gray_fg(level)
-        if last_color != color:
-          line.append(f"\x1b[38;5;{color}m")
-          last_color = color
-        line.append(char)
-      line.append(RESET)
-      rows.append("".join(line))
-    return "\n".join(rows)
+        line.append(clamp(texture * edge_fade * center_dip * options.contrast))
+      grid.append(line)
+    return render_field(width, height, grid, options, self)
 
   def texture(self, u, v, phase, scale):
     x = 2.0 * math.pi * u

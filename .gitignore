@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Captured frames and recordings
+ascii_fields-*.ans
+*.cast
+
 # Virtual environments
 .venv/
 venv/

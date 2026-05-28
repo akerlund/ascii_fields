@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ascii-fields"
+version = "0.2.0"
+description = "Procedural ASCII animations for the terminal: fields, fractals, quantum clouds and more."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "akerlund" }]
+keywords = ["ascii", "animation", "terminal", "ansi", "fractal", "demoscene"]
+classifiers = [
+  "Environment :: Console",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Artistic Software",
+  "Topic :: Multimedia :: Graphics",
+]
+dependencies = []
+
+[project.optional-dependencies]
+# Optional accelerator: the fractal scenes (mandelbrot, julia, burning-ship,
+# newton) run much faster when NumPy is available. Everything works without it.
+fast = ["numpy>=1.21"]
+
+[project.scripts]
+ascii-fields = "ascii_fields.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/akerlund/ascii_fields"
+
+[tool.setuptools]
+packages = ["ascii_fields", "ascii_fields.animations"]

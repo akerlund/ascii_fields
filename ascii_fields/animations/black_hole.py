@@ -1,13 +1,6 @@
 import math
 
-from core import Animation, BLACK_BG, RESET, density_char, gray_fg, smoothstep, star_noise
-
-
-BLACK_HOLE_CHAR_THRESHOLDS = [(0.10, " "), (0.18, "."), (0.28, ":"), (0.39, "-"), (0.51, "="), (0.64, "+"), (0.78, "*"), (0.91, "#"), (1.01, "%")]
-
-
-def black_hole_char(level):
-  return density_char(level, BLACK_HOLE_CHAR_THRESHOLDS)
+from ..core import Animation, clamp, render_field, smoothstep, star_noise
 
 
 def accretion_band(x, y, radius, thickness, t, density, boost):
@@ -20,15 +13,19 @@ def accretion_band(x, y, radius, thickness, t, density, boost):
 
 
 class BlackHoleAnimation(Animation):
+  thresholds = [
+    (0.10, " "), (0.18, "."), (0.28, ":"), (0.39, "-"), (0.51, "="),
+    (0.64, "+"), (0.78, "*"), (0.91, "#"), (1.01, "%"),
+  ]
+
   def render(self, width, height, elapsed, phase, options):
     radius = max(1.0, min(width, height * 2) * 0.44)
     density = max(0.45, options.scale)
     t = elapsed * 0.55
-    rows = []
+    grid = []
     for row in range(height):
-      line = [BLACK_BG]
-      last_color = None
       py = ((row - (height - 1) * 0.5) * 2.0) / radius
+      line = []
       for col in range(width):
         px = (col - (width - 1) * 0.5) / radius
         r = math.hypot(px, py)
@@ -53,13 +50,6 @@ class BlackHoleAnimation(Animation):
         texture = disk + photon_ring + ring_glow + halo + background_stars
         texture *= 1.0 - 0.96 * shadow
         vignette = max(0.0, 1.0 - 0.08 * abs(px) - 0.12 * abs(py))
-        level = max(0.0, min(1.0, texture * vignette * options.contrast))
-        char = black_hole_char(level)
-        color = gray_fg(level)
-        if last_color != color:
-          line.append(f"\x1b[38;5;{color}m")
-          last_color = color
-        line.append(char)
-      line.append(RESET)
-      rows.append("".join(line))
-    return "\n".join(rows)
+        line.append(clamp(texture * vignette * options.contrast))
+      grid.append(line)
+    return render_field(width, height, grid, options, self)

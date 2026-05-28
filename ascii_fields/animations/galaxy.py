@@ -1,27 +1,24 @@
 import math
 
-from core import Animation, BLACK_BG, RESET, density_char, gray_fg, smoothstep, star_noise
-
-
-GALAXY_CHAR_THRESHOLDS = [(0.11, " "), (0.19, "."), (0.29, ":"), (0.40, "-"), (0.52, "="), (0.65, "+"), (0.78, "*"), (0.91, "#"), (1.01, "%")]
-
-
-def galaxy_char(level):
-  return density_char(level, GALAXY_CHAR_THRESHOLDS)
+from ..core import Animation, clamp, render_field, smoothstep, star_noise
 
 
 class GalaxyAnimation(Animation):
+  thresholds = [
+    (0.11, " "), (0.19, "."), (0.29, ":"), (0.40, "-"), (0.52, "="),
+    (0.65, "+"), (0.78, "*"), (0.91, "#"), (1.01, "%"),
+  ]
+
   def render(self, width, height, elapsed, phase, options):
     radius = max(1.0, min(width, height * 2) * 0.47)
     t = elapsed * 0.18
-    rows = []
+    grid = []
     for row in range(height):
-      line = [BLACK_BG]
-      last_color = None
       py = ((row - (height - 1) * 0.5) * 2.0) / radius
+      tilted_y = py / 0.62
+      line = []
       for col in range(width):
         px = (col - (width - 1) * 0.5) / radius
-        tilted_y = py / 0.62
         spin = t * (0.45 + 0.55 / (1.0 + 10.0 * (px * px + tilted_y * tilted_y)))
         cs = math.cos(spin)
         sn = math.sin(spin)
@@ -39,8 +36,7 @@ class GalaxyAnimation(Animation):
         arms = max(arm_a, 0.82 * arm_b, 0.52 * arm_c)
         arm_fade = smoothstep(0.03, 0.18, r) * smoothstep(1.16, 0.42, r)
         dust = smoothstep(
-          0.20,
-          0.86,
+          0.20, 0.86,
           abs(math.sin(14.0 * theta + 9.0 * r - 0.7 * t))
           + 0.18 * math.sin(23.0 * r + 3.0 * theta),
         )
@@ -54,13 +50,6 @@ class GalaxyAnimation(Animation):
         texture += 0.62 * arms * arm_fade * mottled * (1.0 - 0.40 * dust)
         texture += stars * (1.0 - smoothstep(0.0, 0.45, core))
         vignette = max(0.0, 1.0 - 0.10 * abs(px) - 0.16 * abs(py))
-        level = max(0.0, min(1.0, texture * vignette * options.contrast))
-        char = galaxy_char(level)
-        color = gray_fg(level)
-        if last_color != color:
-          line.append(f"\x1b[38;5;{color}m")
-          last_color = color
-        line.append(char)
-      line.append(RESET)
-      rows.append("".join(line))
-    return "\n".join(rows)
+        line.append(clamp(texture * vignette * options.contrast))
+      grid.append(line)
+    return render_field(width, height, grid, options, self)

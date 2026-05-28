@@ -1,24 +1,22 @@
 import math
 
-from core import Animation, BLACK_BG, RESET, density_char, gray_fg, smoothstep
-
-
-WAVE_CHAR_THRESHOLDS = [(0.16, " "), (0.24, "."), (0.33, ":"), (0.44, "-"), (0.55, "="), (0.68, "+"), (0.82, "*"), (0.94, "#"), (1.01, "%")]
-
-
-def wave_char(level):
-  return density_char(level, WAVE_CHAR_THRESHOLDS)
+from ..core import Animation, clamp, render_field, smoothstep
 
 
 class WavesAnimation(Animation):
+  thresholds = [
+    (0.16, " "), (0.24, "."), (0.33, ":"), (0.44, "-"), (0.55, "="),
+    (0.68, "+"), (0.82, "*"), (0.94, "#"), (1.01, "%"),
+  ]
+
   def render(self, width, height, elapsed, phase, options):
     density = max(0.45, options.scale)
     t = elapsed
-    rows = []
+    grid = []
     for row in range(height):
-      line = [BLACK_BG]
-      last_color = None
       y = row / max(1, height - 1)
+      vignette_y = abs(y - 0.5) * 2.0
+      line = []
       for col in range(width):
         x = col / max(1, width - 1)
         shore = 0.70
@@ -55,15 +53,7 @@ class WavesAnimation(Animation):
         texture += shore_foam + wash_up + ripples + wet_sand
         texture = min(1.0, texture)
         vignette_x = abs(x - 0.5) * 2.0
-        vignette_y = abs(y - 0.5) * 2.0
         vignette = max(0.0, 1.0 - 0.18 * vignette_x * vignette_x - 0.10 * vignette_y * vignette_y)
-        level = max(0.0, min(1.0, texture * vignette * options.contrast))
-        char = wave_char(level)
-        color = gray_fg(level)
-        if last_color != color:
-          line.append(f"\x1b[38;5;{color}m")
-          last_color = color
-        line.append(char)
-      line.append(RESET)
-      rows.append("".join(line))
-    return "\n".join(rows)
+        line.append(clamp(texture * vignette * options.contrast))
+      grid.append(line)
+    return render_field(width, height, grid, options, self)
