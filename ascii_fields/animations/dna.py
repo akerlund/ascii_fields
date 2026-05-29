@@ -1,6 +1,6 @@
 import math
 
-from ..core import Animation, clamp, render_field
+from ..core import Animation, render_glyph_field
 
 
 class DNAAnimation(Animation):
@@ -17,17 +17,19 @@ class DNAAnimation(Animation):
 
   def render(self, width, height, elapsed, phase, options):
     cx = width * 0.5
-    amp = width * 0.30
-    twist = 0.45 * max(0.4, options.scale)    # turns per row
-    t = elapsed * 2.2
+    amp = max(2.0, width * 0.22)
+    twist = 0.48 * max(0.45, options.scale)
+    t = elapsed * 2.0
     contrast = options.contrast
 
     grid = [[0.0] * width for _ in range(height)]
+    glyphs = [[" "] * width for _ in range(height)]
 
-    def splat(col, row, value):
+    def splat(col, row, value, glyph):
       c = int(round(col))
       if 0 <= c < width and 0 <= row < height and grid[row][c] < value:
         grid[row][c] = value
+        glyphs[row][c] = glyph
 
     for row in range(height):
       p = row * twist + t
@@ -38,15 +40,20 @@ class DNAAnimation(Animation):
       depthB = -depthA
       brightA = 0.45 + 0.55 * (depthA * 0.5 + 0.5)
       brightB = 0.45 + 0.55 * (depthB * 0.5 + 0.5)
-      splat(xA, row, brightA)
-      splat(xA + 1, row, brightA * 0.7)
-      splat(xB, row, brightB)
-      splat(xB + 1, row, brightB * 0.7)
-      # base-pair rungs when the strands are spread apart (helix facing us)
-      if abs(s) > 0.30 and row % 1 == 0 and (row % 2 == 0):
+      glyphA = "O" if depthA > 0.0 else "o"
+      glyphB = "O" if depthB > 0.0 else "o"
+      splat(xA, row, brightA, glyphA)
+      splat(xA + (1 if s >= 0 else -1), row, brightA * 0.55, ".")
+      splat(xB, row, brightB, glyphB)
+      splat(xB + (-1 if s >= 0 else 1), row, brightB * 0.55, ".")
+
+      # Base-pair rungs are strongest when the helix opens toward the viewer.
+      if abs(s) > 0.20 and row % 2 == 0:
         x0, x1 = sorted((xA, xB))
-        rung = 0.25 + 0.30 * (abs(depthA) < 0.6)
+        rung = 0.24 + 0.38 * (1.0 - abs(depthA))
         steps = int(x1 - x0)
         for i in range(1, max(1, steps)):
-          splat(x0 + i, row, max(rung, 0.30))
-    return render_field(width, height, grid, options, self)
+          ratio = i / max(1, steps)
+          glyph = "=" if 0.42 < ratio < 0.58 else "-"
+          splat(x0 + i, row, max(rung, 0.30), glyph)
+    return render_glyph_field(width, height, grid, glyphs, options, self)

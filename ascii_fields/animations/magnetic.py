@@ -36,9 +36,6 @@ class MagneticAnimation(Animation):
         rs = math.hypot(px + d, py) + 0.05
         strength = clamp(0.10 + 0.65 / (rn * rn) + 0.65 / (rs * rs), 0.0, 1.2)
         level = field_lines * strength
-        # the magnet body and pole caps
-        if abs(py) < 0.14 and abs(px) < d + 0.06:
-          level = 0.95 if px > 0 else 0.6
         line.append(clamp(level * contrast))
       grid.append(line)
     return render_field(width, height, grid, options, self)

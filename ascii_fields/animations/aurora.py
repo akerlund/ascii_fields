@@ -17,9 +17,9 @@ class AuroraAnimation(Animation):
 
   # (vertical centre, thickness, horizontal frequency, drift speed, weight)
   CURTAINS = (
-    (0.42, 0.14, 2.3, 0.55, 1.00),
-    (0.52, 0.10, 3.7, -0.40, 0.75),
-    (0.34, 0.08, 5.1, 0.70, 0.55),
+    (0.42, 0.15, 2.1, 0.22, 1.00),
+    (0.53, 0.11, 3.2, -0.18, 0.72),
+    (0.33, 0.09, 4.4, 0.28, 0.56),
   )
 
   def render(self, width, height, elapsed, phase, options):
@@ -32,12 +32,16 @@ class AuroraAnimation(Animation):
         u = col / max(1, width - 1)
         value = 0.04
         for centre, thick, freq, speed, weight in self.CURTAINS:
-          cy = centre + 0.10 * math.sin(freq * u * math.pi + elapsed * speed)
-          cy += 0.05 * fbm(u * 3.0 + elapsed * 0.1, centre * 4.0, octaves=3)
+          drift = elapsed * speed
+          cy = centre + 0.10 * math.sin(freq * u * math.pi + drift)
+          cy += 0.045 * math.sin(u * 8.0 + elapsed * 0.33 + centre * 9.0)
+          cy += 0.030 * (fbm(u * 2.0 + elapsed * 0.035, centre * 4.0, octaves=2) - 0.5)
           band = math.exp(-((v - cy) ** 2) / (thick * thick))
-          rays = 0.55 + 0.45 * math.sin(u * 60.0 + 8.0 * fbm(u * 6.0, elapsed * 0.3))
-          fade = clamp(1.0 - v * 0.4)
-          value += weight * band * rays * fade
+          ray_phase = u * 42.0 + elapsed * 1.15 + centre * 17.0
+          rays = 0.56 + 0.24 * math.sin(ray_phase) + 0.20 * math.sin(ray_phase * 0.47)
+          vertical = math.exp(-max(0.0, v - cy) * 2.0)
+          fade = clamp(1.08 - v * 0.55)
+          value += weight * band * rays * vertical * fade
         line.append(clamp(value * contrast))
       grid.append(line)
     return render_field(width, height, grid, options, self)

@@ -49,6 +49,9 @@ class Playlist:
   def current(self):
     return self._animation
 
+  def name(self):
+    return self._name
+
   def title(self):
     # always show the position so you know where you are in the lineup,
     # even in single-mode runs where n/p still walks every animation

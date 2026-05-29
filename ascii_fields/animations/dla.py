@@ -65,9 +65,12 @@ class DLAAnimation(Animation):
     if self._cluster is None or width != self._w or height != self._h or elapsed < self._last:
       self._seed(width, height)
     self._last = elapsed
-    walkers = max(20, (width * height) // 80) * max(1, int(options.scale))
-    # cap total density: stop growing once ~25% of cells are cluster
-    if sum(self._cluster) < (width * height) // 4:
+    walkers = max(40, (width * height) // 40) * max(1, int(options.scale))
+    cap = int(width * height * 0.55)
+    if sum(self._cluster) >= cap:
+      # frost fills the window -- thaw and start a new crystal
+      self._seed(width, height)
+    else:
       for _ in range(walkers):
         self._walk_one()
 

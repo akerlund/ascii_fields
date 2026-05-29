@@ -125,7 +125,7 @@ List everything, with presets and aliases:
 
 | Mode | What you'll see |
 | --- | --- |
-| `mandelbrot` | endless zoom in and back out of the Mandelbrot set near the seahorse valley (alias: `mandel`) |
+| `mandelbrot` | continuous zoom into the Mandelbrot set near the seahorse valley; never reverses — the cycle wraps back to the starting frame and dives again (alias: `mandel`) |
 | `julia` | a Julia set whose constant `c` orbits a circle, continuously morphing the shape |
 | `burning-ship` | endless zoom into the jagged, flame-like Burning Ship fractal (alias: `ship`) |
 | `newton` | Newton's-method basins for `z³ = 1` with rotating roots — swirling boundaries |
@@ -212,25 +212,55 @@ coloured-block look:
 
 ## Interactive controls
 
-A two-line HUD shows the current scene and every live-editable parameter. Toggle
-it with `i`. **`n`/`p` walks every animation in single-mode runs too**, so you
-can start on one scene and step through the rest without restarting.
+A two-line HUD pinned to the bottom of the terminal shows the current scene,
+every live-editable parameter, and the script's CPU usage. Toggle it with `i`.
+**`n`/`p` walks every animation in single-mode runs too**, so you can start on
+one scene and step through the rest without restarting.
 
 | Key | Action |
 | --- | --- |
 | `i` | show / hide the HUD |
-| `space` | pause / resume |
+| `space` | pause / resume (rendering stops while paused — CPU drops to near zero) |
 | `n` / `p` / Tab | next / previous scene (works in every mode) |
 | `t` / `T` | cycle colour theme forward / backward |
-| `,` `.` | scale down / up |
-| `;` `'` | contrast down / up |
-| `[` `]` | brightness down / up |
+| `1` `2` | scale down / up |
+| `3` `4` | contrast down / up |
+| `5` `6` | brightness down / up |
 | `+` `-` | motion speed up / down |
-| `s` | save current frame to `ascii_fields-<timestamp>.ans` |
-| `r` | restart current scene |
+| `s` | save current per-mode settings to `ascii_fields.json` |
 | `q` / `Esc` | quit |
 
+Edits to `scale`/`contrast`/`brightness`/`theme` **stick to the scene you make
+them on**: switch with `n`/`p`, change the new scene's values, switch back, and
+your earlier edits on the first scene are still there.
+
 Start with the HUD hidden via `--no-status`.
+
+## Saving Settings
+
+Pressing `s` writes one stable JSON file alongside the running script. It is
+keyed by mode name, so every animation has one small settings dict:
+
+```text
+ascii_fields.json
+{
+  "dna": {
+    "theme": "scene",
+    "scale": 1.2,
+    "contrast": 1.3,
+    "brightness": 1.0
+  },
+  "mach": {
+    "theme": "auto",
+    "scale": 1.0,
+    "contrast": 1.05,
+    "brightness": 1.0
+  }
+}
+```
+
+If `ascii_fields.json` is missing or unreadable, built-in defaults and presets
+are used. Explicit command-line options still override saved values.
 
 ## Recording & GIFs
 

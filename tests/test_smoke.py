@@ -1,10 +1,13 @@
 import re
+import json
+import tempfile
 import unittest
 
 from ascii_fields.core import RenderOptions
 from ascii_fields.registry import ANIMATIONS, create_animation, normalize_mode
 from ascii_fields.presets import preset_names, resolve_preset
-from ascii_fields.cli import build_provider, parse_args
+from ascii_fields.cli import build_options, build_provider, load_saved_options, parse_args
+from ascii_fields.runner import TerminalRunner
 
 ANSI = re.compile(r"\x1b\[[0-9;?]*[a-zA-Z]")
 
@@ -76,6 +79,32 @@ class PlaylistTests(unittest.TestCase):
       provider.go_next(0.0)
       self.assertNotEqual(first, provider.title())
       self.assertEqual(len(provider.current().render(20, 6, 0.1, 0.1, RenderOptions()).split("\n")), 6)
+
+
+class SettingsTests(unittest.TestCase):
+  def test_missing_settings_file_uses_defaults(self):
+    with tempfile.TemporaryDirectory() as tmp:
+      saved = load_saved_options(f"{tmp}/missing.json")
+    self.assertEqual(saved, {})
+    options = build_options(parse_args(["plasma"]), {}, {})
+    self.assertEqual(options.theme, "auto")
+    self.assertEqual(options.scale, 1.0)
+
+  def test_saved_options_are_one_dict_per_mode(self):
+    with tempfile.TemporaryDirectory() as tmp:
+      path = f"{tmp}/ascii_fields.json"
+      mode_options = {
+        "dna": RenderOptions(theme="scene", scale=1.2, contrast=1.3, brightness=0.9),
+        "mach": RenderOptions(theme="auto", scale=1.0, contrast=1.1, brightness=1.0),
+      }
+      runner = TerminalRunner(build_provider("dna", parse_args(["dna"])),
+                              mode_options=mode_options, settings_path=path)
+      runner._save_options()
+      with open(path, "r", encoding="utf-8") as handle:
+        data = json.load(handle)
+    self.assertEqual(set(data), {"dna", "mach"})
+    self.assertEqual(data["dna"]["theme"], "scene")
+    self.assertNotIn("frame", data["dna"])
 
 
 if __name__ == "__main__":

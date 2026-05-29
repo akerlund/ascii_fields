@@ -1,8 +1,10 @@
 import argparse
+import json
+import os
 
 from .core import RenderOptions
 from .playlist import CLIP_SECONDS, Playlist
-from .presets import preset_names, resolve_preset
+from .presets import PRESETS, preset_names, resolve_preset
 from .registry import (
   ANIMATIONS,
   MODE_CHOICES,
@@ -15,6 +17,7 @@ from .runner import TerminalRunner
 from .themes import THEME_CYCLE
 
 THEME_CHOICES = THEME_CYCLE
+SETTINGS_FILE = "ascii_fields.json"
 
 
 def parse_args(argv=None):
@@ -44,7 +47,7 @@ def parse_args(argv=None):
   parser.add_argument("--contrast", type=float, default=None, help="Contrast multiplier.")
   parser.add_argument("--brightness", type=float, default=None,
                       help="Brightness multiplier for the grayscale/colour ramp.")
-  parser.add_argument("--theme", choices=THEME_CHOICES, default="auto",
+  parser.add_argument("--theme", choices=THEME_CHOICES, default=None,
                       help="Colour theme. 'auto' = grayscale, 'scene' = each mode's "
                            "recommended colour, or pick one (needs a truecolor terminal).")
   parser.add_argument("--preset", default="default", help="Mode-specific preset.")
@@ -89,23 +92,45 @@ def selected_mode(args):
   return normalize_mode(mode)
 
 
-def option_value(args, preset, name, default):
+def option_value(args, preset, saved, name, default):
   value = getattr(args, name)
   if value is not None:
     return value
+  if name in saved:
+    return saved[name]
   return preset.get(name, default)
 
 
-def build_options(args, preset):
+def _saved_options_for(saved, mode):
+  data = saved.get(mode, {})
+  if not isinstance(data, dict):
+    return {}
+  allowed = {"scale", "contrast", "brightness", "theme"}
+  return {key: data[key] for key in allowed if key in data}
+
+
+def load_saved_options(path=SETTINGS_FILE):
+  if not os.path.exists(path):
+    return {}
+  try:
+    with open(path, "r", encoding="utf-8") as handle:
+      data = json.load(handle)
+  except (OSError, json.JSONDecodeError):
+    return {}
+  return data if isinstance(data, dict) else {}
+
+
+def build_options(args, preset, saved=None):
+  saved = saved or {}
   return RenderOptions(
-    scale=option_value(args, preset, "scale", 1.0),
-    contrast=option_value(args, preset, "contrast", 1.05),
-    brightness=option_value(args, preset, "brightness", 1.0),
+    scale=option_value(args, preset, saved, "scale", 1.0),
+    contrast=option_value(args, preset, saved, "contrast", 1.05),
+    brightness=option_value(args, preset, saved, "brightness", 1.0),
     charset=args.charset,
     scroll=args.scroll,
     ascii_mode=True,
     blocks=args.blocks,
-    theme=args.theme,
+    theme=option_value(args, preset, saved, "theme", "auto"),
   )
 
 
@@ -135,15 +160,31 @@ def main(argv=None):
     except ValueError as error:
       raise SystemExit(str(error)) from error
 
-  options = build_options(args, preset)
+  # Build a separate RenderOptions bundle per mode so live edits stick to the
+  # scene that owns them; the active bundle is swapped when you press n/p.
+  saved_options = load_saved_options()
+  mode_options = {
+    name: build_options(
+      args,
+      PRESETS.get(name, {}).get("default", {}),
+      _saved_options_for(saved_options, name),
+    )
+    for name in MODE_NAMES
+  }
+  if mode in MODE_NAMES:
+    mode_options[mode] = build_options(args, preset, _saved_options_for(saved_options, mode))
+  options = mode_options.get(mode, build_options(args, preset))
+
   runner = TerminalRunner(
     build_provider(mode, args),
     width=args.width,
     height=args.height,
-    fps=option_value(args, preset, "fps", 24.0),
+    fps=option_value(args, preset, {}, "fps", 24.0),
     seconds=args.seconds,
-    period=option_value(args, preset, "period", 24.0),
+    period=option_value(args, preset, {}, "period", 24.0),
     options=options,
+    mode_options=mode_options,
+    settings_path=SETTINGS_FILE,
     record_path=args.record,
     gif_path=args.gif,
     interactive=not args.no_status,

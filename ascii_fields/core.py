@@ -24,8 +24,7 @@ BLACK_BG = "\x1b[48;5;232m"
 @dataclass
 class RenderOptions:
   """Render-time knobs. Not frozen -- the HUD mutates these in place at runtime
-  so 't', '[', ']', ',', '.', ';', "'" can retune the view without restarting
-  the scene."""
+  so theme, scale, contrast, and brightness can be retuned live."""
   scale: float = 1.0
   contrast: float = 1.05
   brightness: float = 1.0

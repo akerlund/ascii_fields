@@ -18,7 +18,7 @@ class ReactionDiffusionAnimation(Animation):
   DV = 0.08
   F = 0.060
   K = 0.062
-  STEPS_PER_FRAME = 6
+  STEPS_PER_FRAME = 10
 
   def __init__(self):
     self._w = 0
@@ -26,13 +26,15 @@ class ReactionDiffusionAnimation(Animation):
     self._U = None
     self._V = None
     self._last = 0.0
+    self._frame = 0
+    self._rng = random.Random(7)
 
   def _seed(self, w, h):
     self._w, self._h = w, h
     n = w * h
     self._U = [1.0] * n
     self._V = [0.0] * n
-    rng = random.Random(1)
+    rng = self._rng
     # a couple of seeded patches plus sparkles
     for cx, cy in ((w // 2, h // 2), (w // 3, h // 2), (2 * w // 3, h // 2)):
       for dy in range(-3, 4):
@@ -40,12 +42,31 @@ class ReactionDiffusionAnimation(Animation):
           x = (cx + dx) % w
           y = (cy + dy) % h
           if dx * dx + dy * dy <= 9:
-            self._U[y * w + x] = 0.50
-            self._V[y * w + x] = 0.25
+            self._U[y * w + x] = 0.45 + 0.08 * rng.random()
+            self._V[y * w + x] = 0.28 + 0.16 * rng.random()
     for _ in range(max(20, n // 80)):
       x = rng.randint(0, w - 1)
       y = rng.randint(0, h - 1)
-      self._V[y * w + x] = 0.5
+      self._U[y * w + x] = 0.5
+      self._V[y * w + x] = 0.25 + 0.4 * rng.random()
+    self._frame = 0
+
+  def _stir(self):
+    w, h = self._w, self._h
+    rng = self._rng
+    for _ in range(max(1, (w * h) // 900)):
+      cx = rng.randrange(w)
+      cy = rng.randrange(h)
+      radius = rng.choice((2, 3, 4))
+      for dy in range(-radius, radius + 1):
+        for dx in range(-radius, radius + 1):
+          if dx * dx + dy * dy > radius * radius:
+            continue
+          x = (cx + dx) % w
+          y = (cy + dy) % h
+          i = y * w + x
+          self._U[i] = min(self._U[i], 0.62)
+          self._V[i] = max(self._V[i], 0.20 + 0.35 * rng.random())
 
   def _step(self):
     w, h = self._w, self._h
@@ -76,6 +97,9 @@ class ReactionDiffusionAnimation(Animation):
     if self._U is None or width != self._w or height != self._h or elapsed < self._last:
       self._seed(width, height)
     self._last = elapsed
+    self._frame += 1
+    if self._frame % 36 == 0:
+      self._stir()
     steps = max(1, int(self.STEPS_PER_FRAME * max(0.4, options.scale)))
     # keep the simulation step budget bounded so big terminals stay smooth
     if width * height > 6000:
@@ -85,7 +109,14 @@ class ReactionDiffusionAnimation(Animation):
     contrast = options.contrast
     grid = []
     V = self._V
+    U = self._U
     for r in range(height):
       base = r * width
-      grid.append([clamp(V[base + c] * 4.0 * contrast) for c in range(width)])
+      row = []
+      for c in range(width):
+        i = base + c
+        edge = abs(V[i] - V[base + ((c - 1) % width)])
+        texture = V[i] * 3.4 + (1.0 - U[i]) * 0.55 + edge * 4.0
+        row.append(clamp(texture * contrast))
+      grid.append(row)
     return render_field(width, height, grid, options, self)

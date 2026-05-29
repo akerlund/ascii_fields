@@ -1,9 +1,9 @@
 import math
 
-from ..core import Animation, clamp, render_field
+from ..core import Animation, clamp, render_field, smoothstep
 
 
-CYCLE = 11.0
+CYCLE = 8.5
 
 
 class MachAnimation(Animation):
@@ -17,42 +17,15 @@ class MachAnimation(Animation):
     (0.70, "+"), (0.82, "*"), (0.92, "#"), (1.01, "@"),
   ]
 
-  WAVE_SPEED = 0.16          # normalised units per second
-  EMIT_DT = 0.10
+  WAVE_SPEED = 0.18
+  LANES = (-0.28, 0.22)
 
-  def __init__(self):
-    self._fronts = []        # (emit_x, emit_y, emit_time)
-    self._cycle_start = 0.0
-    self._next_emit = 0.0
-    self._last = 0.0
-
-  def _mach(self, p):
-    # accelerate from 0.6 -> ~2.4 across the pass
-    return 0.6 + 1.9 * p
+  def _mach(self, p, seed):
+    top = 1.85 + 0.45 * seed
+    return 0.70 + top * smoothstep(0.04, 0.92, p)
 
   def render(self, width, height, elapsed, phase, options):
-    if elapsed < self._last or elapsed - self._cycle_start > CYCLE:
-      self._cycle_start = elapsed
-      self._fronts = []
-      self._next_emit = elapsed
-    self._last = elapsed
-    local = elapsed - self._cycle_start
-
     ax = width / max(1, height * 2.0)
-    c = self.WAVE_SPEED
-    sy = 0.0
-    # integrate source x by sampling its speed profile (closed enough)
-    def source_x(t):
-      p = t / CYCLE
-      return -1.4 * ax + (self._mach(p) * c) * t
-
-    while elapsed >= self._next_emit:
-      tl = self._next_emit - self._cycle_start
-      self._fronts.append((source_x(tl), sy, tl))
-      self._next_emit += self.EMIT_DT
-    self._fronts = [f for f in self._fronts if local - f[2] < 14.0]
-
-    sx = source_x(local)
     contrast = options.contrast
     grid = []
     for row in range(height):
@@ -61,12 +34,27 @@ class MachAnimation(Animation):
       for col in range(width):
         px = (col / max(1, width - 1) - 0.5) * 2.0 * ax
         v = 0.0
-        for (ex, ey, et) in self._fronts:
-          radius = c * (local - et)
-          dist = math.hypot(px - ex, py - ey)
-          v += math.exp(-((dist - radius) ** 2) / 0.0007)
-        # the moving object
-        v += 0.9 * math.exp(-((px - sx) ** 2 + py * py) / 0.0009)
-        line.append(clamp(v * 0.9 * contrast))
+        for idx, lane_y in enumerate(self.LANES):
+          local = (elapsed / CYCLE + idx * 0.50) % 1.0
+          seed = idx + 1
+          mach = self._mach(local, seed)
+          sx = (-1.45 + 3.10 * local) * ax
+          sy = lane_y + 0.035 * math.sin(elapsed * 0.55 + idx * 2.4)
+          cone_angle = math.asin(1.0 / mach) if mach > 1.0 else math.pi * 0.5
+          cone_slope = math.tan(cone_angle)
+
+          dist = math.hypot(px - sx, py - sy)
+          rings = math.sin((dist - elapsed * self.WAVE_SPEED * (1.0 + idx * 0.1)) * 52.0)
+          v += max(0.0, rings) * 0.12 * math.exp(-dist * 1.6)
+
+          if mach > 1.0 and px < sx:
+            behind = sx - px
+            edge = abs(py - sy) - behind * cone_slope
+            cone = math.exp(-(edge * edge) / 0.0012) * math.exp(-behind * 0.28)
+            interior = smoothstep(0.10, 0.0, edge) * 0.14 * math.exp(-behind * 0.22)
+            v += cone * (1.04 + idx * 0.15) + interior
+
+          v += 0.86 * math.exp(-((px - sx) ** 2 + (py - sy) ** 2) / 0.0008)
+        line.append(clamp(v * contrast))
       grid.append(line)
     return render_field(width, height, grid, options, self)

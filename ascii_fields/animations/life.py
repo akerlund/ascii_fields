@@ -5,6 +5,7 @@ from ..core import Animation, render_field
 
 STEP_DT = 0.11          # seconds per generation
 RESEED_GENERATIONS = 900
+INJECT_EVERY = 48
 
 
 class LifeAnimation(Animation):
@@ -27,21 +28,40 @@ class LifeAnimation(Animation):
     self._rng = random.Random()
     self._stable = 0
     self._last_pop = -1
+    self._signature = None
+    self._signature_stable = 0
 
   def _seed(self, w, h):
     self._w, self._h = w, h
     self._cells = set()
-    fill = 0.30
-    for y in range(h):
-      for x in range(w):
+    fill = 0.12
+    for y in range(1, max(1, h - 1)):
+      for x in range(1, max(1, w - 1)):
         if self._rng.random() < fill:
           self._cells.add((x, y))
+    for _ in range(max(4, (w * h) // 180)):
+      self._add_pattern(self._rng.randrange(w), self._rng.randrange(h))
     self._age = [999] * (w * h)
     for (x, y) in self._cells:
       self._age[y * w + x] = 0
     self._gen = 0
     self._stable = 0
     self._last_pop = -1
+    self._signature = None
+    self._signature_stable = 0
+
+  def _add_pattern(self, ox, oy):
+    patterns = (
+      ((1, 0), (2, 1), (0, 2), (1, 2), (2, 2)),                 # glider
+      ((1, 0), (2, 0), (3, 0), (2, 1), (1, 2)),                 # lightweight spark
+      ((0, 1), (1, 1), (2, 1), (3, 1), (4, 1)),                 # blinker line
+      ((1, 0), (2, 0), (0, 1), (1, 1), (1, 2)),                 # r-pentomino-ish
+    )
+    pattern = self._rng.choice(patterns)
+    flip_x = -1 if self._rng.random() < 0.5 else 1
+    flip_y = -1 if self._rng.random() < 0.5 else 1
+    for dx, dy in pattern:
+      self._cells.add(((ox + dx * flip_x) % self._w, (oy + dy * flip_y) % self._h))
 
   def _step(self):
     w, h = self._w, self._h
@@ -71,6 +91,14 @@ class LifeAnimation(Animation):
     else:
       self._stable = 0
     self._last_pop = pop
+    signature = hash(frozenset(self._cells))
+    if signature == self._signature:
+      self._signature_stable += 1
+    else:
+      self._signature_stable = 0
+    self._signature = signature
+    if self._gen % INJECT_EVERY == 0 and pop < self._w * self._h * 0.22:
+      self._add_pattern(self._rng.randrange(self._w), self._rng.randrange(self._h))
 
   def render(self, width, height, elapsed, phase, options):
     if self._cells is None or width != self._w or height != self._h or elapsed < self._last_elapsed:
@@ -82,7 +110,8 @@ class LifeAnimation(Animation):
     while self._gen < target and guard < 200:
       self._step()
       guard += 1
-      if not self._cells or self._stable > 40 or self._gen > RESEED_GENERATIONS:
+      if (not self._cells or self._stable > 80 or self._signature_stable > 10
+          or self._gen > RESEED_GENERATIONS):
         self._seed(width, height)
         self._gen = target
 
@@ -96,8 +125,8 @@ class LifeAnimation(Animation):
         a = age[base + x]
         if a == 0:
           line.append(1.0)
-        elif a < 9:
-          line.append(0.62 - 0.06 * a)
+        elif a < 16:
+          line.append(0.72 - 0.04 * a)
         else:
           line.append(0.0)
       grid.append(line)
