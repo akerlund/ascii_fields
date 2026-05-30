@@ -28,11 +28,12 @@ class RenderOptions:
   scale: float = 1.0
   contrast: float = 1.05
   brightness: float = 1.0
+  speed: float = 1.0
   charset: str = "clean"
   scroll: bool = False
   ascii_mode: bool = True
   blocks: bool = False
-  theme: str = "auto"
+  theme: str = "grayscale"
 
 
 def clamp(value, low=0.0, high=1.0):
@@ -90,11 +91,11 @@ class Animation:
 def resolve_theme(options, default_theme):
   """Map the requested theme to a concrete palette name.
 
-  ``auto`` keeps the classic grayscale look for every scene; ``scene`` uses each
+  ``grayscale`` keeps the classic mono look for every scene; ``scene`` uses each
   animation's hand-picked colour theme; anything else forces that theme.
   """
   name = options.theme
-  if name == "auto":
+  if name == "grayscale":
     return "mono"
   if name == "scene":
     return default_theme

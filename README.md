@@ -9,7 +9,7 @@ clouds, fractals, a Game of Life, a tesseract, a jump to lightspeed, physics
 demos (gravitational waves, gravitational lensing, Doppler shift, magnetic
 fields, Feynman diagrams), DNA and molecules, reaction-diffusion, Chladni
 plates, curl-noise flow, DLA frost, the Lorenz attractor, drum eigenmodes,
-and more — 47 modes in all.
+and more — 53 modes in all.
 
 ## Requirements
 
@@ -75,7 +75,7 @@ List everything, with presets and aliases:
 | `life` | Conway's Game of Life on a torus, with cells leaving fading glow trails (aliases: `gol`, `conway`) |
 | `rain` | falling Matrix-style glyph columns, with bright leading head and fading trail (alias: `matrix`) |
 | `fire` | a roaring campfire — heat rises into flickering tongues that cool with height (alias: `flame`) |
-| `lightning` | a storm sky with forked bolts that strike, illuminate the clouds, then fade (aliases: `storm`, `bolt`) |
+| `lightning` | a storm sky with forked bolts that strike, illuminate the clouds, then fade (alias: `bolt`) |
 | `plasma` | the classic demoscene plasma — layered sines that ripple and breathe |
 | `starfield` | flying forward through 3D stars that streak past the viewer (alias: `warp`) |
 | `lightspeed` | the Millennium Falcon's jump: stars cruise, stretch, flash, then become hyperspace streaks (aliases: `hyperspace`, `jump`, `falcon`) |
@@ -96,6 +96,12 @@ List everything, with presets and aliases:
 | `gwaves` | two black holes spiral together emitting quadrupole gravitational waves, chirp, merge-flash, and ring down — looping (aliases: `gravity`, `merger`, `ligo`) |
 | `lensing` | an invisible mass drifts behind a star field, bending light into arcs and Einstein rings (aliases: `lens`, `einstein`, `microlensing`) |
 | `doppler` | an exoplanet tugs its star in a small wobble; the emitted wavefronts bunch ahead (blueshift) and stretch behind (redshift), in colour with `--theme scene` (aliases: `exoplanet`, `redshift`) |
+| `storm` | Jupiter's Great Red Spot as a banded atmospheric vortex (aliases: `jupiter`, `red-spot`, `great-red-spot`, `eye`) |
+| `lava` | boiling magma with hot bubbles that rise and burst (alias: `magma`) |
+| `vax_lamp` | a warm wax lamp with blobs stretching, drifting and merging (aliases: `wax-lamp`, `lava-lamp`, `vax`) |
+| `circuit` | a circuit board of varied modules, traces and buses sending data pulses (aliases: `pcb`, `electronics`, `bus`) |
+| `network` | a screen-spanning topology with routers, switches, endpoints and packet classes (aliases: `topology`, `net`) |
+| `cpu` | a CPU pipeline view with instructions, registers, ALU, cache and forwarding pulses (aliases: `pipeline`, `processor`, `alu`) |
 | `mach` | an object accelerates from subsonic to supersonic, piling its wavefronts into a sonic-boom / Mach cone (aliases: `sonic-boom`, `shockwave`, `boom`) |
 | `magnetic` | the dipole field of a bar magnet, with field lines arcing from N to S and tracers flowing along them (aliases: `magnet`, `dipole`) |
 | `longitudinal` | a lattice of particles bunching into compressions and rarefactions as a sound wave passes (aliases: `compression`, `sound`) |
@@ -184,18 +190,19 @@ Each mode has presets; see `--list`.
 ### Colour themes
 
 By default everything renders in grayscale. `--theme scene` colours each mode
-with a hand-picked palette; or force a specific theme (needs a truecolour
-terminal):
+with that animation's hard-coded `default_theme`; or force a specific theme
+(needs a truecolour terminal):
 
 ```bash
 ./ascii_fields.py fire --theme scene       # orange flames
 ./ascii_fields.py aurora --theme scene     # green curtains
 ./ascii_fields.py galaxy --theme nebula
 ./ascii_fields.py plasma --theme spectrum
+./ascii_fields.py mandelbrot --theme copper
 ```
 
-Themes: `auto` (grayscale, default), `scene`, `mono`, `fire`, `ice`, `nebula`,
-`aurora`, `amber`, `plasma`, `ocean`, `spectrum`.
+Themes: `grayscale` (default), `scene`, `mono`, `fire`, `lava`, `ice`, `nebula`,
+`aurora`, `amber`, `copper`, `sunset`, `rose`, `plasma`, `ocean`, `spectrum`.
 
 ### Wave-plane character modes
 
@@ -230,9 +237,9 @@ one scene and step through the rest without restarting.
 | `s` | save current per-mode settings to `ascii_fields.json` |
 | `q` / `Esc` | quit |
 
-Edits to `scale`/`contrast`/`brightness`/`theme` **stick to the scene you make
-them on**: switch with `n`/`p`, change the new scene's values, switch back, and
-your earlier edits on the first scene are still there.
+Edits to `scale`/`contrast`/`brightness`/`speed`/`theme` **stick to the scene
+you make them on**: switch with `n`/`p`, change the new scene's values, switch
+back, and your earlier edits on the first scene are still there.
 
 Start with the HUD hidden via `--no-status`.
 
@@ -248,13 +255,15 @@ ascii_fields.json
     "theme": "scene",
     "scale": 1.2,
     "contrast": 1.3,
-    "brightness": 1.0
+    "brightness": 1.0,
+    "speed": 1.0
   },
   "mach": {
-    "theme": "auto",
+    "theme": "grayscale",
     "scale": 1.0,
     "contrast": 1.05,
-    "brightness": 1.0
+    "brightness": 1.0,
+    "speed": 1.0
   }
 }
 ```
@@ -294,7 +303,7 @@ ascii_fields/
   noise.py                     # value noise + fbm
   registry.py / presets.py     # mode registry, aliases, presets
   gifexport.py                 # ANSI frames -> animated GIF (Pillow)
-  animations/                  # one module per scene (38 of them)
+  animations/                  # one module per scene (53 of them)
 tests/
   test_smoke.py
 ```

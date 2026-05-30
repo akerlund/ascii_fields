@@ -137,6 +137,30 @@ PRESETS = {
   "doppler": {
     "default": {},
   },
+  "storm": {
+    "default": {},
+    "bright": {"contrast": 1.25, "brightness": 1.1},
+  },
+  "lava": {
+    "default": {},
+    "hot": {"contrast": 1.25, "brightness": 1.15},
+  },
+  "vax_lamp": {
+    "default": {},
+    "gooey": {"contrast": 1.2, "brightness": 1.1},
+  },
+  "circuit": {
+    "default": {},
+    "bright": {"contrast": 1.25, "brightness": 1.15},
+  },
+  "network": {
+    "default": {},
+    "bright": {"contrast": 1.25, "brightness": 1.15},
+  },
+  "cpu": {
+    "default": {},
+    "bright": {"contrast": 1.25, "brightness": 1.15},
+  },
   "mach": {
     "default": {},
   },

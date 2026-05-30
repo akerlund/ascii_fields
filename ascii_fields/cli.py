@@ -47,8 +47,10 @@ def parse_args(argv=None):
   parser.add_argument("--contrast", type=float, default=None, help="Contrast multiplier.")
   parser.add_argument("--brightness", type=float, default=None,
                       help="Brightness multiplier for the grayscale/colour ramp.")
+  parser.add_argument("--speed", type=float, default=None,
+                      help="Motion speed multiplier used by live playback.")
   parser.add_argument("--theme", choices=THEME_CHOICES, default=None,
-                      help="Colour theme. 'auto' = grayscale, 'scene' = each mode's "
+                      help="Colour theme. 'grayscale' = mono, 'scene' = each mode's "
                            "recommended colour, or pick one (needs a truecolor terminal).")
   parser.add_argument("--preset", default="default", help="Mode-specific preset.")
   parser.add_argument("--record", default=None, metavar="FILE.cast",
@@ -105,7 +107,7 @@ def _saved_options_for(saved, mode):
   data = saved.get(mode, {})
   if not isinstance(data, dict):
     return {}
-  allowed = {"scale", "contrast", "brightness", "theme"}
+  allowed = {"scale", "contrast", "brightness", "speed", "theme"}
   return {key: data[key] for key in allowed if key in data}
 
 
@@ -126,11 +128,12 @@ def build_options(args, preset, saved=None):
     scale=option_value(args, preset, saved, "scale", 1.0),
     contrast=option_value(args, preset, saved, "contrast", 1.05),
     brightness=option_value(args, preset, saved, "brightness", 1.0),
+    speed=option_value(args, preset, saved, "speed", 1.0),
     charset=args.charset,
     scroll=args.scroll,
     ascii_mode=True,
     blocks=args.blocks,
-    theme=option_value(args, preset, saved, "theme", "auto"),
+    theme=option_value(args, preset, saved, "theme", "grayscale"),
   )
 
 

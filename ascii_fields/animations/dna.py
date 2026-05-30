@@ -4,9 +4,11 @@ from ..core import Animation, render_glyph_field
 
 
 class DNAAnimation(Animation):
-  """A rotating DNA double helix. Two sugar-phosphate backbones wind around each
-  other as sine waves a half-turn apart; base-pair rungs connect them. Strands
-  in front are drawn brighter than those behind."""
+  """A rotating DNA double helix. The two sugar-phosphate backbones spiral
+  around each other a half-turn apart and base-pair rungs connect them. Each
+  strand is drawn with /, \\ or | depending on which way it is heading at that
+  row, so the twist reads as actual twist; the strand currently in front is
+  drawn brighter than the one in back."""
 
   default_theme = "ocean"
 
@@ -17,10 +19,11 @@ class DNAAnimation(Animation):
 
   def render(self, width, height, elapsed, phase, options):
     cx = width * 0.5
-    amp = max(2.0, width * 0.22)
-    twist = 0.48 * max(0.45, options.scale)
-    t = elapsed * 2.0
-    contrast = options.contrast
+    amp = max(3.0, width * 0.20)
+    # Twist tuned so ~1.5 turns fit a typical screen height; scale lets users
+    # crank it tighter.
+    twist = 0.36 * max(0.4, options.scale)
+    t = elapsed * 1.8
 
     grid = [[0.0] * width for _ in range(height)]
     glyphs = [[" "] * width for _ in range(height)]
@@ -31,29 +34,48 @@ class DNAAnimation(Animation):
         grid[row][c] = value
         glyphs[row][c] = glyph
 
+    # -- rungs first so the strands overdraw them at crossings ---------------
     for row in range(height):
       p = row * twist + t
       s = math.sin(p)
-      depthA = math.cos(p)               # +1 front, -1 back
-      xA = cx + amp * s
-      xB = cx - amp * s
-      depthB = -depthA
-      brightA = 0.45 + 0.55 * (depthA * 0.5 + 0.5)
-      brightB = 0.45 + 0.55 * (depthB * 0.5 + 0.5)
-      glyphA = "O" if depthA > 0.0 else "o"
-      glyphB = "O" if depthB > 0.0 else "o"
-      splat(xA, row, brightA, glyphA)
-      splat(xA + (1 if s >= 0 else -1), row, brightA * 0.55, ".")
-      splat(xB, row, brightB, glyphB)
-      splat(xB + (-1 if s >= 0 else 1), row, brightB * 0.55, ".")
-
-      # Base-pair rungs are strongest when the helix opens toward the viewer.
-      if abs(s) > 0.20 and row % 2 == 0:
+      if abs(s) > 0.18:
+        xA = cx + amp * s
+        xB = cx - amp * s
         x0, x1 = sorted((xA, xB))
-        rung = 0.24 + 0.38 * (1.0 - abs(depthA))
-        steps = int(x1 - x0)
-        for i in range(1, max(1, steps)):
-          ratio = i / max(1, steps)
-          glyph = "=" if 0.42 < ratio < 0.58 else "-"
-          splat(x0 + i, row, max(rung, 0.30), glyph)
+        spread = abs(s)
+        rung_b = 0.30 + 0.20 * spread
+        steps = max(2, int(x1 - x0))
+        for i in range(1, steps):
+          # alternate thick/thin so a rung looks like a ladder rung, not a line
+          glyph = "=" if i % 2 == 0 else "-"
+          splat(x0 + i, row, rung_b, glyph)
+
+    # -- strands: A on +amp*sin(p), B on the opposite side --------------------
+    for sign in (+1, -1):
+      prev_x = None
+      for row in range(height):
+        p = row * twist + t
+        s = math.sin(p)
+        c = math.cos(p)
+        x = cx + sign * amp * s
+        depth = c * sign                              # +1 = front, -1 = back
+        slope = sign * amp * c * twist                # dx/drow
+        bright = 0.55 + 0.45 * (depth * 0.5 + 0.5)    # 0.55 (back) .. 1.0 (front)
+        if abs(slope) < 0.35:
+          glyph = "|"                                 # near-vertical at extremes
+        elif slope > 0:
+          glyph = "\\"                                # heading right going down
+        else:
+          glyph = "/"                                 # heading left going down
+        splat(x, row, bright, glyph)
+        splat(x - 1, row, bright * 0.55, glyph)
+        splat(x + 1, row, bright * 0.55, glyph)
+        # If the strand jumped sideways more than a cell since the previous
+        # row, fill the gap so the helix reads as a continuous line.
+        if prev_x is not None and abs(x - prev_x) > 1.4:
+          step = -1 if x < prev_x else 1
+          for fill in range(int(prev_x) + step, int(x), step):
+            splat(fill, row, bright * 0.45, glyph)
+        prev_x = x
+
     return render_glyph_field(width, height, grid, glyphs, options, self)

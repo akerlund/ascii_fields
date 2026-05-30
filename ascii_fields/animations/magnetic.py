@@ -4,10 +4,10 @@ from ..core import Animation, clamp, render_field
 
 
 class MagneticAnimation(Animation):
-  """The dipole field of a bar magnet. Field lines arc from the north pole to
-  the south pole and a current of tracers flows along them. The line pattern is
-  the streamfunction psi = angle(N) - angle(S); its level sets are the field
-  lines."""
+  """The dipole field of a bar magnet -- just the field lines, no drawn magnet.
+  Field lines arc from N to S and a current of tracers flows along them. The
+  pattern is the streamfunction psi = angle(N) - angle(S); its level sets are
+  the lines, and a gentle |B|-like falloff keeps them readable everywhere."""
 
   default_theme = "ice"
 
@@ -31,11 +31,14 @@ class MagneticAnimation(Animation):
         # streamfunction of two opposite poles on the x-axis
         psi = math.atan2(py, px - d) - math.atan2(py, px + d)
         field_lines = 0.5 + 0.5 * math.sin(lines * psi - flow)
-        # field strength (dipole) brightens lines near the poles
-        rn = math.hypot(px - d, py) + 0.05
-        rs = math.hypot(px + d, py) + 0.05
-        strength = clamp(0.10 + 0.65 / (rn * rn) + 0.65 / (rs * rs), 0.0, 1.2)
-        level = field_lines * strength
+        # field strength: gentle |B|-like falloff, capped so the poles don't
+        # paint a saturated 'bar magnet' blob between them
+        rn = math.hypot(px - d, py) + 0.18
+        rs = math.hypot(px + d, py) + 0.18
+        strength = clamp(0.18 + 0.22 / rn + 0.22 / rs, 0.0, 0.95)
+        # darken the immediate neighbourhood of each pole so they don't blob
+        pole_cut = max(math.exp(-(rn * rn) * 18.0), math.exp(-(rs * rs) * 18.0))
+        level = field_lines * strength * (1.0 - 0.85 * pole_cut)
         line.append(clamp(level * contrast))
       grid.append(line)
     return render_field(width, height, grid, options, self)

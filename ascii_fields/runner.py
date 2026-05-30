@@ -134,7 +134,6 @@ class TerminalRunner:
     last_wall = started
     next_frame = started
     virtual = 0.0
-    speed = 1.0
     paused = False
     last_size = None
     hud_visible = bool(self.interactive)
@@ -177,7 +176,7 @@ class TerminalRunner:
           dt = now - last_wall
           last_wall = now
           if not paused:
-            virtual += dt * speed
+            virtual += dt * self.options.speed
 
           for key in keyboard.poll():
             if key in ("q", "\x1b", "\x03"):
@@ -185,9 +184,9 @@ class TerminalRunner:
             elif key == " ":
               paused = not paused
             elif key in ("+", "="):
-              speed = min(8.0, speed * 1.25)
+              self.options.speed = min(8.0, self.options.speed * 1.25)
             elif key in ("-", "_"):
-              speed = max(0.1, speed * 0.8)
+              self.options.speed = max(0.1, self.options.speed * 0.8)
             elif key in ("n", "\t"):
               self.provider.go_next(virtual)
             elif key == "p":
@@ -245,7 +244,7 @@ class TerminalRunner:
           self._prev_proc = now_proc
           self._prev_wall = now_wall
 
-          hud = self._hud(width, hud_visible, paused, speed, term_lines)
+          hud = self._hud(width, hud_visible, paused, term_lines)
           if paused:
             # nothing to redraw on the field -- only the HUD (absolute positioning)
             out.write(hud)
@@ -261,7 +260,7 @@ class TerminalRunner:
         out.write(RESET + SHOW_CURSOR + ALT_SCREEN_OFF)
         out.flush()
 
-  def _hud(self, width, visible, paused, speed, term_lines):
+  def _hud(self, width, visible, paused, term_lines):
     if not visible or not self.interactive or not sys.stdout.isatty():
       return ""
     o = self.options
@@ -269,8 +268,8 @@ class TerminalRunner:
     title = f"{self.provider.title():<22}"
     if paused:
       state = "PAUSED"
-    elif abs(speed - 1.0) > 0.02:
-      state = f"x{speed:.2f}"
+    elif abs(o.speed - 1.0) > 0.02:
+      state = f"x{o.speed:.2f}"
     else:
       state = "play "
     if self._save_msg and time.monotonic() < self._save_until:
@@ -280,7 +279,7 @@ class TerminalRunner:
     #   title=22 ; theme=14 ; scale=10 ; contrast=13 ; bright=11 ; cpu=10 ; fps=6
     line1 = (
       f" {title}"
-      f" theme={o.theme:<8}"                  # 14 chars (label 6 + value 8)
+      f" theme={o.theme:<10}"                 # 16 chars (label 6 + value 10 fits 'grayscale')
       f" scale={o.scale:>4.2f}"               # 10 chars (label 6 + value 4)
       f" contrast={o.contrast:>4.2f}"         # 13 chars (label 9 + value 4)
       f" bright={o.brightness:>4.2f}"         # 11 chars (label 7 + value 4)
@@ -288,18 +287,22 @@ class TerminalRunner:
       f" fps={self.fps:>2.0f}"                # 6 chars
       f"  {state}"
     )
+    # Line 2: [n/p]switch sits at the very left (under the title), then the
+    # per-value control hints align with line 1's value columns.
     line2 = (
-      f" {'[n/p]':<22}"
-      f" {'[t/T]theme':<14}"                  # under theme=
-      f" {'[1/2]scale':<10}"                  # under scale=
-      f" {'[3/4]contrast':<13}"               # under contrast=
-      f" {'[5/6]bright':<11}"                 # under bright=
+      f" {'[n/p]switch':<22}"                  # leftmost control, padded to title column
+      f" {'[t/T]theme':<16}"                   # under theme=
+      f" {'[1/2]scale':<10}"                   # under scale=
+      f" {'[3/4]contrast':<13}"                # under contrast=
+      f" {'[5/6]bright':<11}"                  # under bright=
       f" {'[i]menu':<10}"
       f"  [_]pause [+/-]speed [s]save [q]quit"
     )
     pos1 = f"\x1b[{max(1, term_lines - 1)};1H"
     pos2 = f"\x1b[{max(1, term_lines)};1H"
-    style = "\x1b[2m" + BLACK_BG
+    # True black background so the menu reads as a separate black strip from
+    # the field's near-black BLACK_BG (which is 232 -> very dark gray).
+    style = "\x1b[2m\x1b[40m"
     return (pos1 + style + _fit(line1, width) + "\x1b[0m"
             + pos2 + style + _fit(line2, width) + "\x1b[0m")
 
@@ -317,6 +320,7 @@ class TerminalRunner:
         "scale": round(options.scale, 4),
         "contrast": round(options.contrast, 4),
         "brightness": round(options.brightness, 4),
+        "speed": round(options.speed, 4),
       }
     with open(self.settings_path, "w", encoding="utf-8") as handle:
       json.dump(data, handle, indent=2, sort_keys=True)

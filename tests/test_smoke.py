@@ -1,4 +1,6 @@
 import re
+import contextlib
+import io
 import json
 import tempfile
 import unittest
@@ -42,7 +44,7 @@ class RenderSmokeTests(unittest.TestCase):
           self.assertEqual(len(frame.split("\n")), height)
 
   def test_themes_render(self):
-    for theme in ("auto", "scene", "fire", "spectrum"):
+    for theme in ("grayscale", "scene", "fire", "lava", "copper", "sunset", "rose", "spectrum"):
       options = RenderOptions(theme=theme)
       frame = create_animation("plasma").render(20, 6, 0.4, 0.4, options)
       self.assertEqual(len(frame.split("\n")), 6)
@@ -61,6 +63,17 @@ class RenderSmokeTests(unittest.TestCase):
     self.assertEqual(normalize_mode("blackhole"), "black-hole")
     self.assertEqual(normalize_mode("hydrogen"), "orbitals")
     self.assertEqual(normalize_mode("tesseract"), "hypercube")
+    self.assertEqual(normalize_mode("pcb"), "circuit")
+    self.assertEqual(normalize_mode("topology"), "network")
+    self.assertEqual(normalize_mode("jupiter"), "storm")
+    self.assertEqual(normalize_mode("storm"), "storm")
+    self.assertEqual(normalize_mode("magma"), "lava")
+    self.assertEqual(normalize_mode("lava-lamp"), "vax_lamp")
+    self.assertEqual(normalize_mode("pipeline"), "cpu")
+
+  def test_auto_theme_is_not_accepted(self):
+    with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+      parse_args(["plasma", "--theme", "auto"])
 
   def test_unknown_preset_raises(self):
     with self.assertRaises(ValueError):
@@ -87,15 +100,18 @@ class SettingsTests(unittest.TestCase):
       saved = load_saved_options(f"{tmp}/missing.json")
     self.assertEqual(saved, {})
     options = build_options(parse_args(["plasma"]), {}, {})
-    self.assertEqual(options.theme, "auto")
+    self.assertEqual(options.theme, "grayscale")
     self.assertEqual(options.scale, 1.0)
+    self.assertEqual(options.speed, 1.0)
+    saved_options = build_options(parse_args(["plasma"]), {}, {"speed": 1.75})
+    self.assertEqual(saved_options.speed, 1.75)
 
   def test_saved_options_are_one_dict_per_mode(self):
     with tempfile.TemporaryDirectory() as tmp:
       path = f"{tmp}/ascii_fields.json"
       mode_options = {
-        "dna": RenderOptions(theme="scene", scale=1.2, contrast=1.3, brightness=0.9),
-        "mach": RenderOptions(theme="auto", scale=1.0, contrast=1.1, brightness=1.0),
+        "dna": RenderOptions(theme="scene", scale=1.2, contrast=1.3, brightness=0.9, speed=1.4),
+        "mach": RenderOptions(theme="grayscale", scale=1.0, contrast=1.1, brightness=1.0, speed=0.8),
       }
       runner = TerminalRunner(build_provider("dna", parse_args(["dna"])),
                               mode_options=mode_options, settings_path=path)
@@ -104,6 +120,7 @@ class SettingsTests(unittest.TestCase):
         data = json.load(handle)
     self.assertEqual(set(data), {"dna", "mach"})
     self.assertEqual(data["dna"]["theme"], "scene")
+    self.assertEqual(data["dna"]["speed"], 1.4)
     self.assertNotIn("frame", data["dna"])
 
 
