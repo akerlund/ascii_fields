@@ -1,4 +1,4 @@
-// All 53 ported animations + the shared fractal helpers.
+// All ported and native Rust animations + the shared fractal helpers.
 
 pub mod fractal_base;
 
@@ -18,6 +18,7 @@ pub mod doppler;
 pub mod double_slit;
 pub mod drops;
 pub mod drum;
+pub mod extended;
 pub mod feynman;
 pub mod fire;
 pub mod flares;

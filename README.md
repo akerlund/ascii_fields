@@ -5,7 +5,7 @@ Procedural ASCII animations for the terminal, now as a native Rust binary.
 `ascii-fields` renders animated scenes with ANSI escape codes: surf, solar
 flares, galaxies and black holes, quantum clouds, fractals, Game of Life,
 physics demos, DNA, molecules, reaction-diffusion, Chladni plates, curl-noise
-flow, DLA frost, the Lorenz attractor, drum eigenmodes, and more. There are 53
+flow, DLA frost, the Lorenz attractor, drum eigenmodes, and more. There are 73
 modes in all.
 
 ## Requirements
@@ -68,8 +68,12 @@ List everything:
 | `night-sky` | Twinkling stars, milky way, and shooting stars |
 | `aurora` | Northern lights curtains |
 | `clouds` | Drifting fractal-noise clouds |
+| `pulsar` | Rotating neutron-star beam sweep |
+| `supernova` | Expanding stellar shock shell and filaments |
+| `solar-wind` | Charged particles flowing around a magnetosphere |
 | `whirlpool` | Swirling vortex / maelstrom |
 | `drops` | Raindrops rippling across a pond |
+| `caustics` | Underwater light caustics rippling over a surface |
 
 ### Life, Light, And Weather
 
@@ -105,13 +109,21 @@ List everything:
 | `circuit` | Circuit board traces with data pulses |
 | `network` | Network topology with moving packets |
 | `cpu` | CPU pipeline, registers, ALU, cache and data pulses |
+| `oscilloscope` | Phosphor oscilloscope traces and graticule |
+| `radar` | Sweeping radar display with fading contacts |
 | `mach` | Sonic boom / Mach cone from a moving source |
 | `magnetic` | Bar-magnet dipole field lines |
+| `ferrofluid` | Magnetic fluid spikes around moving field sources |
+| `schlieren` | Heat-haze and shockwave density gradients |
+| `seismograph` | Earthquake wavefronts through layered ground |
+| `convection` | Rayleigh-Benard-like heat convection rolls |
+| `reconnection` | Magnetic field lines snapping and reconnecting |
 | `longitudinal` | Longitudinal compression wave |
 | `feynman` | Animated Feynman diagrams |
 | `chladni` | Chladni plate nodal patterns |
 | `drum` | Vibrational eigenmodes of a circular drum |
 | `karman` | Karman vortex street behind a circular obstacle |
+| `topography` | Animated contour map with rivers and flow lines |
 
 ### Biology And Chemistry
 
@@ -127,7 +139,15 @@ List everything:
 | --- | --- |
 | `curl` | Particles drifting through a curl-noise flow field |
 | `dla` | Diffusion-limited aggregation |
+| `dunes` | Wind-driven sand ripples migrating over dunes |
 | `phyllotaxis` | Golden-angle sunflower spiral |
+| `quasicrystal` | Fivefold wave interference quasicrystal |
+| `moire` | Rotating line-grid moire interference |
+| `penrose` | Aperiodic Penrose-like interference tiling |
+| `voronoi` | Moving Voronoi cell boundaries |
+| `reaction-rings` | Belousov-Zhabotinsky-style chemical wave rings |
+| `nbody` | Gravitational bodies orbiting through a shared field |
+| `strange` | Morphing De Jong strange attractor |
 | `lorenz` | The Lorenz strange attractor |
 
 ### Fractals
@@ -328,7 +348,7 @@ src/
   registry.rs          mode-name -> animation factory
   animations/
     fractal_base.rs    shared escape-time helpers
-    *.rs               one module per animation
+    *.rs               one animation module, or grouped native Rust modes
 ```
 
 Each animation builds a grid of brightness levels in `[0, 1]` and hands it to

@@ -52,12 +52,12 @@ pub fn run() -> std::io::Result<()> {
   if cli.list {
     println!("Available modes:");
     for info in registry::MODES {
-      println!("  {:<14} {}", info.name, info.description);
+      println!("  {:<16} {}", info.name, info.description);
     }
     println!();
     println!("Playlists:");
-    println!("  {:<14} shuffle through every mode", "random");
-    println!("  {:<14} step through every mode in order", "cycle");
+    println!("  {:<16} shuffle through every mode", "random");
+    println!("  {:<16} step through every mode in order", "cycle");
     return Ok(());
   }
 
