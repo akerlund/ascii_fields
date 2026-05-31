@@ -1,34 +1,11 @@
-# Python caches
-__pycache__/
-*.py[cod]
-*$py.class
+# Rust build output
+/target/
 
 # Captured frames and recordings
 *.cast
+*.gif
 
-# Virtual environments
-.venv/
-venv/
-env/
-ENV/
-
-# Build and packaging
-build/
-dist/
-*.egg-info/
-.eggs/
-
-# Test and coverage output
-.pytest_cache/
-.coverage
-htmlcov/
-
-# Type checker / tooling caches
-.mypy_cache/
-.ruff_cache/
-.pyre/
-
-# Local environment files
+# Runtime/local settings
 .env
 .env.*
 

@@ -1,255 +1,271 @@
-# ascii_fields
+# ascii-fields
 
-Procedural ASCII animations for the terminal.
+Procedural ASCII animations for the terminal, now as a native Rust binary.
 
-`ascii_fields` renders animated scenes using plain Python and ANSI escape codes.
-It started as a cyclic wave-plane experiment and grew into a collection of
-terminal fields: surf, solar flares, galaxies and black holes, plus quantum
-clouds, fractals, a Game of Life, a tesseract, a jump to lightspeed, physics
-demos (gravitational waves, gravitational lensing, Doppler shift, magnetic
-fields, Feynman diagrams), DNA and molecules, reaction-diffusion, Chladni
-plates, curl-noise flow, DLA frost, the Lorenz attractor, drum eigenmodes,
-and more — 53 modes in all.
+`ascii-fields` renders animated scenes with ANSI escape codes: surf, solar
+flares, galaxies and black holes, quantum clouds, fractals, Game of Life,
+physics demos, DNA, molecules, reaction-diffusion, Chladni plates, curl-noise
+flow, DLA frost, the Lorenz attractor, drum eigenmodes, and more. There are 53
+modes in all.
 
 ## Requirements
 
-- Python 3.10+
-- A terminal with 256-colour ANSI support (truecolour for the colour themes)
+- Rust / Cargo
+- A terminal with ANSI 256-color support
+- Truecolor support for named color themes
 - A monospace font
-- No external Python packages are required to run. `numpy` is optional and only
-  speeds up the fractal modes (`pip install ascii-fields[fast]`); `Pillow` is
-  optional and only needed for `--gif` export.
 
-## Install / run
-
-Run straight from the repo:
+Install Rust if needed:
 
 ```bash
-./ascii_fields.py            # convenience launcher
-python3 -m ascii_fields      # module form
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+source "$HOME/.cargo/env"
 ```
 
-Or install it (adds an `ascii-fields` command):
+## Build And Run
 
 ```bash
-pip install .
-ascii-fields galaxy
+cargo build --release
+./target/release/ascii-fields --list
+./target/release/ascii-fields plasma
+./target/release/ascii-fields random
 ```
 
-Stop an animation with `Ctrl+C` (or `q`).
+Or build and run in one command:
+
+```bash
+cargo run --release -- galaxy
+cargo run --release -- magnetic --theme scene
+cargo run --release -- plasma --seconds 5
+```
+
+`--release` matters. Debug builds are much slower for the per-cell math.
 
 ## Modes
 
-List everything, with presets and aliases:
+List everything:
 
 ```bash
-./ascii_fields.py --list
+./target/release/ascii-fields --list
 ```
 
-### Classic fields
+### Classic Fields
 
-| Mode | What you'll see |
+| Mode | What you will see |
 | --- | --- |
-| `wave-plane` | the original cyclic grayscale wave plane, rendered with a long character ramp (aliases: `plane`, `base`) |
-| `flower-sphere` | a dark sphere with a slowly rotating flower-like ASCII texture (aliases: `codex`, `flower`) |
-| `areas` | a dark oval sphere with floating regions of ASCII texture drifting across its face |
+| `wave-plane` | Cyclic grayscale wave plane with a long character ramp |
+| `flower-sphere` | Dark sphere with a rotating flower-like ASCII texture |
+| `areas` | Dark oval sphere with floating regions of ASCII texture |
 
-### Nature & space
+### Nature And Space
 
-| Mode | What you'll see |
+| Mode | What you will see |
 | --- | --- |
-| `waves` | top-down view of surf breaking on a beach, with foam, sandbars and backwash |
-| `flares` | the limb of a star with arching loops, plumes and corona |
-| `galaxy` | a tilted spiral galaxy rotating around a bright core with dust lanes |
-| `black-hole` | an accretion disk warped by gravitational lensing around a Schwarzschild hole (alias: `blackhole`) |
-| `night-sky` | a still, deep night sky: twinkling stars, the Milky Way band, the odd shooting star (aliases: `stars`, `sky`) |
-| `aurora` | shimmering vertical curtains of northern lights with vertical ray structure (alias: `borealis`) |
-| `clouds` | drifting fractal-noise cumulus with a brighter horizon glow |
-| `whirlpool` | a swirling maelstrom with logarithmic spiral arms and a dark central throat (aliases: `vortex`, `maelstrom`) |
-| `drops` | raindrops splashing into a pond, leaving expanding interfering rings (aliases: `pond`, `ripples`) |
+| `waves` | Top-down surf breaking on a beach |
+| `flares` | Solar flare-like arcs and tendrils |
+| `galaxy` | Rotating spiral galaxy |
+| `black-hole` | Lensed black hole accretion disk |
+| `night-sky` | Twinkling stars, milky way, and shooting stars |
+| `aurora` | Northern lights curtains |
+| `clouds` | Drifting fractal-noise clouds |
+| `whirlpool` | Swirling vortex / maelstrom |
+| `drops` | Raindrops rippling across a pond |
 
-### Life, light & weather
+### Life, Light, And Weather
 
-| Mode | What you'll see |
+| Mode | What you will see |
 | --- | --- |
-| `life` | Conway's Game of Life on a torus, with cells leaving fading glow trails (aliases: `gol`, `conway`) |
-| `rain` | falling Matrix-style glyph columns, with bright leading head and fading trail (alias: `matrix`) |
-| `fire` | a roaring campfire — heat rises into flickering tongues that cool with height (alias: `flame`) |
-| `lightning` | a storm sky with forked bolts that strike, illuminate the clouds, then fade (alias: `bolt`) |
-| `plasma` | the classic demoscene plasma — layered sines that ripple and breathe |
-| `starfield` | flying forward through 3D stars that streak past the viewer (alias: `warp`) |
-| `lightspeed` | the Millennium Falcon's jump: stars cruise, stretch, flash, then become hyperspace streaks (aliases: `hyperspace`, `jump`, `falcon`) |
+| `life` | Conway's Game of Life with fading trails |
+| `rain` | Falling Matrix-style character rain |
+| `fire` | Rising campfire flames |
+| `lightning` | Branching lightning bolts in a storm |
+| `plasma` | Classic sinusoidal plasma |
+| `starfield` | Flying through a 3D starfield |
+| `lightspeed` | Jump to lightspeed star streaks |
 
 ### Quantum
 
-| Mode | What you'll see |
+| Mode | What you will see |
 | --- | --- |
-| `orbitals` | hydrogen electron probability clouds \|ψ\|² morphing through 1s → 2p → 3d → 4f (aliases: `hydrogen`, `atom`) |
-| `qfield` | vacuum fluctuations on a fractal energy field, with particle-antiparticle pairs popping in and annihilating (aliases: `quantum-field`, `foam`) |
-| `double-slit` | the textbook experiment: incoming plane wave, two slits, interference fan, and a detector strip that slowly builds up fringes (aliases: `slit`, `interference`) |
-| `wave-well` | a Gaussian wave packet sloshing around a 2D potential well, \|ψ\|² spreading and reviving (aliases: `packet`, `well`) |
+| `orbitals` | Hydrogen electron probability clouds |
+| `qfield` | Quantum vacuum foam with particle pairs |
+| `double-slit` | Double-slit interference build-up |
+| `wave-well` | Quantum wave packet in a potential well |
 
-### Physics & engineering
+### Physics And Engineering
 
-| Mode | What you'll see |
+| Mode | What you will see |
 | --- | --- |
-| `gwaves` | two black holes spiral together emitting quadrupole gravitational waves, chirp, merge-flash, and ring down — looping (aliases: `gravity`, `merger`, `ligo`) |
-| `lensing` | an invisible mass drifts behind a star field, bending light into arcs and Einstein rings (aliases: `lens`, `einstein`, `microlensing`) |
-| `doppler` | an exoplanet tugs its star in a small wobble; the emitted wavefronts bunch ahead (blueshift) and stretch behind (redshift), in colour with `--theme scene` (aliases: `exoplanet`, `redshift`) |
-| `storm` | Jupiter's Great Red Spot as a banded atmospheric vortex (aliases: `jupiter`, `red-spot`, `great-red-spot`, `eye`) |
-| `lava` | boiling magma with hot bubbles that rise and burst (alias: `magma`) |
-| `vax_lamp` | a warm wax lamp with blobs stretching, drifting and merging (aliases: `wax-lamp`, `lava-lamp`, `vax`) |
-| `circuit` | a circuit board of varied modules, traces and buses sending data pulses (aliases: `pcb`, `electronics`, `bus`) |
-| `network` | a screen-spanning topology with routers, switches, endpoints and packet classes (aliases: `topology`, `net`) |
-| `cpu` | a CPU pipeline view with instructions, registers, ALU, cache and forwarding pulses (aliases: `pipeline`, `processor`, `alu`) |
-| `mach` | an object accelerates from subsonic to supersonic, piling its wavefronts into a sonic-boom / Mach cone (aliases: `sonic-boom`, `shockwave`, `boom`) |
-| `magnetic` | the dipole field of a bar magnet, with field lines arcing from N to S and tracers flowing along them (aliases: `magnet`, `dipole`) |
-| `longitudinal` | a lattice of particles bunching into compressions and rarefactions as a sound wave passes (aliases: `compression`, `sound`) |
-| `feynman` | animated Feynman diagrams: arrowed fermions, wavy photons, coiled gluons, vertices and labels — cycling between annihilation, Compton scattering and gluon exchange (alias: `particles`) |
-| `chladni` | a square plate driven through its eigenmodes; sand piles along the nodal lines of `sin(mπx)sin(nπy) − sin(nπx)sin(mπy)` (aliases: `cymatics`, `plate`) |
-| `drum` | the first vibrational eigenmodes of a circular drum, with real Bessel-J radial profiles and `n` angular nodes (aliases: `bessel`, `membrane`) |
-| `karman` | fluid streaming past a circular obstacle sheds a Karman vortex street of alternating swirls (aliases: `vortex-street`, `wake`) |
+| `gwaves` | Black holes merging, gravitational waves |
+| `lensing` | Gravitational lensing: stars bent by a moving mass |
+| `doppler` | Exoplanet radial-velocity Doppler shift |
+| `storm` | Jupiter Great Red Spot vortex |
+| `lava` | Boiling lava with bursting bubbles |
+| `vax_lamp` | Wax lamp blobs stretching and merging |
+| `circuit` | Circuit board traces with data pulses |
+| `network` | Network topology with moving packets |
+| `cpu` | CPU pipeline, registers, ALU, cache and data pulses |
+| `mach` | Sonic boom / Mach cone from a moving source |
+| `magnetic` | Bar-magnet dipole field lines |
+| `longitudinal` | Longitudinal compression wave |
+| `feynman` | Animated Feynman diagrams |
+| `chladni` | Chladni plate nodal patterns |
+| `drum` | Vibrational eigenmodes of a circular drum |
+| `karman` | Karman vortex street behind a circular obstacle |
 
-### Biology & chemistry
+### Biology And Chemistry
 
-| Mode | What you'll see |
+| Mode | What you will see |
 | --- | --- |
-| `dna` | a rotating DNA double helix, two sinusoidal backbones with base-pair rungs (alias: `helix`) |
-| `molecule` | a fullerene-like 3D molecular cage of atoms and bonds, tumbling in 3D (aliases: `buckyball`, `fullerene`) |
-| `rd` | Gray-Scott reaction-diffusion: organic spots, stripes and mazes that crawl and morph forever (aliases: `gray-scott`, `react`) |
+| `dna` | Rotating DNA double helix |
+| `molecule` | Rotating 3D molecular cage |
+| `rd` | Gray-Scott reaction-diffusion |
 
-### Generative / chaos
+### Generative And Chaos
 
-| Mode | What you'll see |
+| Mode | What you will see |
 | --- | --- |
-| `curl` | many tiny particles drifting through a divergence-free curl-of-noise flow field, leaving fading trails (aliases: `flow`, `curl-noise`) |
-| `dla` | diffusion-limited aggregation — random walkers stick when they touch the cluster, growing a branched fractal frost (aliases: `frost`, `aggregation`) |
-| `phyllotaxis` | the golden-angle sunflower spiral packing the screen with rotating seed dots (aliases: `sunflower`, `spiral`) |
-| `lorenz` | the Lorenz strange attractor traced live, the current point bright with a fading trail (aliases: `attractor`, `butterfly`) |
+| `curl` | Particles drifting through a curl-noise flow field |
+| `dla` | Diffusion-limited aggregation |
+| `phyllotaxis` | Golden-angle sunflower spiral |
+| `lorenz` | The Lorenz strange attractor |
 
 ### Fractals
 
-| Mode | What you'll see |
+| Mode | What you will see |
 | --- | --- |
-| `mandelbrot` | continuous zoom into the Mandelbrot set near the seahorse valley; never reverses — the cycle wraps back to the starting frame and dives again (alias: `mandel`) |
-| `julia` | a Julia set whose constant `c` orbits a circle, continuously morphing the shape |
-| `burning-ship` | endless zoom into the jagged, flame-like Burning Ship fractal (alias: `ship`) |
-| `newton` | Newton's-method basins for `z³ = 1` with rotating roots — swirling boundaries |
-| `sierpinski` | the right-triangle Sierpinski gasket zooming in seamlessly forever (one octave loops perfectly) (aliases: `triangle`, `triangles`) |
+| `mandelbrot` | Endless zoom into the Mandelbrot set |
+| `julia` | Morphing, zooming Julia set |
+| `burning-ship` | Endless zoom into the Burning Ship fractal |
+| `newton` | Newton's-method fractal with rotating roots |
+| `sierpinski` | Zooming Sierpinski triangle fractal |
 
 ### Geometry
 
-| Mode | What you'll see |
+| Mode | What you will see |
 | --- | --- |
-| `hypercube` | a tesseract (4D hypercube) rotating through planes that don't exist in 3D (alias: `tesseract`) |
-| `tunnel` | flying through a winding tunnel — the vanishing point drifts so the bore curves (alias: `wormhole`) |
+| `hypercube` | Rotating 4D tesseract wireframe |
+| `tunnel` | Flight through a winding tunnel |
 
 ### Playlists
 
-| Mode | What you'll see |
+| Mode | What you will see |
 | --- | --- |
-| `random` | shuffle through every animation, 10s each, reshuffled on each full pass |
-| `cycle` | walk every animation in order, 10s each |
+| `random` | Shuffle through every animation |
+| `cycle` | Step through every animation in order |
+
+`random` and `cycle` show each scene for 10 seconds by default. In interactive
+playlist runs, `--seconds` controls how long each scene stays active before
+advancing:
 
 ```bash
-./ascii_fields.py galaxy
-./ascii_fields.py orbitals
-./ascii_fields.py mandelbrot
-./ascii_fields.py drops
-./ascii_fields.py random        # shuffle through every mode, 10s each
-./ascii_fields.py cycle         # step through every mode in order
+./target/release/ascii-fields random --seconds 4
+./target/release/ascii-fields cycle --seconds 15
 ```
-
-`random` and `cycle` show each scene for a fixed 10s clip (a constant in
-`playlist.py`; `--seconds` still controls total runtime).
 
 ## Options
 
-```bash
-./ascii_fields.py galaxy --width 120 --height 36
-./ascii_fields.py waves --fps 18
-./ascii_fields.py flares --seconds 10        # stop after 10s (0 = forever)
-./ascii_fields.py black-hole --contrast 1.2
-./ascii_fields.py areas --scale 0.8
-./ascii_fields.py night-sky --brightness 1.3
-```
-
-`--period` controls the looping base modes (`wave-plane`, `flower-sphere`). The
-scene modes use elapsed time so they evolve without a visible loop reset.
-
-### Presets
-
-Each mode has presets; see `--list`.
+Common examples:
 
 ```bash
-./ascii_fields.py waves --preset calm
-./ascii_fields.py fire --preset blaze
-./ascii_fields.py galaxy --preset bright
+./target/release/ascii-fields galaxy --width 120 --height 36
+./target/release/ascii-fields waves --fps 18
+./target/release/ascii-fields flares --seconds 10
+./target/release/ascii-fields black-hole --contrast 1.2
+./target/release/ascii-fields areas --scale 0.8
+./target/release/ascii-fields night-sky --brightness 1.3
 ```
 
-### Colour themes
+CLI options:
 
-By default everything renders in grayscale. `--theme scene` colours each mode
-with that animation's hard-coded `default_theme`; or force a specific theme
-(needs a truecolour terminal):
+```text
+--list
+--width <WIDTH>
+--height <HEIGHT>
+--fps <FPS>
+--seconds <SECONDS>
+--scale <SCALE>
+--contrast <CONTRAST>
+--brightness <BRIGHTNESS>
+--speed <SPEED>
+--theme <THEME>
+--no-status
+--blocks
+--charset <CHARSET>
+--scroll
+--export-gif <PATH>
+--export-asciinema <PATH>
+```
+
+## Color Themes
+
+By default, everything renders in grayscale. Use `--theme scene` to let each
+mode choose its own color palette, or force a specific palette:
 
 ```bash
-./ascii_fields.py fire --theme scene       # orange flames
-./ascii_fields.py aurora --theme scene     # green curtains
-./ascii_fields.py galaxy --theme nebula
-./ascii_fields.py plasma --theme spectrum
-./ascii_fields.py mandelbrot --theme copper
+./target/release/ascii-fields fire --theme scene
+./target/release/ascii-fields aurora --theme scene
+./target/release/ascii-fields galaxy --theme nebula
+./target/release/ascii-fields plasma --theme spectrum
+./target/release/ascii-fields mandelbrot --theme copper
 ```
 
-Themes: `grayscale` (default), `scene`, `mono`, `fire`, `lava`, `ice`, `nebula`,
-`aurora`, `amber`, `copper`, `sunset`, `rose`, `plasma`, `ocean`, `spectrum`.
+Themes:
 
-### Wave-plane character modes
+```text
+grayscale, scene, mono, fire, lava, ice, nebula, aurora, amber,
+copper, sunset, rose, plasma, ocean, spectrum
+```
 
-`wave-plane` now renders with the long `clean` character ramp by default, so
-you see a rich gradient of glyphs. Switch ramps or fall back to the smooth
-coloured-block look:
+## Wave-Plane Character Modes
+
+`wave-plane` renders with the `clean` character ramp by default. Switch ramps
+or use the smooth block look:
 
 ```bash
-./ascii_fields.py wave-plane
-./ascii_fields.py wave-plane --charset dense
-./ascii_fields.py wave-plane --scroll
-./ascii_fields.py wave-plane --blocks       # the old smooth-block style
+./target/release/ascii-fields wave-plane
+./target/release/ascii-fields wave-plane --charset dense
+./target/release/ascii-fields wave-plane --scroll
+./target/release/ascii-fields wave-plane --blocks
 ```
 
-## Interactive controls
+## Interactive Controls
 
-A two-line HUD pinned to the bottom of the terminal shows the current scene,
-every live-editable parameter, and the script's CPU usage. Toggle it with `i`.
-**`n`/`p` walks every animation in single-mode runs too**, so you can start on
-one scene and step through the rest without restarting.
+The HUD is pinned to the bottom of the terminal and shows the current scene,
+live-editable parameters, and CPU usage. Toggle it with `i`, or start hidden:
+
+```bash
+./target/release/ascii-fields random --no-status
+```
 
 | Key | Action |
 | --- | --- |
-| `i` | show / hide the HUD |
-| `space` | pause / resume (rendering stops while paused — CPU drops to near zero) |
-| `n` / `p` / Tab | next / previous scene (works in every mode) |
-| `t` / `T` | cycle colour theme forward / backward |
-| `1` `2` | scale down / up |
-| `3` `4` | contrast down / up |
-| `5` `6` | brightness down / up |
-| `+` `-` | motion speed up / down |
-| `s` | save current per-mode settings to `ascii_fields.json` |
-| `q` / `Esc` | quit |
+| `i` | Show / hide the HUD |
+| `space` | Pause / resume |
+| `n` / `p` / Tab | Next / previous scene |
+| `t` / `T` | Cycle color theme forward / backward |
+| `1` `2` | Scale down / up |
+| `3` `4` | Contrast down / up |
+| `5` `6` | Brightness down / up |
+| `+` `-` | Motion speed up / down |
+| `s` | Save current per-mode settings to `ascii_fields.json` |
+| `q` / `Esc` | Quit |
 
-Edits to `scale`/`contrast`/`brightness`/`speed`/`theme` **stick to the scene
-you make them on**: switch with `n`/`p`, change the new scene's values, switch
-back, and your earlier edits on the first scene are still there.
-
-Start with the HUD hidden via `--no-status`.
+Edits to `scale`, `contrast`, `brightness`, `speed`, and `theme` stick to the
+scene you make them on. Switch with `n`/`p`, tune another scene, switch back,
+and the first scene keeps its values.
 
 ## Saving Settings
 
-Pressing `s` writes one stable JSON file alongside the running script. It is
-keyed by mode name, so every animation has one small settings dict:
+Pressing `s` writes one JSON file in the working directory:
 
 ```text
 ascii_fields.json
+```
+
+The file is keyed by mode name:
+
+```json
 {
   "dna": {
     "theme": "scene",
@@ -257,78 +273,79 @@ ascii_fields.json
     "contrast": 1.3,
     "brightness": 1.0,
     "speed": 1.0
-  },
-  "mach": {
-    "theme": "grayscale",
-    "scale": 1.0,
-    "contrast": 1.05,
-    "brightness": 1.0,
-    "speed": 1.0
   }
 }
 ```
 
-If `ascii_fields.json` is missing or unreadable, built-in defaults and presets
-are used. Explicit command-line options still override saved values.
+If `ascii_fields.json` is missing or unreadable, built-in defaults are used.
+Explicit command-line options still override saved values.
 
-## Recording & GIFs
+## Exporting
 
-Export an animated **GIF** directly (needs `pip install pillow`). `--seconds`
-sets the length, `--width`/`--height` the size:
-
-```bash
-./ascii_fields.py galaxy --gif galaxy.gif --seconds 8 --width 100 --height 30
-./ascii_fields.py fire --theme scene --gif fire.gif --seconds 6
-./ascii_fields.py doppler --theme scene --gif doppler.gif
-```
-
-Or record to an [asciinema](https://asciinema.org) v2 cast (no dependencies):
+Export mode renders a finite deterministic clip and exits. In export mode,
+`--seconds` controls the total exported duration. Use `--fps`, `--width`, and
+`--height` to control the capture. If `--seconds` is omitted, exports default
+to a 5-second clip.
 
 ```bash
-./ascii_fields.py galaxy --record galaxy.cast --seconds 12
-asciinema play galaxy.cast
+./target/release/ascii-fields plasma --width 100 --height 40 --seconds 5 --export-asciinema plasma.cast
+./target/release/ascii-fields plasma --width 100 --height 40 --seconds 5 --export-gif plasma.gif
+./target/release/ascii-fields random --width 120 --height 45 --fps 20 --seconds 12 --export-gif random.gif
 ```
 
-## Project layout
+Write both formats from one command:
+
+```bash
+./target/release/ascii-fields lava --seconds 5 --export-gif lava.gif --export-asciinema lava.cast
+```
+
+GIF export rasterizes ANSI-colored terminal frames using a built-in 8x8 bitmap
+font, so it does not need system fonts or external converters.
+
+Play asciinema casts with:
+
+```bash
+asciinema play plasma.cast
+```
+
+## Project Layout
 
 ```text
-ascii_fields.py                # convenience launcher (./ascii_fields.py)
-pyproject.toml                 # packaging; `ascii-fields` console script
-ascii_fields/
-  cli.py                       # argument parsing and mode selection
-  core.py                      # render options, math helpers, render_field()
-  runner.py                    # terminal loop: alt-screen, keys, recording
-  playlist.py                  # single / random / cycle scene providers
-  themes.py                    # truecolour gradient palettes
-  noise.py                     # value noise + fbm
-  registry.py / presets.py     # mode registry, aliases, presets
-  gifexport.py                 # ANSI frames -> animated GIF (Pillow)
-  animations/                  # one module per scene (53 of them)
-tests/
-  test_smoke.py
+Cargo.toml
+Cargo.lock
+src/
+  main.rs              entrypoint
+  cli.rs               clap CLI
+  options.rs           RenderOptions
+  animation.rs         Animation trait and FrameContext
+  core.rs              math helpers and field renderers
+  export.rs            GIF and asciinema export
+  noise.rs             value noise, fbm, star noise
+  themes.rs            gradient palettes
+  runner.rs            terminal loop, keys, HUD
+  playlist.rs          single / random / cycle scene providers
+  settings.rs          ascii_fields.json load/save
+  registry.rs          mode-name -> animation factory
+  animations/
+    fractal_base.rs    shared escape-time helpers
+    *.rs               one module per animation
 ```
 
 Each animation builds a grid of brightness levels in `[0, 1]` and hands it to
-`render_field()` (or `render_glyph_field` / `render_block_field`), which does
-the character mapping, palette lookup and run-length ANSI batching once, in one
-place.
+`render_field()`, `render_glyph_field()`, or `render_block_field()`. The shared
+renderer handles character mapping, palette lookup, and ANSI batching.
 
 ## Development
 
 ```bash
-python3 -m compileall -q ascii_fields ascii_fields.py   # syntax check
-python3 -m unittest discover -s tests                   # tests
-./ascii_fields.py galaxy --width 60 --height 20 --seconds 1   # quick visual
+cargo check
+cargo test
+cargo build --release
+./target/release/ascii-fields galaxy --width 60 --height 20 --seconds 1
 ```
 
-## Capture ideas
-
-Use the built-in `--gif` to make artifacts for `docs/` directly:
+Quick export smoke test:
 
 ```bash
-./ascii_fields.py cycle --gif docs/gifs/tour.gif --seconds 30
-./ascii_fields.py orbitals --gif docs/gifs/orbitals.gif
-./ascii_fields.py gwaves --gif docs/gifs/gwaves.gif
+./target/release/ascii-fields plasma --width 32 --height 12 --fps 2 --seconds 1 --export-gif /tmp/ascii-fields.gif --export-asciinema /tmp/ascii-fields.cast
 ```
-
-`--record` (asciinema) is the other route if you prefer casts.
