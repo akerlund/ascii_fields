@@ -55,12 +55,41 @@ const SPECTRUM: Stops = &[
   (0.55, (0, 200, 120)), (0.70, (220, 220, 0)), (0.85, (240, 110, 20)),
   (1.0, (250, 60, 60)),
 ];
+const INFRARED: Stops = &[
+  (0.0, (0, 0, 0)), (0.25, (25, 0, 45)), (0.48, (115, 0, 80)),
+  (0.68, (220, 25, 65)), (0.86, (255, 125, 55)), (1.0, (255, 240, 180)),
+];
+const TOXIC: Stops = &[
+  (0.0, (0, 0, 0)), (0.24, (10, 30, 20)), (0.45, (25, 95, 35)),
+  (0.66, (90, 190, 45)), (0.84, (190, 245, 70)), (1.0, (245, 255, 190)),
+];
+const BATHYMETRY: Stops = &[
+  (0.0, (0, 0, 8)), (0.25, (0, 18, 55)), (0.48, (0, 70, 105)),
+  (0.68, (0, 145, 145)), (0.86, (85, 220, 205)), (1.0, (230, 255, 245)),
+];
+const GEOLOGIC: Stops = &[
+  (0.0, (0, 0, 0)), (0.26, (30, 24, 20)), (0.46, (85, 70, 42)),
+  (0.65, (145, 115, 58)), (0.82, (205, 175, 92)), (1.0, (245, 235, 185)),
+];
+const STELLAR: Stops = &[
+  (0.0, (0, 0, 8)), (0.22, (18, 12, 55)), (0.42, (55, 40, 140)),
+  (0.62, (120, 75, 220)), (0.80, (230, 135, 90)), (1.0, (255, 250, 210)),
+];
+const DUSK: Stops = &[
+  (0.0, (8, 4, 18)), (0.25, (45, 24, 50)), (0.47, (105, 58, 65)),
+  (0.67, (175, 105, 70)), (0.84, (230, 170, 100)), (1.0, (255, 235, 180)),
+];
+const XRAY: Stops = &[
+  (0.0, (0, 0, 0)), (0.30, (8, 18, 28)), (0.52, (28, 70, 95)),
+  (0.72, (95, 165, 185)), (0.88, (180, 230, 230)), (1.0, (245, 255, 255)),
+];
 
 /// `t` key in the HUD cycles through this order.
 pub const THEME_CYCLE: &[&str] = &[
   "grayscale", "scene",
   "mono", "fire", "lava", "ice", "nebula", "aurora", "amber",
   "copper", "sunset", "rose", "plasma", "ocean", "spectrum",
+  "infrared", "toxic", "bathymetry", "geologic", "stellar", "dusk", "xray",
 ];
 
 fn stops_for(name: &str) -> Stops {
@@ -69,6 +98,8 @@ fn stops_for(name: &str) -> Stops {
     "nebula" => NEBULA, "aurora" => AURORA, "amber" => AMBER,
     "copper" => COPPER, "sunset" => SUNSET, "rose" => ROSE,
     "plasma" => PLASMA, "ocean" => OCEAN, "spectrum" => SPECTRUM,
+    "infrared" => INFRARED, "toxic" => TOXIC, "bathymetry" => BATHYMETRY,
+    "geologic" => GEOLOGIC, "stellar" => STELLAR, "dusk" => DUSK, "xray" => XRAY,
     _ => MONO,
   }
 }

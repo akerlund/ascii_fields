@@ -56,8 +56,6 @@ pub static MODES: &[ModeInfo] = &[
   ModeInfo { name: "circuit",        description: "Circuit board traces with data pulses",                  factory: || Box::new(circuit::Circuit) },
   ModeInfo { name: "network",        description: "Network topology with moving packets",                   factory: || Box::new(network::Network) },
   ModeInfo { name: "cpu",            description: "CPU pipeline, registers, ALU, cache and data pulses",    factory: || Box::new(cpu::Cpu) },
-  ModeInfo { name: "oscilloscope",   description: "Phosphor oscilloscope traces and graticule",             factory: || Box::new(extended::Oscilloscope) },
-  ModeInfo { name: "radar",          description: "Sweeping radar display with fading contacts",            factory: || Box::new(extended::Radar) },
   ModeInfo { name: "mach",           description: "Sonic boom / Mach cone from a moving source",            factory: || Box::new(mach::Mach) },
   ModeInfo { name: "schlieren",      description: "Heat-haze and shockwave density gradients",              factory: || Box::new(extended::Schlieren) },
   ModeInfo { name: "seismograph",    description: "Earthquake wavefronts through layered ground",           factory: || Box::new(extended::Seismograph) },

@@ -5,7 +5,7 @@ Procedural ASCII animations for the terminal, now as a native Rust binary.
 `ascii-fields` renders animated scenes with ANSI escape codes: surf, solar
 flares, galaxies and black holes, quantum clouds, fractals, Game of Life,
 physics demos, DNA, molecules, reaction-diffusion, Chladni plates, curl-noise
-flow, DLA frost, the Lorenz attractor, drum eigenmodes, and more. There are 73
+flow, DLA frost, the Lorenz attractor, drum eigenmodes, and more. There are 71
 modes in all.
 
 ## Requirements
@@ -109,8 +109,6 @@ List everything:
 | `circuit` | Circuit board traces with data pulses |
 | `network` | Network topology with moving packets |
 | `cpu` | CPU pipeline, registers, ALU, cache and data pulses |
-| `oscilloscope` | Phosphor oscilloscope traces and graticule |
-| `radar` | Sweeping radar display with fading contacts |
 | `mach` | Sonic boom / Mach cone from a moving source |
 | `magnetic` | Bar-magnet dipole field lines |
 | `ferrofluid` | Magnetic fluid spikes around moving field sources |
@@ -234,7 +232,8 @@ Themes:
 
 ```text
 grayscale, scene, mono, fire, lava, ice, nebula, aurora, amber,
-copper, sunset, rose, plasma, ocean, spectrum
+copper, sunset, rose, plasma, ocean, spectrum, infrared, toxic,
+bathymetry, geologic, stellar, dusk, xray
 ```
 
 ## Wave-Plane Character Modes

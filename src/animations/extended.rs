@@ -42,17 +42,7 @@ fn put(grid: &mut [f64], glyphs: &mut [char], w: usize, h: usize, col: i64, row:
   }
 }
 
-fn line(grid: &mut [f64], glyphs: &mut [char], w: usize, h: usize, a: (f64, f64), b: (f64, f64), level: f64, ch: char) {
-  let dx = b.0 - a.0;
-  let dy = b.1 - a.1;
-  let steps = dx.abs().max(dy.abs()).ceil().max(1.0) as i64;
-  for i in 0..=steps {
-    let f = i as f64 / steps as f64;
-    put(grid, glyphs, w, h, (a.0 + dx * f).round() as i64, (a.1 + dy * f).round() as i64, level, ch);
-  }
-}
-
-const CONVECTION_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "fire" };
+const CONVECTION_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "infrared" };
 pub struct Convection;
 impl Animation for Convection {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
@@ -79,7 +69,7 @@ impl Animation for Convection {
   }
 }
 
-const SCHLIEREN_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "ice" };
+const SCHLIEREN_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "xray" };
 pub struct Schlieren;
 impl Animation for Schlieren {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
@@ -155,7 +145,7 @@ impl Animation for Ferrofluid {
   }
 }
 
-const SEISMO_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "amber" };
+const SEISMO_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "geologic" };
 pub struct Seismograph;
 impl Animation for Seismograph {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
@@ -189,7 +179,7 @@ impl Animation for Seismograph {
   }
 }
 
-const QUASI_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "spectrum" };
+const QUASI_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "toxic" };
 pub struct Quasicrystal;
 impl Animation for Quasicrystal {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
@@ -215,7 +205,7 @@ impl Animation for Quasicrystal {
   }
 }
 
-const MOIRE_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "mono" };
+const MOIRE_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "xray" };
 pub struct Moire;
 impl Animation for Moire {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
@@ -277,7 +267,7 @@ impl Animation for NBody {
   }
 }
 
-const PULSAR_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "ice" };
+const PULSAR_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "stellar" };
 pub struct Pulsar;
 impl Animation for Pulsar {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
@@ -306,7 +296,7 @@ impl Animation for Pulsar {
   }
 }
 
-const SUPERNOVA_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "fire" };
+const SUPERNOVA_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "stellar" };
 pub struct Supernova;
 impl Animation for Supernova {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
@@ -360,7 +350,7 @@ impl Animation for SolarWind {
   }
 }
 
-const RECONNECT_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "plasma" };
+const RECONNECT_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "toxic" };
 pub struct Reconnection;
 impl Animation for Reconnection {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
@@ -384,7 +374,7 @@ impl Animation for Reconnection {
   }
 }
 
-const CAUSTICS_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "ocean" };
+const CAUSTICS_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "bathymetry" };
 pub struct Caustics;
 impl Animation for Caustics {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
@@ -407,7 +397,7 @@ impl Animation for Caustics {
   }
 }
 
-const DUNES_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "amber" };
+const DUNES_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "dusk" };
 pub struct Dunes;
 impl Animation for Dunes {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
@@ -430,7 +420,7 @@ impl Animation for Dunes {
   }
 }
 
-const TOPO_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "ice" };
+const TOPO_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "geologic" };
 pub struct Topography;
 impl Animation for Topography {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
@@ -452,77 +442,7 @@ impl Animation for Topography {
   }
 }
 
-const SCOPE_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "aurora" };
-pub struct Oscilloscope;
-impl Animation for Oscilloscope {
-  fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    let (w, h, dw, dh) = dims(ctx);
-    let t = ctx.elapsed;
-    let mut grid = vec![0.0; w * h];
-    let mut glyphs = vec![' '; w * h];
-    for row in (0..h).step_by(4.max(h / 8)) {
-      for col in 0..w {
-        put(&mut grid, &mut glyphs, w, h, col as i64, row as i64, 0.16, '.');
-      }
-    }
-    for col in (0..w).step_by(8.max(w / 12)) {
-      for row in 0..h {
-        put(&mut grid, &mut glyphs, w, h, col as i64, row as i64, 0.12, '.');
-      }
-    }
-    let mid = dh * 0.48;
-    let amp = dh * 0.28 * ctx.options.scale.min(2.0);
-    let mut prev: Option<(f64, f64)> = None;
-    for col in 0..w {
-      let u = col as f64 / dw;
-      let y = mid + amp * ((u * TAU * 3.0 + t * 2.1).sin() * 0.65 + (u * TAU * 7.0 - t * 1.2).sin() * 0.25);
-      if let Some(p) = prev {
-        line(&mut grid, &mut glyphs, w, h, p, (col as f64, y), 0.92, '*');
-      }
-      prev = Some((col as f64, y));
-    }
-    render_glyph_field(ctx, &grid, &glyphs, &SCOPE_STYLE, out);
-  }
-}
-
-const RADAR_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "aurora" };
-pub struct Radar;
-impl Animation for Radar {
-  fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    let (w, h, dw, dh) = dims(ctx);
-    let ax = aspect(ctx);
-    let sweep = ctx.elapsed * 1.4;
-    let contacts = [(0.30, 0.32), (0.74, 0.42), (0.58, 0.76), (0.42, 0.62)];
-    let mut grid = vec![0.0; w * h];
-    for row in 0..h {
-      let v = row as f64 / dh;
-      let base = row * w;
-      for col in 0..w {
-        let u = col as f64 / dw;
-        let dx = (u - 0.5) * ax;
-        let dy = v - 0.5;
-        let r = (dx * dx + dy * dy).sqrt();
-        let a = dy.atan2(dx);
-        let rings = pulse((r * 8.0).fract() - 0.5, 0.002) * 0.22;
-        let da = (a - sweep + PI).rem_euclid(TAU) - PI;
-        let sweep_line = pulse(da, 0.006) * (1.0 - r * 1.4).max(0.0);
-        let mut blip = 0.0;
-        for &(cx, cy) in &contacts {
-          let bx = (u - cx) * ax;
-          let by = v - cy;
-          let br = (bx * bx + by * by).sqrt();
-          let ba = by.atan2(bx);
-          let lit = 0.25 + 0.75 * pulse((ba - sweep + PI).rem_euclid(TAU) - PI, 0.080);
-          blip += pulse(br, 0.0007) * lit;
-        }
-        grid[base + col] = clamp((rings + sweep_line + blip) * ctx.options.contrast);
-      }
-    }
-    render_field(ctx, &grid, LINE_TH, &RADAR_STYLE, out);
-  }
-}
-
-const PENROSE_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "rose" };
+const PENROSE_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "toxic" };
 pub struct Penrose;
 impl Animation for Penrose {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
@@ -549,7 +469,7 @@ impl Animation for Penrose {
   }
 }
 
-const VORONOI_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "copper" };
+const VORONOI_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "geologic" };
 pub struct Voronoi;
 impl Animation for Voronoi {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
@@ -584,7 +504,7 @@ impl Animation for Voronoi {
   }
 }
 
-const REACTION_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "plasma" };
+const REACTION_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "toxic" };
 pub struct ReactionRings;
 impl Animation for ReactionRings {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
