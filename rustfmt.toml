@@ -1,0 +1,48 @@
+# ascii-fields formatting style.
+#
+# Run with:        cargo fmt
+# For extras:      cargo +nightly fmt   (enables the commented-out nightly opts below)
+#
+# About vertical alignment of `let x = ...` blocks:
+# Rust has no widely-supported formatter that vertically aligns assignment
+# operators across multiple let-bindings (rustfmt actively normalises that
+# away). For the few blocks where you want hand-aligned columns, add
+# `#[rustfmt::skip]` on the binding and rustfmt will leave it alone:
+#
+#     #[rustfmt::skip]
+#     let (cw, ch, ax, t) = (
+#         width  as f64 * 0.5,
+#         height as f64 * 0.5,
+#         width  as f64 / (height as f64 * 2.0),
+#         ctx.elapsed * 0.55,
+#     );
+#
+# It's the only reliable way to get clang-format-style aligned columns in
+# Rust without them being clobbered on the next `cargo fmt`.
+
+edition          = "2021"
+max_width        = 110
+tab_spaces       = 2
+reorder_imports  = true
+reorder_modules  = true
+newline_style    = "Unix"
+use_small_heuristics = "Max"
+
+# Note on `fn_single_line`: despite being stable-in-practice since rustfmt 1.0,
+# upstream still flags it as nightly-only in its config schema, so stable
+# rustfmt errors on it. `use_small_heuristics = "Max"` covers the same intent
+# (short fn bodies stay one-line when they fit max_width), so we leave it out.
+
+# -- Nightly-only options ----------------------------------------------------
+# Uncomment AFTER switching to `cargo +nightly fmt`. They give nicer import
+# grouping and (most importantly for our use case) align struct field types
+# when 8+ contiguous fields could be aligned. Stable rustfmt refuses to run
+# if any of these are present, so they stay commented by default.
+#
+# unstable_features         = true
+# imports_granularity       = "Module"
+# group_imports             = "StdExternalCrate"
+# struct_field_align_threshold = 8
+# enum_discrim_align_threshold = 8
+# struct_lit_single_line    = true
+# error_on_unformatted      = false
