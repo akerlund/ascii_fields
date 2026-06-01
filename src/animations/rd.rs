@@ -15,15 +15,24 @@ const STEPS_PER_FRAME: i32 = 6;
 pub struct Rd {
   w: usize, h: usize,
   u: Vec<f64>, v: Vec<f64>,
+  // Scratch buffers reused every step instead of allocating fresh ones.
+  // Each Vec is w*h * 8 bytes; without these we'd allocate ~128 KB per step,
+  // ~768 KB of garbage per frame at 6 steps/frame.
+  u_buf: Vec<f64>, v_buf: Vec<f64>,
   last: f64,
 }
-impl Default for Rd { fn default() -> Self { Self { w: 0, h: 0, u: Vec::new(), v: Vec::new(), last: 0.0 } } }
+impl Default for Rd {
+  fn default() -> Self {
+    Self { w: 0, h: 0, u: Vec::new(), v: Vec::new(), u_buf: Vec::new(), v_buf: Vec::new(), last: 0.0 }
+  }
+}
 
 impl Rd {
   fn seed(&mut self, w: usize, h: usize) {
     self.w = w; self.h = h;
     let n = w * h;
     self.u = vec![1.0; n]; self.v = vec![0.0; n];
+    self.u_buf = vec![0.0; n]; self.v_buf = vec![0.0; n];
     for &(cx_f, cy_f) in &[(0.5_f64, 0.5_f64), (0.33, 0.5), (0.66, 0.5)] {
       let cx = (cx_f * w as f64) as i64;
       let cy = (cy_f * h as f64) as i64;
@@ -47,23 +56,25 @@ impl Rd {
   }
   fn step(&mut self) {
     let w = self.w; let h = self.h;
-    let nu = self.u.clone();
-    let nv = self.v.clone();
-    let (mut new_u, mut new_v) = (nu.clone(), nv.clone());
+    // Read from u/v, write into u_buf/v_buf, then swap. Zero allocations.
     for y in 0..h {
       let ym = (y + h - 1) % h; let yp = (y + 1) % h;
       let base = y * w; let bm = ym * w; let bp = yp * w;
       for x in 0..w {
         let xm = (x + w - 1) % w; let xp = (x + 1) % w;
-        let u = nu[base + x]; let v = nv[base + x];
-        let lap_u = nu[base + xm] + nu[base + xp] + nu[bm + x] + nu[bp + x] - 4.0 * u;
-        let lap_v = nv[base + xm] + nv[base + xp] + nv[bm + x] + nv[bp + x] - 4.0 * v;
+        let u = self.u[base + x];
+        let v = self.v[base + x];
+        let lap_u = self.u[base + xm] + self.u[base + xp]
+                  + self.u[bm + x] + self.u[bp + x] - 4.0 * u;
+        let lap_v = self.v[base + xm] + self.v[base + xp]
+                  + self.v[bm + x] + self.v[bp + x] - 4.0 * v;
         let uvv = u * v * v;
-        new_u[base + x] = u + DU * lap_u - uvv + F * (1.0 - u);
-        new_v[base + x] = v + DV * lap_v + uvv - (F + K) * v;
+        self.u_buf[base + x] = u + DU * lap_u - uvv + F * (1.0 - u);
+        self.v_buf[base + x] = v + DV * lap_v + uvv - (F + K) * v;
       }
     }
-    self.u = new_u; self.v = new_v;
+    std::mem::swap(&mut self.u, &mut self.u_buf);
+    std::mem::swap(&mut self.v, &mut self.v_buf);
   }
 }
 

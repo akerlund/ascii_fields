@@ -1,3 +1,5 @@
+use rayon::prelude::*;
+
 use crate::animation::{Animation, FrameContext};
 use crate::core::{clamp, render_field, FieldStyle};
 use crate::noise::fbm;
@@ -19,20 +21,23 @@ impl Animation for Clouds {
     let mut grid = vec![0.0_f64; w * h];
     let dw = (w.saturating_sub(1)).max(1) as f64;
     let dh = (h.saturating_sub(1)).max(1) as f64;
-    for row in 0..h {
+    grid.par_chunks_mut(w).enumerate().for_each(|(row, row_slice)| {
       let v = row as f64 / dh;
       let glow = 0.12 + 0.18 * v;
-      let base = row * w;
+      let vfreq = v * freq;
+      let vfreq14 = v * freq * 1.4;
+      let vfreq_drift = vfreq - drift * 0.6;
       for col in 0..w {
         let u = col as f64 / dw;
-        let wx = fbm(u * freq + drift, v * freq, 3);
-        let wy = fbm(u * freq + 5.2, v * freq - drift * 0.6, 3);
-        let n = fbm(u * freq + drift + wx * 1.5, v * freq * 1.4 + wy * 1.5, 5);
+        let ufreq = u * freq;
+        let wx = fbm(ufreq + drift, vfreq, 3);
+        let wy = fbm(ufreq + 5.2, vfreq_drift, 3);
+        let n = fbm(ufreq + drift + wx * 1.5, vfreq14 + wy * 1.5, 5);
         let cloud = ((n - 0.42) / 0.58).max(0.0);
         let level = glow + cloud * 0.95;
-        grid[base + col] = clamp(level * contrast);
+        row_slice[col] = clamp(level * contrast);
       }
-    }
+    });
     render_field(ctx, &grid, TH, &STYLE, out);
   }
 }

@@ -1,4 +1,6 @@
 use std::f64::consts::PI;
+use rayon::prelude::*;
+
 use crate::animation::{Animation, FrameContext};
 use crate::core::{clamp, render_field, FieldStyle};
 use crate::noise::fbm;
@@ -24,24 +26,24 @@ impl Animation for Aurora {
     let mut grid = vec![0.0_f64; w * h];
     let dw = (w.saturating_sub(1)).max(1) as f64;
     let dh = (h.saturating_sub(1)).max(1) as f64;
-    for row in 0..h {
+    let t = ctx.elapsed;
+    grid.par_chunks_mut(w).enumerate().for_each(|(row, row_slice)| {
       let v = row as f64 / dh;
-      let base = row * w;
       for col in 0..w {
         let u = col as f64 / dw;
         let mut value = 0.04;
         for &(centre, thick, freq, speed, weight) in CURTAINS {
           let cy = centre
-            + 0.10 * (freq * u * PI + ctx.elapsed * speed).sin()
-            + 0.05 * fbm(u * 3.0 + ctx.elapsed * 0.1, centre * 4.0, 3);
+            + 0.10 * (freq * u * PI + t * speed).sin()
+            + 0.05 * fbm(u * 3.0 + t * 0.1, centre * 4.0, 3);
           let band = (-((v - cy).powi(2)) / (thick * thick)).exp();
-          let rays = 0.55 + 0.45 * (u * 60.0 + 8.0 * fbm(u * 6.0, ctx.elapsed * 0.3, 4)).sin();
+          let rays = 0.55 + 0.45 * (u * 60.0 + 8.0 * fbm(u * 6.0, t * 0.3, 4)).sin();
           let fade = (1.0 - v * 0.4).clamp(0.0, 1.0);
           value += weight * band * rays * fade;
         }
-        grid[base + col] = clamp(value * contrast);
+        row_slice[col] = clamp(value * contrast);
       }
-    }
+    });
     render_field(ctx, &grid, TH, &STYLE, out);
   }
 }

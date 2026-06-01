@@ -1,3 +1,5 @@
+use rayon::prelude::*;
+
 use crate::animation::{Animation, FrameContext};
 use crate::core::{clamp, render_field, FieldStyle};
 use crate::noise::fbm;
@@ -24,13 +26,15 @@ impl Animation for Storm {
     let mut grid = vec![0.0_f64; w * h];
     let dw = (w.saturating_sub(1)).max(1) as f64;
     let dh = (h.saturating_sub(1)).max(1) as f64;
-    for row in 0..h {
+    let t = ctx.elapsed;
+    grid.par_chunks_mut(w).enumerate().for_each(|(row, row_slice)| {
       let y = (row as f64 / dh - 0.5) * 2.0;
-      let band_base = 0.10 + 0.13 * (y * 18.0 + ctx.elapsed * 0.25).sin()
-        + 0.07 * (y * 43.0 - ctx.elapsed * 0.15).sin();
-      let shear = 0.12 * (y * 9.0 + ctx.elapsed * 0.2).sin();
+      let band_base = 0.10 + 0.13 * (y * 18.0 + t * 0.25).sin()
+        + 0.07 * (y * 43.0 - t * 0.15).sin();
+      let shear = 0.12 * (y * 9.0 + t * 0.2).sin();
       let dy = (y - cy) / 0.25;
-      let base = row * w;
+      let abs_dy = dy.abs();
+      let streamer_y = (-((abs_dy - 0.75).powi(2)) / 0.10).exp();
       for col in 0..w {
         let x = (col as f64 / dw - 0.5) * 2.0 * ax;
         let wind = fbm(x * 1.8 + band_drift, y * 5.0 + shear, 3);
@@ -43,14 +47,13 @@ impl Animation for Storm {
         let eye = (-(r * r) / 0.12).exp();
         let swirl = 0.5 + 0.5 * (theta * 4.0 - spin + r * 8.5).sin();
         let turbulent = fbm(dx * 2.2 + cos_spin * 0.4, dy * 2.2 + sin_spin * 0.4, 3);
-        let streamer = (-((dy.abs() - 0.75).powi(2)) / 0.10).exp();
         value += oval * (0.25 + 0.30 * swirl + 0.20 * turbulent);
         value += wall * (0.42 + 0.22 * swirl);
         value -= eye * 0.55;
-        value += streamer * (1.0 - dx.abs() * 0.9).max(0.0) * 0.18;
-        grid[base + col] = clamp(value * contrast);
+        value += streamer_y * (1.0 - dx.abs() * 0.9).max(0.0) * 0.18;
+        row_slice[col] = clamp(value * contrast);
       }
-    }
+    });
     render_field(ctx, &grid, TH, &STYLE, out);
   }
 }

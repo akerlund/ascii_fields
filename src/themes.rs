@@ -1,5 +1,8 @@
-//! Truecolor gradient palettes. `palette(name)` returns a 256-entry lookup
-//! mapping `level in [0, 1]` to `(r, g, b)`.
+//! Truecolor gradient palettes.
+//!
+//! `palette_table(name)` returns a `&'static [(u8, u8, u8)]` of 256 entries.
+//! Each table is built lazily into its own `OnceLock`, so the hot path is a
+//! simple array index -- no mutex, no hash lookup, no `String` allocation.
 
 use std::sync::OnceLock;
 
@@ -92,19 +95,7 @@ pub const THEME_CYCLE: &[&str] = &[
   "infrared", "toxic", "bathymetry", "geologic", "stellar", "dusk", "xray",
 ];
 
-fn stops_for(name: &str) -> Stops {
-  match name {
-    "mono" => MONO, "fire" => FIRE, "lava" => LAVA, "ice" => ICE,
-    "nebula" => NEBULA, "aurora" => AURORA, "amber" => AMBER,
-    "copper" => COPPER, "sunset" => SUNSET, "rose" => ROSE,
-    "plasma" => PLASMA, "ocean" => OCEAN, "spectrum" => SPECTRUM,
-    "infrared" => INFRARED, "toxic" => TOXIC, "bathymetry" => BATHYMETRY,
-    "geologic" => GEOLOGIC, "stellar" => STELLAR, "dusk" => DUSK, "xray" => XRAY,
-    _ => MONO,
-  }
-}
-
-const STEPS: usize = 256;
+pub const STEPS: usize = 256;
 
 fn build(stops: Stops) -> Vec<(u8, u8, u8)> {
   let mut table = Vec::with_capacity(STEPS);
@@ -129,19 +120,37 @@ fn build(stops: Stops) -> Vec<(u8, u8, u8)> {
   table
 }
 
-static CACHE: OnceLock<std::sync::Mutex<std::collections::HashMap<String, Vec<(u8, u8, u8)>>>> =
-  OnceLock::new();
-
-pub fn palette_sample(name: &str, level: f64) -> (u8, u8, u8) {
-  let cache = CACHE.get_or_init(|| std::sync::Mutex::new(Default::default()));
-  let mut guard = cache.lock().unwrap();
-  let table = guard.entry(name.to_string()).or_insert_with(|| build(stops_for(name)));
-  let last = STEPS - 1;
-  let mut idx = (level * last as f64 + 0.5) as isize;
-  if idx < 0 {
-    idx = 0;
-  } else if idx as usize > last {
-    idx = last as isize;
-  }
-  table[idx as usize]
+// One OnceLock per theme. Each holds a Vec<(u8,u8,u8)> of length STEPS.
+// First access for a given theme runs `build` once; thereafter `palette_table`
+// is a match + an `as_slice()` -- no locking, no allocation.
+macro_rules! palette_slot {
+  ($name:ident) => { { static T: OnceLock<Vec<(u8, u8, u8)>> = OnceLock::new(); &T } };
 }
+
+pub fn palette_table(name: &str) -> &'static [(u8, u8, u8)] {
+  let (slot, stops): (&'static OnceLock<Vec<(u8, u8, u8)>>, Stops) = match name {
+    "mono"       => (palette_slot!(mono),       MONO),
+    "fire"       => (palette_slot!(fire),       FIRE),
+    "lava"       => (palette_slot!(lava),       LAVA),
+    "ice"        => (palette_slot!(ice),        ICE),
+    "nebula"     => (palette_slot!(nebula),     NEBULA),
+    "aurora"     => (palette_slot!(aurora),     AURORA),
+    "amber"      => (palette_slot!(amber),      AMBER),
+    "copper"     => (palette_slot!(copper),     COPPER),
+    "sunset"     => (palette_slot!(sunset),     SUNSET),
+    "rose"       => (palette_slot!(rose),       ROSE),
+    "plasma"     => (palette_slot!(plasma),     PLASMA),
+    "ocean"      => (palette_slot!(ocean),      OCEAN),
+    "spectrum"   => (palette_slot!(spectrum),   SPECTRUM),
+    "infrared"   => (palette_slot!(infrared),   INFRARED),
+    "toxic"      => (palette_slot!(toxic),      TOXIC),
+    "bathymetry" => (palette_slot!(bathymetry), BATHYMETRY),
+    "geologic"   => (palette_slot!(geologic),   GEOLOGIC),
+    "stellar"    => (palette_slot!(stellar),    STELLAR),
+    "dusk"       => (palette_slot!(dusk),       DUSK),
+    "xray"       => (palette_slot!(xray),       XRAY),
+    _            => (palette_slot!(mono),       MONO),
+  };
+  slot.get_or_init(|| build(stops)).as_slice()
+}
+

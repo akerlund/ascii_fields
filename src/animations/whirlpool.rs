@@ -1,3 +1,5 @@
+use rayon::prelude::*;
+
 use crate::animation::{Animation, FrameContext};
 use crate::core::{clamp, render_field, FieldStyle};
 use crate::noise::fbm;
@@ -19,11 +21,12 @@ impl Animation for Whirlpool {
     let windings = 5.0 * ctx.options.scale.max(0.5);
     let contrast = ctx.options.contrast;
     let radius = (w.min(h * 2) as f64 * 0.5).max(1.0);
-    for row in 0..h {
-      let py = ((row as f64 - (h as f64 - 1.0) * 0.5) * 2.0) / radius;
-      let base = row * w;
+    let cx_mid = (w as f64 - 1.0) * 0.5;
+    let cy_mid = (h as f64 - 1.0) * 0.5;
+    grid.par_chunks_mut(w).enumerate().for_each(|(row, row_slice)| {
+      let py = ((row as f64 - cy_mid) * 2.0) / radius;
       for col in 0..w {
-        let px = (col as f64 - (w as f64 - 1.0) * 0.5) / radius;
+        let px = (col as f64 - cx_mid) / radius;
         let r = (px * px + py * py).sqrt() + 1e-4;
         let theta = py.atan2(px);
         let swirl = theta + windings * (r + 0.05).ln() + t * (0.6 + 1.4 / (1.0 + 8.0 * r));
@@ -34,9 +37,9 @@ impl Animation for Whirlpool {
         let rim = (-((r - 0.16).powi(2)) / 0.01).exp() * 0.6;
         let edge = (1.0 - (r - 1.0) * 2.5).max(0.0).min(1.0);
         let level = (surface * throat + rim) * edge;
-        grid[base + col] = clamp(level * 1.5 * contrast);
+        row_slice[col] = clamp(level * 1.5 * contrast);
       }
-    }
+    });
     render_field(ctx, &grid, TH, &STYLE, out);
   }
 }

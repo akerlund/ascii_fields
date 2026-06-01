@@ -1,3 +1,5 @@
+use rayon::prelude::*;
+
 use crate::animation::{Animation, FrameContext};
 use crate::core::{clamp, render_field, FieldStyle};
 use crate::noise::fbm;
@@ -22,10 +24,9 @@ impl Animation for Tunnel {
     let mut grid = vec![0.0_f64; w * h];
     let dw = (w.saturating_sub(1)).max(1) as f64;
     let dh = (h.saturating_sub(1)).max(1) as f64;
-    for row in 0..h {
+    grid.par_chunks_mut(w).enumerate().for_each(|(row, row_slice)| {
       let v = row as f64 / dh;
       let dy = v - cy;
-      let base = row * w;
       for col in 0..w {
         let u = col as f64 / dw;
         let dx = (u - cx) * ax;
@@ -37,9 +38,9 @@ impl Animation for Tunnel {
         let grime = fbm(angle * 2.0, depth * 0.4, 3);
         let wall = 0.35 * ring + 0.35 * stripe + 0.30 * grime;
         let lighting = (r * 2.2).clamp(0.0, 1.0);
-        grid[base + col] = clamp(wall * lighting * 1.4 * contrast);
+        row_slice[col] = clamp(wall * lighting * 1.4 * contrast);
       }
-    }
+    });
     render_field(ctx, &grid, TH, &STYLE, out);
   }
 }
