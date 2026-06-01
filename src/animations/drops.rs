@@ -1,17 +1,21 @@
-use rand::{Rng, SeedableRng};
-use rand_pcg::Pcg32;
 use crate::animation::{Animation, FrameContext};
 use crate::core::{clamp, render_field, FieldStyle};
+use rand::{Rng, SeedableRng};
+use rand_pcg::Pcg32;
 
 const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "ocean" };
-const TH: &[(f64, char)] = &[
-  (0.30, '.'), (0.40, ':'), (0.47, '-'), (0.53, '='), (0.60, '+'),
-  (0.70, '*'), (0.82, '#'), (1.01, '%'),
-];
+const TH: &[(f64, char)] =
+  &[(0.30, '.'), (0.40, ':'), (0.47, '-'), (0.53, '='), (0.60, '+'), (0.70, '*'), (0.82, '#'), (1.01, '%')];
 const WAVE_SPEED: f64 = 0.55;
 const SPAWN_DT: f64 = 0.55;
 
-#[derive(Clone, Copy)] struct Drop { x: f64, y: f64, t0: f64, strength: f64 }
+#[derive(Clone, Copy)]
+struct Drop {
+  x: f64,
+  y: f64,
+  t0: f64,
+  strength: f64,
+}
 
 pub struct Drops {
   drops: Vec<Drop>,
@@ -27,7 +31,10 @@ impl Default for Drops {
 
 impl Animation for Drops {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    if ctx.elapsed < self.last_elapsed { self.drops.clear(); self.next_spawn = 0.0; }
+    if ctx.elapsed < self.last_elapsed {
+      self.drops.clear();
+      self.next_spawn = 0.0;
+    }
     self.last_elapsed = ctx.elapsed;
     let ax = ctx.width as f64 / (ctx.height as f64 * 2.0).max(1.0);
     while ctx.elapsed >= self.next_spawn {
@@ -40,7 +47,9 @@ impl Animation for Drops {
       self.next_spawn += SPAWN_DT * self.rng.gen_range(0.6..1.5);
     }
     self.drops.retain(|d| ctx.elapsed - d.t0 < 7.0);
-    while self.drops.len() > 16 { self.drops.remove(0); }
+    while self.drops.len() > 16 {
+      self.drops.remove(0);
+    }
     let contrast = ctx.options.contrast;
     let mut grid = vec![0.0_f64; ctx.width * ctx.height];
     let dw = (ctx.width.saturating_sub(1)).max(1) as f64;

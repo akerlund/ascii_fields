@@ -29,12 +29,10 @@ impl Playlist {
     Self::new(false, false, CLIP_SECONDS, Some(start_name), Some(names))
   }
   pub fn random() -> Self {
-    Self::new(true, true, CLIP_SECONDS, None, None)
-      .expect("registry should contain at least one mode")
+    Self::new(true, true, CLIP_SECONDS, None, None).expect("registry should contain at least one mode")
   }
   pub fn cycle() -> Self {
-    Self::new(true, false, CLIP_SECONDS, None, None)
-      .expect("registry should contain at least one mode")
+    Self::new(true, false, CLIP_SECONDS, None, None).expect("registry should contain at least one mode")
   }
   pub fn random_from(names: &[String]) -> Option<Self> {
     Self::new(true, true, CLIP_SECONDS, None, Some(names))
@@ -43,12 +41,10 @@ impl Playlist {
     Self::new(true, false, CLIP_SECONDS, None, Some(names))
   }
   pub fn random_with_clip(clip: f64) -> Self {
-    Self::new(true, true, clip.max(0.1), None, None)
-      .expect("registry should contain at least one mode")
+    Self::new(true, true, clip.max(0.1), None, None).expect("registry should contain at least one mode")
   }
   pub fn cycle_with_clip(clip: f64) -> Self {
-    Self::new(true, false, clip.max(0.1), None, None)
-      .expect("registry should contain at least one mode")
+    Self::new(true, false, clip.max(0.1), None, None).expect("registry should contain at least one mode")
   }
   pub fn random_with_clip_from(clip: f64, names: &[String]) -> Option<Self> {
     Self::new(true, true, clip.max(0.1), None, Some(names))
@@ -57,7 +53,13 @@ impl Playlist {
     Self::new(true, false, clip.max(0.1), None, Some(names))
   }
 
-  fn new(auto: bool, shuffle: bool, clip: f64, start_name: Option<&str>, allowed_names: Option<&[String]>) -> Option<Self> {
+  fn new(
+    auto: bool,
+    shuffle: bool,
+    clip: f64,
+    start_name: Option<&str>,
+    allowed_names: Option<&[String]>,
+  ) -> Option<Self> {
     let entries = registry::MODES;
     let mut order: Vec<usize> = match allowed_names {
       Some(names) => {
@@ -77,7 +79,9 @@ impl Playlist {
       return None;
     }
     let mut rng = Pcg32::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7);
-    if shuffle { order.shuffle(&mut rng); }
+    if shuffle {
+      order.shuffle(&mut rng);
+    }
     if let Some(name) = start_name {
       let target = entries.iter().position(|m| m.name == name)?;
       if let Some(at) = order.iter().position(|&i| i == target) {
@@ -90,23 +94,35 @@ impl Playlist {
     Some(Self { entries, order, pos: 0, auto, shuffle, clip, start: 0.0, current, rng })
   }
 
-  pub fn current(&mut self) -> &mut Box<dyn Animation> { &mut self.current }
-  pub fn name(&self) -> &'static str { self.entries[self.order[self.pos]].name }
+  pub fn current(&mut self) -> &mut Box<dyn Animation> {
+    &mut self.current
+  }
+  pub fn name(&self) -> &'static str {
+    self.entries[self.order[self.pos]].name
+  }
   pub fn title(&self) -> String {
     format!("{}  ({}/{})", self.name(), self.pos + 1, self.order.len())
   }
-  pub fn scene_elapsed(&self, virtual_time: f64) -> f64 { virtual_time - self.start }
+  pub fn scene_elapsed(&self, virtual_time: f64) -> f64 {
+    virtual_time - self.start
+  }
 
   pub fn maybe_advance(&mut self, virtual_time: f64) -> bool {
-    if !self.auto { return false; }
+    if !self.auto {
+      return false;
+    }
     if virtual_time - self.start >= self.clip {
       self.step(1, virtual_time);
       return true;
     }
     false
   }
-  pub fn go_next(&mut self, virtual_time: f64) { self.step(1, virtual_time); }
-  pub fn go_prev(&mut self, virtual_time: f64) { self.step(-1, virtual_time); }
+  pub fn go_next(&mut self, virtual_time: f64) {
+    self.step(1, virtual_time);
+  }
+  pub fn go_prev(&mut self, virtual_time: f64) {
+    self.step(-1, virtual_time);
+  }
   pub fn restart(&mut self, virtual_time: f64) {
     self.start = virtual_time;
     self.current = (self.entries[self.order[self.pos]].factory)();
@@ -117,7 +133,9 @@ impl Playlist {
     let mut p = self.pos as i32 + direction;
     if p >= n as i32 {
       p = 0;
-      if self.shuffle { self.order.shuffle(&mut self.rng); }
+      if self.shuffle {
+        self.order.shuffle(&mut self.rng);
+      }
     } else if p < 0 {
       p = n as i32 - 1;
     }

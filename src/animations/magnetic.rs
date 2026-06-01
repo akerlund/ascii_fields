@@ -3,15 +3,23 @@ use crate::core::{clamp, render_field, FieldStyle};
 
 const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "ice" };
 const TH: &[(f64, char)] = &[
-  (0.18, ' '), (0.30, '.'), (0.42, ':'), (0.54, '-'), (0.66, '='),
-  (0.76, '+'), (0.85, '*'), (0.93, '#'), (1.01, '@'),
+  (0.18, ' '),
+  (0.30, '.'),
+  (0.42, ':'),
+  (0.54, '-'),
+  (0.66, '='),
+  (0.76, '+'),
+  (0.85, '*'),
+  (0.93, '#'),
+  (1.01, '@'),
 ];
 
 pub struct Magnetic;
 
 impl Animation for Magnetic {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    let w = ctx.width; let h = ctx.height;
+    let w = ctx.width;
+    let h = ctx.height;
     let mut grid = vec![0.0_f64; w * h];
     let t = ctx.elapsed;
     let flow = t * 2.2;

@@ -3,8 +3,15 @@ use crate::core::{clamp, render_field, FieldStyle};
 
 const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "ocean" };
 const TH: &[(f64, char)] = &[
-  (0.10, ' '), (0.22, '.'), (0.34, ':'), (0.46, '-'), (0.58, '='),
-  (0.70, '+'), (0.82, '*'), (0.92, '#'), (1.01, '@'),
+  (0.10, ' '),
+  (0.22, '.'),
+  (0.34, ':'),
+  (0.46, '-'),
+  (0.58, '='),
+  (0.70, '+'),
+  (0.82, '*'),
+  (0.92, '#'),
+  (1.01, '@'),
 ];
 const SHED_DT: f64 = 0.95;
 const FLOW_SPEED: f64 = 0.55;
@@ -18,11 +25,19 @@ pub struct Karman {
   last: f64,
   even: bool,
 }
-impl Default for Karman { fn default() -> Self { Self { vortices: Vec::new(), next_shed: 0.0, last: 0.0, even: false } } }
+impl Default for Karman {
+  fn default() -> Self {
+    Self { vortices: Vec::new(), next_shed: 0.0, last: 0.0, even: false }
+  }
+}
 
 impl Animation for Karman {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    if ctx.elapsed < self.last { self.vortices.clear(); self.next_shed = 0.0; self.even = false; }
+    if ctx.elapsed < self.last {
+      self.vortices.clear();
+      self.next_shed = 0.0;
+      self.even = false;
+    }
     self.last = ctx.elapsed;
     while ctx.elapsed >= self.next_shed {
       let sign = if self.even { 1.0 } else { -1.0 };
@@ -43,7 +58,9 @@ impl Animation for Karman {
         let px = (col as f64 / dw - 0.5) * 2.0 * ax;
         let dx_obs = px - OBSTACLE_X;
         let d_obs = (dx_obs * dx_obs + py * py).sqrt();
-        if d_obs < OBSTACLE_R { continue; }
+        if d_obs < OBSTACLE_R {
+          continue;
+        }
         let bg = 0.10 + 0.04 * (8.0 * py + 0.6 * ctx.elapsed).sin();
         let mut accum = 0.0_f64;
         for &(sign, t0) in &self.vortices {

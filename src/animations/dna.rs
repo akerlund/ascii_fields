@@ -7,7 +7,8 @@ pub struct Dna;
 
 impl Animation for Dna {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    let w = ctx.width; let h = ctx.height;
+    let w = ctx.width;
+    let h = ctx.height;
     let cx = w as f64 * 0.5;
     let amp = (w as f64 * 0.20).max(3.0);
     let twist = 0.36 * ctx.options.scale.max(0.4);
@@ -18,7 +19,10 @@ impl Animation for Dna {
       let c = col.round() as i64;
       if c >= 0 && (c as usize) < w && row < h {
         let idx = row * w + (c as usize);
-        if grid[idx] < value { grid[idx] = value; glyphs[idx] = ch; }
+        if grid[idx] < value {
+          grid[idx] = value;
+          glyphs[idx] = ch;
+        }
       }
     };
     // rungs
@@ -43,12 +47,19 @@ impl Animation for Dna {
       let mut prev_x: Option<f64> = None;
       for row in 0..h {
         let p = row as f64 * twist + t;
-        let s = p.sin(); let c = p.cos();
+        let s = p.sin();
+        let c = p.cos();
         let x = cx + sign * amp * s;
         let depth = c * sign;
         let slope = sign * amp * c * twist;
         let bright = 0.55 + 0.45 * (depth * 0.5 + 0.5);
-        let glyph = if slope.abs() < 0.35 { '|' } else if slope > 0.0 { '\\' } else { '/' };
+        let glyph = if slope.abs() < 0.35 {
+          '|'
+        } else if slope > 0.0 {
+          '\\'
+        } else {
+          '/'
+        };
         put(&mut grid, &mut glyphs, x, row, bright, glyph);
         put(&mut grid, &mut glyphs, x - 1.0, row, bright * 0.55, glyph);
         put(&mut grid, &mut glyphs, x + 1.0, row, bright * 0.55, glyph);

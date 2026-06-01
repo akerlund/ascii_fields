@@ -135,10 +135,8 @@ where
     let name = playlist.name();
     if name != current_name.as_str() {
       *current_name = name.to_string();
-      active.options = mode_options
-        .get(current_name.as_str())
-        .cloned()
-        .unwrap_or_else(RenderOptions::default);
+      active.options =
+        mode_options.get(current_name.as_str()).cloned().unwrap_or_else(RenderOptions::default);
       enforce_charset_support(current_name.as_str(), &mut active.options);
     }
 
@@ -175,12 +173,15 @@ struct CastSink {
 impl CastSink {
   fn create(path: PathBuf, width: usize, height: usize) -> io::Result<Self> {
     let mut writer = BufWriter::new(File::create(path)?);
-    write_json_line(&mut writer, &json!({
-      "version": 2,
-      "width": width,
-      "height": height,
-      "env": { "TERM": "xterm-256color", "SHELL": "ascii-fields" },
-    }))?;
+    write_json_line(
+      &mut writer,
+      &json!({
+        "version": 2,
+        "width": width,
+        "height": height,
+        "env": { "TERM": "xterm-256color", "SHELL": "ascii-fields" },
+      }),
+    )?;
     Ok(Self { writer })
   }
 
@@ -224,8 +225,7 @@ impl GifSink {
     }
 
     let writer = BufWriter::new(File::create(path)?);
-    let mut encoder = Encoder::new(writer, pixel_w as u16, pixel_h as u16, &[])
-      .map_err(io_other)?;
+    let mut encoder = Encoder::new(writer, pixel_w as u16, pixel_h as u16, &[]).map_err(io_other)?;
     encoder.set_repeat(Repeat::Infinite).map_err(io_other)?;
 
     Ok(Self {
@@ -329,7 +329,11 @@ fn apply_sgr(params: &str, fg: &mut Rgb, bg: &mut Rgb) {
         let is_fg = codes[idx] == 38;
         if idx + 2 < codes.len() && codes[idx + 1] == 5 {
           let color = xterm_256(codes[idx + 2].clamp(0, 255) as u8);
-          if is_fg { *fg = color; } else { *bg = color; }
+          if is_fg {
+            *fg = color;
+          } else {
+            *bg = color;
+          }
           idx += 2;
         } else if idx + 4 < codes.len() && codes[idx + 1] == 2 {
           let color = (
@@ -337,7 +341,11 @@ fn apply_sgr(params: &str, fg: &mut Rgb, bg: &mut Rgb) {
             codes[idx + 3].clamp(0, 255) as u8,
             codes[idx + 4].clamp(0, 255) as u8,
           );
-          if is_fg { *fg = color; } else { *bg = color; }
+          if is_fg {
+            *fg = color;
+          } else {
+            *bg = color;
+          }
           idx += 4;
         }
       }
@@ -376,7 +384,9 @@ fn draw_glyph(pixels: &mut [u8], pixel_w: usize, row: usize, col: usize, ch: cha
     return;
   }
   let glyph = BASIC_FONTS.get(ch).or_else(|| BASIC_FONTS.get('?'));
-  let Some(bitmap) = glyph else { return; };
+  let Some(bitmap) = glyph else {
+    return;
+  };
   let x0 = col * CELL_W;
   let y0 = row * CELL_H + FONT_Y;
   for (gy, bits) in bitmap.iter().enumerate() {
@@ -397,10 +407,22 @@ fn put_pixel(pixels: &mut [u8], pixel_w: usize, x: usize, y: usize, color: Rgb) 
 
 fn ansi_16(idx: u8) -> Rgb {
   const COLORS: [Rgb; 16] = [
-    (0, 0, 0),       (205, 0, 0),     (0, 205, 0),     (205, 205, 0),
-    (0, 0, 238),     (205, 0, 205),   (0, 205, 205),   (229, 229, 229),
-    (127, 127, 127), (255, 0, 0),     (0, 255, 0),     (255, 255, 0),
-    (92, 92, 255),   (255, 0, 255),   (0, 255, 255),   (255, 255, 255),
+    (0, 0, 0),
+    (205, 0, 0),
+    (0, 205, 0),
+    (205, 205, 0),
+    (0, 0, 238),
+    (205, 0, 205),
+    (0, 205, 205),
+    (229, 229, 229),
+    (127, 127, 127),
+    (255, 0, 0),
+    (0, 255, 0),
+    (255, 255, 0),
+    (92, 92, 255),
+    (255, 0, 255),
+    (0, 255, 255),
+    (255, 255, 255),
   ];
   COLORS[idx as usize]
 }
@@ -412,11 +434,7 @@ fn xterm_256(idx: u8) -> Rgb {
   if idx < 232 {
     let n = idx - 16;
     let scale = [0, 95, 135, 175, 215, 255];
-    return (
-      scale[(n / 36) as usize],
-      scale[((n / 6) % 6) as usize],
-      scale[(n % 6) as usize],
-    );
+    return (scale[(n / 36) as usize], scale[((n / 6) % 6) as usize], scale[(n % 6) as usize]);
   }
   let gray = 8 + (idx - 232) * 10;
   (gray, gray, gray)

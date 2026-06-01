@@ -3,8 +3,15 @@ use crate::core::{clamp, render_field, FieldStyle};
 
 const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "ice" };
 const TH: &[(f64, char)] = &[
-  (0.10, ' '), (0.20, '.'), (0.32, ':'), (0.44, '-'), (0.56, '='),
-  (0.68, '+'), (0.80, '*'), (0.90, '#'), (1.01, '@'),
+  (0.10, ' '),
+  (0.20, '.'),
+  (0.32, ':'),
+  (0.44, '-'),
+  (0.56, '='),
+  (0.68, '+'),
+  (0.80, '*'),
+  (0.90, '#'),
+  (1.01, '@'),
 ];
 const CYCLE: f64 = 13.0;
 const T_INSPIRAL: f64 = 9.5;
@@ -18,29 +25,42 @@ pub struct GravitationalWaves {
 }
 
 impl Default for GravitationalWaves {
-  fn default() -> Self { Self { phi: 0.0, cycle_start: 0.0, last: 0.0 } }
+  fn default() -> Self {
+    Self { phi: 0.0, cycle_start: 0.0, last: 0.0 }
+  }
 }
 
 impl Animation for GravitationalWaves {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    if ctx.elapsed < self.last { self.phi = 0.0; self.cycle_start = ctx.elapsed; }
+    if ctx.elapsed < self.last {
+      self.phi = 0.0;
+      self.cycle_start = ctx.elapsed;
+    }
     let mut local = ctx.elapsed - self.cycle_start;
-    if local > CYCLE { self.cycle_start = ctx.elapsed; self.phi = 0.0; local = 0.0; }
+    if local > CYCLE {
+      self.cycle_start = ctx.elapsed;
+      self.phi = 0.0;
+      local = 0.0;
+    }
     let dt = (ctx.elapsed - self.last).clamp(0.0, 0.1);
     self.last = ctx.elapsed;
     let merging = local >= T_INSPIRAL;
     let sep = if !merging {
       let frac = local / T_INSPIRAL;
       R_MAX * (1.0 - frac).powf(0.5) + R_MIN
-    } else { R_MIN };
+    } else {
+      R_MIN
+    };
     let omega = (0.6 / sep.powf(1.5)).min(7.0);
     self.phi += omega * dt;
     let amp = clamp(0.25 + 0.9 * (R_MAX - sep) / R_MAX);
     let ring_age = local - T_INSPIRAL;
     let flash = if merging { (-(ring_age * ring_age) / 0.05).exp() } else { 0.0 };
     let radius = (ctx.width.min(ctx.height * 2) as f64 * 0.5).max(1.0);
-    let bx1 = sep * self.phi.cos(); let by1 = sep * self.phi.sin();
-    let bx2 = -bx1; let by2 = -by1;
+    let bx1 = sep * self.phi.cos();
+    let by1 = sep * self.phi.sin();
+    let bx2 = -bx1;
+    let by2 = -by1;
     let contrast = ctx.options.contrast;
     let mut grid = vec![0.0_f64; ctx.width * ctx.height];
     for row in 0..ctx.height {

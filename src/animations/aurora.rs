@@ -1,5 +1,5 @@
-use std::f64::consts::PI;
 use rayon::prelude::*;
+use std::f64::consts::PI;
 
 use crate::animation::{Animation, FrameContext};
 use crate::core::{clamp, render_field, FieldStyle};
@@ -7,21 +7,26 @@ use crate::noise::fbm;
 
 const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "aurora" };
 const TH: &[(f64, char)] = &[
-  (0.08, ' '), (0.18, '.'), (0.30, ':'), (0.42, '-'), (0.55, '='),
-  (0.68, '+'), (0.80, '*'), (0.90, '#'), (1.01, '@'),
+  (0.08, ' '),
+  (0.18, '.'),
+  (0.30, ':'),
+  (0.42, '-'),
+  (0.55, '='),
+  (0.68, '+'),
+  (0.80, '*'),
+  (0.90, '#'),
+  (1.01, '@'),
 ];
 // (centre, thickness, frequency, drift speed, weight)
-const CURTAINS: &[(f64, f64, f64, f64, f64)] = &[
-  (0.42, 0.14, 2.3, 0.55, 1.00),
-  (0.52, 0.10, 3.7, -0.40, 0.75),
-  (0.34, 0.08, 5.1, 0.70, 0.55),
-];
+const CURTAINS: &[(f64, f64, f64, f64, f64)] =
+  &[(0.42, 0.14, 2.3, 0.55, 1.00), (0.52, 0.10, 3.7, -0.40, 0.75), (0.34, 0.08, 5.1, 0.70, 0.55)];
 
 pub struct Aurora;
 
 impl Animation for Aurora {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    let w = ctx.width; let h = ctx.height;
+    let w = ctx.width;
+    let h = ctx.height;
     let contrast = ctx.options.contrast;
     let mut grid = vec![0.0_f64; w * h];
     let dw = (w.saturating_sub(1)).max(1) as f64;

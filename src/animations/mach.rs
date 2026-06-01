@@ -1,11 +1,18 @@
-use std::f64::consts::PI;
 use crate::animation::{Animation, FrameContext};
 use crate::core::{clamp, render_field, smoothstep, FieldStyle};
+use std::f64::consts::PI;
 
 const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "ice" };
 const TH: &[(f64, char)] = &[
-  (0.12, ' '), (0.22, '.'), (0.34, ':'), (0.46, '-'), (0.58, '='),
-  (0.70, '+'), (0.82, '*'), (0.92, '#'), (1.01, '@'),
+  (0.12, ' '),
+  (0.22, '.'),
+  (0.34, ':'),
+  (0.46, '-'),
+  (0.58, '='),
+  (0.70, '+'),
+  (0.82, '*'),
+  (0.92, '#'),
+  (1.01, '@'),
 ];
 const CYCLE: f64 = 8.5;
 const WAVE_SPEED: f64 = 0.18;
@@ -20,7 +27,8 @@ pub struct Mach;
 
 impl Animation for Mach {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    let w = ctx.width; let h = ctx.height;
+    let w = ctx.width;
+    let h = ctx.height;
     let ax = w as f64 / (h as f64 * 2.0).max(1.0);
     let contrast = ctx.options.contrast;
     let mut grid = vec![0.0_f64; w * h];
@@ -50,7 +58,7 @@ impl Animation for Mach {
             let interior = smoothstep(0.10, 0.0, edge) * 0.14 * (-behind * 0.22).exp();
             v += cone * (1.04 + idx as f64 * 0.15) + interior;
           }
-          v += 0.86 * (-(((px - sx).powi(2) + (py - sy).powi(2))) / 0.0008).exp();
+          v += 0.86 * (-((px - sx).powi(2) + (py - sy).powi(2)) / 0.0008).exp();
         }
         grid[base + col] = clamp(v * contrast);
       }

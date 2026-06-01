@@ -6,22 +6,31 @@ use crate::noise::fbm;
 
 const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "sunset" };
 const TH: &[(f64, char)] = &[
-  (0.08, ' '), (0.18, '.'), (0.30, ':'), (0.42, '-'), (0.54, '='),
-  (0.66, '+'), (0.78, '*'), (0.90, '#'), (1.01, '@'),
+  (0.08, ' '),
+  (0.18, '.'),
+  (0.30, ':'),
+  (0.42, '-'),
+  (0.54, '='),
+  (0.66, '+'),
+  (0.78, '*'),
+  (0.90, '#'),
+  (1.01, '@'),
 ];
 
 pub struct Storm;
 
 impl Animation for Storm {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    let w = ctx.width; let h = ctx.height;
+    let w = ctx.width;
+    let h = ctx.height;
     let ax = w as f64 / (h as f64 * 2.0).max(1.0);
     let cx = 0.08 * ax * (ctx.elapsed * 0.12).sin();
     let cy = 0.03 * (ctx.elapsed * 0.18).sin();
     let spin = ctx.elapsed * 0.55;
     let contrast = ctx.options.contrast;
     let band_drift = ctx.elapsed * 0.06;
-    let cos_spin = spin.cos(); let sin_spin = spin.sin();
+    let cos_spin = spin.cos();
+    let sin_spin = spin.sin();
     let inv_rx = 1.0 / (0.36 * ax).max(0.22);
     let mut grid = vec![0.0_f64; w * h];
     let dw = (w.saturating_sub(1)).max(1) as f64;
@@ -29,8 +38,7 @@ impl Animation for Storm {
     let t = ctx.elapsed;
     grid.par_chunks_mut(w).enumerate().for_each(|(row, row_slice)| {
       let y = (row as f64 / dh - 0.5) * 2.0;
-      let band_base = 0.10 + 0.13 * (y * 18.0 + t * 0.25).sin()
-        + 0.07 * (y * 43.0 - t * 0.15).sin();
+      let band_base = 0.10 + 0.13 * (y * 18.0 + t * 0.25).sin() + 0.07 * (y * 43.0 - t * 0.15).sin();
       let shear = 0.12 * (y * 9.0 + t * 0.2).sin();
       let dy = (y - cy) / 0.25;
       let abs_dy = dy.abs();

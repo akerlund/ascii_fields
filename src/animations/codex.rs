@@ -1,14 +1,12 @@
 //! FlowerSphere -- a dark sphere with a rotating flower-like ASCII texture.
 
-use std::f64::consts::PI;
 use crate::animation::{Animation, FrameContext};
 use crate::core::{clamp, render_field, FieldStyle};
+use std::f64::consts::PI;
 
 const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "rose" };
-const RAMP: &[char] = &[
-  ' ', ' ', '.', '.', ':', ':', '-', '-', '=', '=',
-  '+', '+', '*', '*', '#', '#', '%', '%',
-];
+const RAMP: &[char] =
+  &[' ', ' ', '.', '.', ':', ':', '-', '-', '=', '=', '+', '+', '*', '*', '#', '#', '%', '%'];
 
 fn thresholds() -> [(f64, char); 18] {
   let mut out = [(0.0_f64, ' '); 18];
@@ -35,7 +33,8 @@ fn texture(u: f64, v: f64, phase: f64, scale: f64) -> f64 {
 
 impl Animation for FlowerSphere {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    let w = ctx.width; let h = ctx.height;
+    let w = ctx.width;
+    let h = ctx.height;
     let mut grid = vec![0.0_f64; w * h];
     let radius = (w.min(h * 2) as f64 * 0.5).max(1.0);
     let contrast = ctx.options.contrast;
@@ -45,9 +44,10 @@ impl Animation for FlowerSphere {
       for col in 0..w {
         let px = (col as f64 - (w as f64 - 1.0) * 0.5) / radius;
         let r = (px * px + py * py).sqrt();
-        if r >= 1.0 { continue; }
-        let u = (py.atan2(px) / (2.0 * PI) + 0.5
-                 + 0.025 * (2.0 * PI * ctx.phase).sin()).rem_euclid(1.0);
+        if r >= 1.0 {
+          continue;
+        }
+        let u = (py.atan2(px) / (2.0 * PI) + 0.5 + 0.025 * (2.0 * PI * ctx.phase).sin()).rem_euclid(1.0);
         let v = py.clamp(-1.0, 1.0).asin() / PI + 0.5;
         let texv = texture(u, v, ctx.phase, ctx.options.scale);
         let edge_fade = (1.0 - r.powf(2.8)).max(0.0);

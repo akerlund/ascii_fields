@@ -1,18 +1,26 @@
-use std::f64::consts::PI;
 use crate::animation::{Animation, FrameContext};
 use crate::core::{clamp, render_field, FieldStyle};
+use std::f64::consts::PI;
 
 const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "ice" };
 const TH: &[(f64, char)] = &[
-  (0.12, ' '), (0.22, '.'), (0.34, ':'), (0.46, '-'), (0.58, '='),
-  (0.70, '+'), (0.82, '*'), (0.92, '#'), (1.01, '@'),
+  (0.12, ' '),
+  (0.22, '.'),
+  (0.34, ':'),
+  (0.46, '-'),
+  (0.58, '='),
+  (0.70, '+'),
+  (0.82, '*'),
+  (0.92, '#'),
+  (1.01, '@'),
 ];
 
 pub struct Longitudinal;
 
 impl Animation for Longitudinal {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    let w = ctx.width; let h = ctx.height;
+    let w = ctx.width;
+    let h = ctx.height;
     let freq = 3.0 * ctx.options.scale.max(0.4);
     let omega = 2.2;
     let amp = (0.55 / freq.max(1.0)).max(0.01);
@@ -40,13 +48,19 @@ impl Animation for Longitudinal {
         let c = col as usize;
         let mut row = 0;
         while row < h {
-          if grid[row * w + c] < 1.0 { grid[row * w + c] = 1.0; }
-          if c + 1 < w && grid[row * w + c + 1] < 0.55 { grid[row * w + c + 1] = 0.55; }
+          if grid[row * w + c] < 1.0 {
+            grid[row * w + c] = 1.0;
+          }
+          if c + 1 < w && grid[row * w + c + 1] < 0.55 {
+            grid[row * w + c + 1] = 0.55;
+          }
           row += row_step;
         }
       }
     }
-    for v in grid.iter_mut() { *v = clamp(*v * contrast); }
+    for v in grid.iter_mut() {
+      *v = clamp(*v * contrast);
+    }
     render_field(ctx, &grid, TH, &STYLE, out);
   }
 }

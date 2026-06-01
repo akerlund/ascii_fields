@@ -3,8 +3,15 @@ use crate::core::{clamp, render_field, FieldStyle};
 
 const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "lava" };
 const TH: &[(f64, char)] = &[
-  (0.08, ' '), (0.18, '.'), (0.30, ':'), (0.42, '-'), (0.54, '='),
-  (0.66, '+'), (0.78, '*'), (0.90, '#'), (1.01, '@'),
+  (0.08, ' '),
+  (0.18, '.'),
+  (0.30, ':'),
+  (0.42, '-'),
+  (0.54, '='),
+  (0.66, '+'),
+  (0.78, '*'),
+  (0.90, '#'),
+  (1.01, '@'),
 ];
 // (bx, offset, rx, ry, period)
 const BLOBS: &[(f64, f64, f64, f64, f64)] = &[
@@ -14,30 +21,45 @@ const BLOBS: &[(f64, f64, f64, f64, f64)] = &[
   (0.62, 0.70, 0.11, 0.15, 5.7),
 ];
 
-struct BlobState { cx0: f64, sway: f64, cy: f64, inv_rx: f64, inv_ry: f64, offset: f64 }
+struct BlobState {
+  cx0: f64,
+  sway: f64,
+  cy: f64,
+  inv_rx: f64,
+  inv_ry: f64,
+  offset: f64,
+}
 
 pub struct VaxLamp;
 
 impl Animation for VaxLamp {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    let w = ctx.width; let h = ctx.height;
+    let w = ctx.width;
+    let h = ctx.height;
     let ax = w as f64 / (h as f64 * 2.0).max(1.0);
     let contrast = ctx.options.contrast;
-    let blob_state: Vec<BlobState> = BLOBS.iter().map(|&(bx, offset, rx, ry, period)| {
-      let local = ((ctx.elapsed / period + offset) % 1.0 + 1.0) % 1.0;
-      let mut cy = 1.15 - local * 2.30;
-      if cy < -1.15 { cy += 2.30; }
-      let cx0 = (bx - 0.5) * 2.0 * ax;
-      let sway = 0.08 * ax * (ctx.elapsed * 0.55 + offset * 12.0).sin();
-      let rise_fraction = (1.0 - (2.0 * local - 1.0).abs()).clamp(0.0, 1.0);
-      let stretch = 1.0 + 0.45 * rise_fraction;
-      BlobState {
-        cx0, sway, cy,
-        inv_rx: 1.0 / (rx * ax).max(0.001),
-        inv_ry: 1.0 / (ry * stretch).max(0.001),
-        offset,
-      }
-    }).collect();
+    let blob_state: Vec<BlobState> = BLOBS
+      .iter()
+      .map(|&(bx, offset, rx, ry, period)| {
+        let local = ((ctx.elapsed / period + offset) % 1.0 + 1.0) % 1.0;
+        let mut cy = 1.15 - local * 2.30;
+        if cy < -1.15 {
+          cy += 2.30;
+        }
+        let cx0 = (bx - 0.5) * 2.0 * ax;
+        let sway = 0.08 * ax * (ctx.elapsed * 0.55 + offset * 12.0).sin();
+        let rise_fraction = (1.0 - (2.0 * local - 1.0).abs()).clamp(0.0, 1.0);
+        let stretch = 1.0 + 0.45 * rise_fraction;
+        BlobState {
+          cx0,
+          sway,
+          cy,
+          inv_rx: 1.0 / (rx * ax).max(0.001),
+          inv_ry: 1.0 / (ry * stretch).max(0.001),
+          offset,
+        }
+      })
+      .collect();
     let mut grid = vec![0.0_f64; w * h];
     let dw = (w.saturating_sub(1)).max(1) as f64;
     let dh = (h.saturating_sub(1)).max(1) as f64;

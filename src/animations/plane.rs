@@ -1,8 +1,8 @@
 //! Wave-plane: the original cyclic wave with a long scene-specific ASCII ramp.
 
-use std::f64::consts::PI;
 use crate::animation::{Animation, FrameContext};
 use crate::core::{clamp, render_field, shade, FieldStyle};
+use std::f64::consts::PI;
 
 const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "ocean" };
 
@@ -24,18 +24,23 @@ const RAMP_CLEAN: &str = " .'`^\",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqp
 fn ramp_thresholds(ramp: &str) -> Vec<(f64, char)> {
   let chars: Vec<char> = ramp.chars().collect();
   let n = chars.len();
-  chars.iter().enumerate().map(|(i, &c)| {
-    let limit = ((i + 1) as f64 / n as f64).min(1.01);
-    (limit, c)
-  }).collect()
+  chars
+    .iter()
+    .enumerate()
+    .map(|(i, &c)| {
+      let limit = ((i + 1) as f64 / n as f64).min(1.01);
+      (limit, c)
+    })
+    .collect()
 }
 
 pub struct WavePlane;
 
 fn sample_uv(u: f64, v: f64, elapsed: f64, scroll: bool) -> (f64, f64) {
-  if !scroll { return (u, v); }
-  ((u + elapsed * 0.055).rem_euclid(1.0),
-   (v + elapsed * 0.025).rem_euclid(1.0))
+  if !scroll {
+    return (u, v);
+  }
+  ((u + elapsed * 0.055).rem_euclid(1.0), (v + elapsed * 0.025).rem_euclid(1.0))
 }
 
 fn wave_height(u: f64, v: f64, phase: f64, scale: f64) -> f64 {
@@ -51,7 +56,8 @@ fn wave_height(u: f64, v: f64, phase: f64, scale: f64) -> f64 {
 }
 
 fn levels(ctx: &FrameContext) -> Vec<f64> {
-  let w = ctx.width; let h = ctx.height;
+  let w = ctx.width;
+  let h = ctx.height;
   let mut g = vec![0.0_f64; w * h];
   let contrast = ctx.options.contrast;
   for row in 0..h {

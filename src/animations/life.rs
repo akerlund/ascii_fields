@@ -1,19 +1,27 @@
+use crate::animation::{Animation, FrameContext};
+use crate::core::{render_field, FieldStyle};
 use rand::{Rng, SeedableRng};
 use rand_pcg::Pcg32;
 use std::collections::HashMap;
-use crate::animation::{Animation, FrameContext};
-use crate::core::{render_field, FieldStyle};
 
 const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "aurora" };
 const TH: &[(f64, char)] = &[
-  (0.08, ' '), (0.20, '.'), (0.34, ':'), (0.48, '-'), (0.62, '='),
-  (0.74, '+'), (0.85, '*'), (0.93, '#'), (1.01, '@'),
+  (0.08, ' '),
+  (0.20, '.'),
+  (0.34, ':'),
+  (0.48, '-'),
+  (0.62, '='),
+  (0.74, '+'),
+  (0.85, '*'),
+  (0.93, '#'),
+  (1.01, '@'),
 ];
 const STEP_DT: f64 = 0.11;
 const RESEED_GEN: i64 = 900;
 
 pub struct Life {
-  w: usize, h: usize,
+  w: usize,
+  h: usize,
   cells: HashMap<(i64, i64), bool>,
   age: Vec<i32>,
   gen: i64,
@@ -26,8 +34,14 @@ pub struct Life {
 impl Default for Life {
   fn default() -> Self {
     Self {
-      w: 0, h: 0, cells: HashMap::new(), age: Vec::new(), gen: 0,
-      last_elapsed: 0.0, stable: 0, last_pop: -1,
+      w: 0,
+      h: 0,
+      cells: HashMap::new(),
+      age: Vec::new(),
+      gen: 0,
+      last_elapsed: 0.0,
+      stable: 0,
+      last_pop: -1,
       rng: Pcg32::from_entropy(),
     }
   }
@@ -35,7 +49,8 @@ impl Default for Life {
 
 impl Life {
   fn seed(&mut self, w: usize, h: usize) {
-    self.w = w; self.h = h;
+    self.w = w;
+    self.h = h;
     self.cells.clear();
     self.age = vec![999; w * h];
     let fill = 0.30;
@@ -52,13 +67,16 @@ impl Life {
     self.last_pop = -1;
   }
   fn step(&mut self) {
-    let w = self.w as i64; let h = self.h as i64;
+    let w = self.w as i64;
+    let h = self.h as i64;
     let mut counts: HashMap<(i64, i64), i32> = HashMap::new();
     for &(x, y) in self.cells.keys() {
       for dy in -1..=1 {
         let ny = (y + dy).rem_euclid(h);
         for dx in -1..=1 {
-          if dx == 0 && dy == 0 { continue; }
+          if dx == 0 && dy == 0 {
+            continue;
+          }
           let nx = (x + dx).rem_euclid(w);
           *counts.entry((nx, ny)).or_insert(0) += 1;
         }
@@ -71,13 +89,19 @@ impl Life {
       }
     }
     self.cells = new_cells;
-    for a in self.age.iter_mut() { *a += 1; }
+    for a in self.age.iter_mut() {
+      *a += 1;
+    }
     for &(x, y) in self.cells.keys() {
       self.age[(y as usize) * self.w + (x as usize)] = 0;
     }
     self.gen += 1;
     let pop = self.cells.len() as i64;
-    if pop == self.last_pop { self.stable += 1; } else { self.stable = 0; }
+    if pop == self.last_pop {
+      self.stable += 1;
+    } else {
+      self.stable = 0;
+    }
     self.last_pop = pop;
   }
 }
@@ -103,7 +127,13 @@ impl Animation for Life {
       let base = r * ctx.width;
       for c in 0..ctx.width {
         let a = self.age[base + c];
-        grid[base + c] = if a == 0 { 1.0 } else if a < 9 { 0.62 - 0.06 * a as f64 } else { 0.0 };
+        grid[base + c] = if a == 0 {
+          1.0
+        } else if a < 9 {
+          0.62 - 0.06 * a as f64
+        } else {
+          0.0
+        };
       }
     }
     render_field(ctx, &grid, TH, &STYLE, out);

@@ -10,7 +10,9 @@ const NBODY_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default
 const STELLAR_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "stellar" };
 
 #[derive(Default)]
-pub struct NBody { scratch: FrameScratch }
+pub struct NBody {
+  scratch: FrameScratch,
+}
 impl Animation for NBody {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
@@ -40,14 +42,25 @@ impl Animation for NBody {
       *glyph = density_char(grid[idx], FIELD_TH);
     }
     for &(bx, by, mass) in &bodies {
-      put(grid, glyphs, w, h, (bx * dw).round() as i64, (by * dh).round() as i64, 1.0, if mass > 0.7 { '@' } else { '*' });
+      put(
+        grid,
+        glyphs,
+        w,
+        h,
+        (bx * dw).round() as i64,
+        (by * dh).round() as i64,
+        1.0,
+        if mass > 0.7 { '@' } else { '*' },
+      );
     }
     render_glyph_field(ctx, grid, glyphs, &NBODY_STYLE, out);
   }
 }
 
 #[derive(Default)]
-pub struct Pulsar { scratch: FrameScratch }
+pub struct Pulsar {
+  scratch: FrameScratch,
+}
 impl Animation for Pulsar {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
@@ -76,7 +89,9 @@ impl Animation for Pulsar {
 }
 
 #[derive(Default)]
-pub struct Supernova { scratch: FrameScratch }
+pub struct Supernova {
+  scratch: FrameScratch,
+}
 impl Animation for Supernova {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
@@ -105,7 +120,9 @@ impl Animation for Supernova {
 
 const SOLAR_WIND_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "aurora" };
 #[derive(Default)]
-pub struct SolarWind { scratch: FrameScratch }
+pub struct SolarWind {
+  scratch: FrameScratch,
+}
 impl Animation for SolarWind {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);

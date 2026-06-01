@@ -10,7 +10,9 @@ const PHI: f64 = 1.6180339887498949;
 
 const QUASI_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "toxic" };
 #[derive(Default)]
-pub struct Quasicrystal { scratch: FrameScratch }
+pub struct Quasicrystal {
+  scratch: FrameScratch,
+}
 impl Animation for Quasicrystal {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
@@ -38,7 +40,9 @@ impl Animation for Quasicrystal {
 
 const MOIRE_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "xray" };
 #[derive(Default)]
-pub struct Moire { scratch: FrameScratch }
+pub struct Moire {
+  scratch: FrameScratch,
+}
 impl Animation for Moire {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
@@ -64,7 +68,9 @@ impl Animation for Moire {
 
 const PENROSE_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "toxic" };
 #[derive(Default)]
-pub struct Penrose { scratch: FrameScratch }
+pub struct Penrose {
+  scratch: FrameScratch,
+}
 impl Animation for Penrose {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
@@ -92,7 +98,9 @@ impl Animation for Penrose {
 
 const VORONOI_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "geologic" };
 #[derive(Default)]
-pub struct Voronoi { scratch: FrameScratch }
+pub struct Voronoi {
+  scratch: FrameScratch,
+}
 impl Animation for Voronoi {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
@@ -116,7 +124,12 @@ impl Animation for Voronoi {
           let dx = (u - sx) * ax;
           let dy = v - sy;
           let d = dx * dx + dy * dy;
-          if d < d1 { d2 = d1; d1 = d; } else if d < d2 { d2 = d; }
+          if d < d1 {
+            d2 = d1;
+            d1 = d;
+          } else if d < d2 {
+            d2 = d;
+          }
         }
         let edge = pulse((d2.sqrt() - d1.sqrt()).abs(), 0.00035);
         grid[base + col] = clamp(edge * ctx.options.contrast);
@@ -128,7 +141,9 @@ impl Animation for Voronoi {
 
 const REACTION_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "toxic" };
 #[derive(Default)]
-pub struct ReactionRings { scratch: FrameScratch }
+pub struct ReactionRings {
+  scratch: FrameScratch,
+}
 impl Animation for ReactionRings {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
@@ -158,7 +173,9 @@ impl Animation for ReactionRings {
 
 const STRANGE_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "spectrum" };
 #[derive(Default)]
-pub struct Strange { scratch: FrameScratch }
+pub struct Strange {
+  scratch: FrameScratch,
+}
 impl Animation for Strange {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
@@ -183,7 +200,9 @@ impl Animation for Strange {
         grid[idx] = (grid[idx] + 0.16).min(1.0);
       }
     }
-    for v in grid.iter_mut() { *v = clamp(*v * ctx.options.contrast); }
+    for v in grid.iter_mut() {
+      *v = clamp(*v * ctx.options.contrast);
+    }
     render_field(ctx, grid, LINE_TH, &STRANGE_STYLE, out);
   }
 }

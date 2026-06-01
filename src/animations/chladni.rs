@@ -1,15 +1,30 @@
-use std::f64::consts::PI;
 use crate::animation::{Animation, FrameContext};
 use crate::core::{clamp, render_field, FieldStyle};
+use std::f64::consts::PI;
 
 const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "amber" };
 const TH: &[(f64, char)] = &[
-  (0.10, ' '), (0.22, '.'), (0.34, ':'), (0.46, '-'), (0.58, '='),
-  (0.70, '+'), (0.82, '*'), (0.92, '#'), (1.01, '@'),
+  (0.10, ' '),
+  (0.22, '.'),
+  (0.34, ':'),
+  (0.46, '-'),
+  (0.58, '='),
+  (0.70, '+'),
+  (0.82, '*'),
+  (0.92, '#'),
+  (1.01, '@'),
 ];
 const MODES: &[(f64, f64)] = &[
-  (2.0, 3.0), (3.0, 4.0), (4.0, 5.0), (5.0, 6.0), (4.0, 7.0),
-  (3.0, 5.0), (6.0, 7.0), (2.0, 5.0), (5.0, 3.0), (7.0, 4.0),
+  (2.0, 3.0),
+  (3.0, 4.0),
+  (4.0, 5.0),
+  (5.0, 6.0),
+  (4.0, 7.0),
+  (3.0, 5.0),
+  (6.0, 7.0),
+  (2.0, 5.0),
+  (5.0, 3.0),
+  (7.0, 4.0),
 ];
 const MODE_SECONDS: f64 = 4.5;
 const TRANSITION: f64 = 1.4;
@@ -28,7 +43,8 @@ impl Animation for Chladni {
     let omega = 1.6;
     let pulse = 0.78 + 0.22 * (omega * ctx.elapsed).cos().abs();
     let contrast = ctx.options.contrast;
-    let w = ctx.width; let h = ctx.height;
+    let w = ctx.width;
+    let h = ctx.height;
     let mut grid = vec![0.0_f64; w * h];
     let dw = (w.saturating_sub(1)).max(1) as f64;
     let dh = (h.saturating_sub(1)).max(1) as f64;

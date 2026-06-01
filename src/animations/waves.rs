@@ -1,18 +1,26 @@
-use std::f64::consts::PI;
 use crate::animation::{Animation, FrameContext};
 use crate::core::{clamp, render_field, smoothstep, FieldStyle};
+use std::f64::consts::PI;
 
 const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "ocean" };
 const TH: &[(f64, char)] = &[
-  (0.16, ' '), (0.24, '.'), (0.33, ':'), (0.44, '-'), (0.55, '='),
-  (0.68, '+'), (0.82, '*'), (0.94, '#'), (1.01, '%'),
+  (0.16, ' '),
+  (0.24, '.'),
+  (0.33, ':'),
+  (0.44, '-'),
+  (0.55, '='),
+  (0.68, '+'),
+  (0.82, '*'),
+  (0.94, '#'),
+  (1.01, '%'),
 ];
 
 pub struct Waves;
 
 impl Animation for Waves {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    let w = ctx.width; let h = ctx.height;
+    let w = ctx.width;
+    let h = ctx.height;
     let mut grid = vec![0.0_f64; w * h];
     let density = ctx.options.scale.max(0.45);
     let t = ctx.elapsed;

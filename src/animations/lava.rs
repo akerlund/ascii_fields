@@ -6,8 +6,15 @@ use crate::noise::fbm;
 
 const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "lava" };
 const TH: &[(f64, char)] = &[
-  (0.07, ' '), (0.16, '.'), (0.27, ':'), (0.39, '-'), (0.52, '='),
-  (0.65, '+'), (0.78, '*'), (0.90, '#'), (1.01, '@'),
+  (0.07, ' '),
+  (0.16, '.'),
+  (0.27, ':'),
+  (0.39, '-'),
+  (0.52, '='),
+  (0.65, '+'),
+  (0.78, '*'),
+  (0.90, '#'),
+  (1.01, '@'),
 ];
 // (bx, by, period, offset, radius)
 const BUBBLES: &[(f64, f64, f64, f64, f64)] = &[
@@ -21,8 +28,8 @@ const BUBBLES: &[(f64, f64, f64, f64, f64)] = &[
 struct BubbleState {
   bx_eff: f64,
   rise: f64,
-  inv_rx: f64,        // 1 / radius, hoisted out of the per-cell loop
-  inv_ry: f64,        // 1 / (radius * 0.55), same
+  inv_rx: f64, // 1 / radius, hoisted out of the per-cell loop
+  inv_ry: f64, // 1 / (radius * 0.55), same
   local: f64,
   bursting: bool,
   ring_r: f64,
@@ -35,25 +42,36 @@ pub struct Lava;
 
 impl Animation for Lava {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    let w = ctx.width; let h = ctx.height;
+    let w = ctx.width;
+    let h = ctx.height;
     let contrast = ctx.options.contrast;
-    let bubble_state: Vec<BubbleState> = BUBBLES.iter().map(|&(bx, by, period, offset, radius)| {
-      let local = ((ctx.elapsed / period + offset) % 1.0 + 1.0) % 1.0;
-      let rise = by - local * 0.42;
-      let wobble = 0.035 * (ctx.elapsed * 1.3 + offset * 9.0).sin();
-      let bx_eff = bx + wobble;
-      let bursting = local > 0.78;
-      let burst = if bursting { (local - 0.78) / 0.22 } else { 0.0 };
-      let ring_r = if bursting { 0.45 + burst * 2.1 } else { 0.0 };
-      let ring_decay = if bursting { (1.0 - burst).powf(1.5) } else { 0.0 };
-      let inv_rx = 1.0 / radius.max(0.001);
-      let inv_ry = inv_rx / 0.55;
-      BubbleState {
-        bx_eff, rise, inv_rx, inv_ry, local, bursting, ring_r, ring_decay,
-        spark_x_scale: 140.0,
-        spark_phase: offset * 140.0 * 0.01,
-      }
-    }).collect();
+    let bubble_state: Vec<BubbleState> = BUBBLES
+      .iter()
+      .map(|&(bx, by, period, offset, radius)| {
+        let local = ((ctx.elapsed / period + offset) % 1.0 + 1.0) % 1.0;
+        let rise = by - local * 0.42;
+        let wobble = 0.035 * (ctx.elapsed * 1.3 + offset * 9.0).sin();
+        let bx_eff = bx + wobble;
+        let bursting = local > 0.78;
+        let burst = if bursting { (local - 0.78) / 0.22 } else { 0.0 };
+        let ring_r = if bursting { 0.45 + burst * 2.1 } else { 0.0 };
+        let ring_decay = if bursting { (1.0 - burst).powf(1.5) } else { 0.0 };
+        let inv_rx = 1.0 / radius.max(0.001);
+        let inv_ry = inv_rx / 0.55;
+        BubbleState {
+          bx_eff,
+          rise,
+          inv_rx,
+          inv_ry,
+          local,
+          bursting,
+          ring_r,
+          ring_decay,
+          spark_x_scale: 140.0,
+          spark_phase: offset * 140.0 * 0.01,
+        }
+      })
+      .collect();
 
     // Frame-invariant terms hoisted out of the row/col loops.
     let drift = ctx.elapsed * 0.18;
@@ -63,12 +81,12 @@ impl Animation for Lava {
     let mut grid = vec![0.0_f64; w * h];
     let dw = (w.saturating_sub(1)).max(1) as f64;
     let dh = (h.saturating_sub(1)).max(1) as f64;
-    let bubble_state = &bubble_state;       // shared, captured by ref into closures
+    let bubble_state = &bubble_state; // shared, captured by ref into closures
     grid.par_chunks_mut(w).enumerate().for_each(|(row, row_slice)| {
       let v = row as f64 / dh;
       let one_minus_v = 1.0 - v;
       let sin_v7 = (v * 7.0).sin() * 1.6;
-      let v_drift = v * 2.4 - drift;             // fbm Y argument is row-only
+      let v_drift = v * 2.4 - drift; // fbm Y argument is row-only
       let base_heat = 0.16 + 0.22 * one_minus_v; // row-only part of `heat`
       for col in 0..w {
         let u = col as f64 / dw;

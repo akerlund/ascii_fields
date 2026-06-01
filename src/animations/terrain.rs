@@ -6,7 +6,9 @@ use super::field_common::{aspect, dims, pulse, FrameScratch, FIELD_TH, LINE_TH};
 
 const SEISMO_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "geologic" };
 #[derive(Default)]
-pub struct Seismograph { scratch: FrameScratch }
+pub struct Seismograph {
+  scratch: FrameScratch,
+}
 impl Animation for Seismograph {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
@@ -41,7 +43,9 @@ impl Animation for Seismograph {
 
 const CAUSTICS_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "bathymetry" };
 #[derive(Default)]
-pub struct Caustics { scratch: FrameScratch }
+pub struct Caustics {
+  scratch: FrameScratch,
+}
 impl Animation for Caustics {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
@@ -65,7 +69,9 @@ impl Animation for Caustics {
 
 const DUNES_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "dusk" };
 #[derive(Default)]
-pub struct Dunes { scratch: FrameScratch }
+pub struct Dunes {
+  scratch: FrameScratch,
+}
 impl Animation for Dunes {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
@@ -77,7 +83,9 @@ impl Animation for Dunes {
       for col in 0..w {
         let u = col as f64 / dw;
         let slope = v + 0.08 * (u * 5.0 + t).sin();
-        let ripples = ((u * 34.0 + slope * 14.0 - t * 5.0 + fbm_seeded(u * 4.0, v * 4.0, 3, 23) * 3.0).sin() * 0.5 + 0.5).powf(3.0);
+        let ripples =
+          ((u * 34.0 + slope * 14.0 - t * 5.0 + fbm_seeded(u * 4.0, v * 4.0, 3, 23) * 3.0).sin() * 0.5 + 0.5)
+            .powf(3.0);
         let ridge = pulse(ripples - 0.92, 0.010);
         let shade = 0.28 + 0.45 * v + 0.35 * ridge;
         grid[base + col] = clamp(shade * ctx.options.contrast);
@@ -89,7 +97,9 @@ impl Animation for Dunes {
 
 const TOPO_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "geologic" };
 #[derive(Default)]
-pub struct Topography { scratch: FrameScratch }
+pub struct Topography {
+  scratch: FrameScratch,
+}
 impl Animation for Topography {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
@@ -102,7 +112,8 @@ impl Animation for Topography {
         let u = col as f64 / dw;
         let elev = fbm_seeded(u * 4.2 + t, v * 4.2 - t * 0.5, 5, 771);
         let contour = pulse(((elev * 15.0).fract() - 0.5).abs(), 0.0025);
-        let river = pulse(elev - (0.43 + 0.04 * (u * 8.0 + t * 4.0).sin()), 0.0018) * (0.6 + 0.4 * (v * 10.0).sin().abs());
+        let river = pulse(elev - (0.43 + 0.04 * (u * 8.0 + t * 4.0).sin()), 0.0018)
+          * (0.6 + 0.4 * (v * 10.0).sin().abs());
         grid[base + col] = clamp((contour * 0.85 + river * 0.75 + elev * 0.20) * ctx.options.contrast);
       }
     }

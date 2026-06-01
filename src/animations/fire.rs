@@ -4,15 +4,23 @@ use crate::noise::fbm;
 
 const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "fire" };
 const TH: &[(f64, char)] = &[
-  (0.10, ' '), (0.20, '.'), (0.32, ':'), (0.44, '-'), (0.56, '='),
-  (0.68, '+'), (0.80, '*'), (0.90, '#'), (1.01, '@'),
+  (0.10, ' '),
+  (0.20, '.'),
+  (0.32, ':'),
+  (0.44, '-'),
+  (0.56, '='),
+  (0.68, '+'),
+  (0.80, '*'),
+  (0.90, '#'),
+  (1.01, '@'),
 ];
 
 pub struct Fire;
 
 impl Animation for Fire {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    let w = ctx.width; let h = ctx.height;
+    let w = ctx.width;
+    let h = ctx.height;
     let contrast = ctx.options.contrast;
     let mut grid = vec![0.0_f64; w * h];
     let dw = (w.saturating_sub(1)).max(1) as f64;

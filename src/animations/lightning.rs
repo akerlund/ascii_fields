@@ -1,13 +1,20 @@
-use rand::{Rng, SeedableRng};
-use rand_pcg::Pcg32;
 use crate::animation::{Animation, FrameContext};
 use crate::core::{clamp, render_field, FieldStyle};
 use crate::noise::fbm;
+use rand::{Rng, SeedableRng};
+use rand_pcg::Pcg32;
 
 const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "ice" };
 const TH: &[(f64, char)] = &[
-  (0.08, ' '), (0.18, '.'), (0.30, ':'), (0.42, '-'), (0.54, '='),
-  (0.66, '+'), (0.78, '*'), (0.90, '#'), (1.01, '@'),
+  (0.08, ' '),
+  (0.18, '.'),
+  (0.30, ':'),
+  (0.42, '-'),
+  (0.54, '='),
+  (0.66, '+'),
+  (0.78, '*'),
+  (0.90, '#'),
+  (1.01, '@'),
 ];
 const STRIKE_PERIOD: f64 = 2.6;
 const STRIKE_DURATION: f64 = 0.55;
@@ -15,9 +22,14 @@ const STRIKE_DURATION: f64 = 0.55;
 pub struct Lightning {
   strike_idx: Option<i64>,
   centers: Vec<Vec<f64>>,
-  w: usize, h: usize,
+  w: usize,
+  h: usize,
 }
-impl Default for Lightning { fn default() -> Self { Self { strike_idx: None, centers: Vec::new(), w: 0, h: 0 } } }
+impl Default for Lightning {
+  fn default() -> Self {
+    Self { strike_idx: None, centers: Vec::new(), w: 0, h: 0 }
+  }
+}
 
 impl Lightning {
   fn build_bolt(&mut self, seed: i64, width: usize, height: usize) {
@@ -27,7 +39,9 @@ impl Lightning {
     let mut main = Vec::with_capacity(height);
     for row in 0..height {
       x += rng.gen_range(-1.6..1.6);
-      if rng.gen::<f64>() < 0.12 { x += rng.gen_range(-4.0..4.0); }
+      if rng.gen::<f64>() < 0.12 {
+        x += rng.gen_range(-4.0..4.0);
+      }
       x = x.clamp(0.0, width as f64 - 1.0);
       main.push(x);
       centers[row].push(x);
@@ -40,7 +54,9 @@ impl Lightning {
       let length = rng.gen_range(3..(4_usize.max(height / 3) + 1));
       for k in 0..length {
         let row = start + k;
-        if row >= height { break; }
+        if row >= height {
+          break;
+        }
         bx += direction * rng.gen_range(0.8..2.2) + rng.gen_range(-0.6..0.6);
         bx = bx.clamp(0.0, width as f64 - 1.0);
         centers[row].push(bx);
@@ -49,7 +65,9 @@ impl Lightning {
     self.centers = centers;
   }
   fn intensity(local: f64) -> f64 {
-    if local > STRIKE_DURATION { return 0.0; }
+    if local > STRIKE_DURATION {
+      return 0.0;
+    }
     let mut f = (-local / 0.10).exp();
     f += 0.6 * (-((local - 0.16).powi(2)) / 0.0015).exp();
     f += 0.4 * (-((local - 0.30).powi(2)) / 0.002).exp();
@@ -63,7 +81,8 @@ impl Animation for Lightning {
     let local = ctx.elapsed - idx as f64 * STRIKE_PERIOD;
     if self.strike_idx != Some(idx) || ctx.width != self.w || ctx.height != self.h {
       self.strike_idx = Some(idx);
-      self.w = ctx.width; self.h = ctx.height;
+      self.w = ctx.width;
+      self.h = ctx.height;
       self.build_bolt(idx, ctx.width, ctx.height);
     }
     let intensity = Self::intensity(local);
@@ -86,7 +105,9 @@ impl Animation for Lightning {
           for &cxr in centers {
             let dx = col as f64 - cxr;
             let g = (-(dx * dx) / 1.6).exp();
-            if g > glow { glow = g; }
+            if g > glow {
+              glow = g;
+            }
           }
           level += glow * (0.4 + 0.6 * intensity) * 1.4;
         }

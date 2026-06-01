@@ -4,8 +4,15 @@ use crate::noise::star_noise;
 
 const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "amber" };
 const TH: &[(f64, char)] = &[
-  (0.10, ' '), (0.18, '.'), (0.28, ':'), (0.39, '-'), (0.51, '='),
-  (0.64, '+'), (0.78, '*'), (0.91, '#'), (1.01, '%'),
+  (0.10, ' '),
+  (0.18, '.'),
+  (0.28, ':'),
+  (0.39, '-'),
+  (0.51, '='),
+  (0.64, '+'),
+  (0.78, '*'),
+  (0.91, '#'),
+  (1.01, '%'),
 ];
 
 #[inline]
@@ -22,7 +29,8 @@ pub struct BlackHole;
 
 impl Animation for BlackHole {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    let w = ctx.width; let h = ctx.height;
+    let w = ctx.width;
+    let h = ctx.height;
     let mut grid = vec![0.0_f64; w * h];
     let radius = (w.min(h * 2) as f64 * 0.44).max(1.0);
     let density = ctx.options.scale.max(0.45);

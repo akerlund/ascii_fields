@@ -14,38 +14,50 @@ use crate::runner::{self, RunConfig};
 use crate::settings;
 
 #[derive(Parser, Debug)]
-#[command(
-  name = "ascii-fields",
-  about = "Procedural ASCII animations for the terminal.",
-  version
-)]
+#[command(name = "ascii-fields", about = "Procedural ASCII animations for the terminal.", version)]
 pub struct Cli {
   /// Animation mode (use --list to see what's available).
   /// Use 'random' or 'cycle' for a playlist.
   pub mode: Option<String>,
 
-  #[arg(long)] pub list: bool,
+  #[arg(long)]
+  pub list: bool,
   /// Restrict --list, random, cycle, and scene switching to saved favorites.
-  #[arg(long)] pub favorites: bool,
-  #[arg(long)] pub width: Option<usize>,
-  #[arg(long)] pub height: Option<usize>,
-  #[arg(long, default_value_t = 24.0)] pub fps: f64,
+  #[arg(long)]
+  pub favorites: bool,
+  #[arg(long)]
+  pub width: Option<usize>,
+  #[arg(long)]
+  pub height: Option<usize>,
+  #[arg(long, default_value_t = 24.0)]
+  pub fps: f64,
   /// Per-scene duration for interactive playlists; total clip length for exports.
-  #[arg(long, default_value_t = 0.0)] pub seconds: f64,
-  #[arg(long)] pub scale: Option<f64>,
-  #[arg(long)] pub contrast: Option<f64>,
-  #[arg(long)] pub brightness: Option<f64>,
-  #[arg(long)] pub speed: Option<f64>,
-  #[arg(long)] pub theme: Option<String>,
-  #[arg(long)] pub no_status: bool,
-  #[arg(long, value_name = "scene|clean|soft|dense|minimal|blocks")] pub charset: Option<String>,
-  #[arg(long, default_value_t = false)] pub scroll: bool,
+  #[arg(long, default_value_t = 0.0)]
+  pub seconds: f64,
+  #[arg(long)]
+  pub scale: Option<f64>,
+  #[arg(long)]
+  pub contrast: Option<f64>,
+  #[arg(long)]
+  pub brightness: Option<f64>,
+  #[arg(long)]
+  pub speed: Option<f64>,
+  #[arg(long)]
+  pub theme: Option<String>,
+  #[arg(long)]
+  pub no_status: bool,
+  #[arg(long, value_name = "scene|clean|soft|dense|minimal|blocks")]
+  pub charset: Option<String>,
+  #[arg(long, default_value_t = false)]
+  pub scroll: bool,
 
   /// Export an animated GIF clip instead of running interactively.
-  #[arg(long, value_name = "PATH")] pub export_gif: Option<PathBuf>,
+  #[arg(long, value_name = "PATH")]
+  pub export_gif: Option<PathBuf>,
 
   /// Export an asciinema v2 .cast clip instead of running interactively.
-  #[arg(long, value_name = "PATH")] pub export_asciinema: Option<PathBuf>,
+  #[arg(long, value_name = "PATH")]
+  pub export_asciinema: Option<PathBuf>,
 }
 
 pub fn run() -> std::io::Result<()> {
@@ -59,7 +71,11 @@ pub fn run() -> std::io::Result<()> {
   }
 
   let name = cli.mode.clone().unwrap_or_else(|| {
-    if cli.favorites { "random".to_string() } else { "wave-plane".to_string() }
+    if cli.favorites {
+      "random".to_string()
+    } else {
+      "wave-plane".to_string()
+    }
   });
   let favorite_filter = if cli.favorites {
     if favorites.is_empty() {
@@ -81,11 +97,21 @@ pub fn run() -> std::io::Result<()> {
 
   let make_options = |base_name: &str| -> RenderOptions {
     let mut opt = make_saved_options(base_name);
-    if let Some(v) = cli.scale { opt.scale = v; }
-    if let Some(v) = cli.contrast { opt.contrast = v; }
-    if let Some(v) = cli.brightness { opt.brightness = v; }
-    if let Some(v) = cli.speed { opt.speed = v; }
-    if let Some(ref v) = cli.theme { opt.theme = v.clone(); }
+    if let Some(v) = cli.scale {
+      opt.scale = v;
+    }
+    if let Some(v) = cli.contrast {
+      opt.contrast = v;
+    }
+    if let Some(v) = cli.brightness {
+      opt.brightness = v;
+    }
+    if let Some(v) = cli.speed {
+      opt.speed = v;
+    }
+    if let Some(ref v) = cli.theme {
+      opt.theme = v.clone();
+    }
     opt.scroll = cli.scroll;
     if let Some(ref v) = cli.charset {
       opt.charset = normalize_charset(v);
@@ -94,48 +120,48 @@ pub fn run() -> std::io::Result<()> {
     opt
   };
 
-  let saved_mode_options: BTreeMap<String, RenderOptions> = registry::MODES
-    .iter()
-    .map(|m| (m.name.to_string(), make_saved_options(m.name)))
-    .collect();
-  let mode_options: BTreeMap<String, RenderOptions> = registry::MODES
-    .iter()
-    .map(|m| (m.name.to_string(), make_options(m.name)))
-    .collect();
+  let saved_mode_options: BTreeMap<String, RenderOptions> =
+    registry::MODES.iter().map(|m| (m.name.to_string(), make_saved_options(m.name))).collect();
+  let mode_options: BTreeMap<String, RenderOptions> =
+    registry::MODES.iter().map(|m| (m.name.to_string(), make_options(m.name))).collect();
 
   let playlist = make_playlist(&name, favorite_filter)?;
-  let initial_options = mode_options
-    .get(playlist.name())
-    .cloned()
-    .unwrap_or_else(|| make_options(playlist.name()));
+  let initial_options =
+    mode_options.get(playlist.name()).cloned().unwrap_or_else(|| make_options(playlist.name()));
 
   if let Some(path) = cli.export_gif.as_ref() {
     let playlist = make_playlist(&name, favorite_filter)?;
-    export::export(playlist, ExportConfig {
-      format: ExportFormat::Gif,
-      path: path.clone(),
-      fps: cli.fps,
-      seconds: export_seconds(cli.seconds),
-      width: cli.width.unwrap_or(100),
-      height: cli.height.unwrap_or(40),
-      options: initial_options.clone(),
-      mode_options: mode_options.clone(),
-    })?;
+    export::export(
+      playlist,
+      ExportConfig {
+        format: ExportFormat::Gif,
+        path: path.clone(),
+        fps: cli.fps,
+        seconds: export_seconds(cli.seconds),
+        width: cli.width.unwrap_or(100),
+        height: cli.height.unwrap_or(40),
+        options: initial_options.clone(),
+        mode_options: mode_options.clone(),
+      },
+    )?;
     println!("wrote {}", path.display());
   }
 
   if let Some(path) = cli.export_asciinema.as_ref() {
     let playlist = make_playlist(&name, favorite_filter)?;
-    export::export(playlist, ExportConfig {
-      format: ExportFormat::Asciinema,
-      path: path.clone(),
-      fps: cli.fps,
-      seconds: export_seconds(cli.seconds),
-      width: cli.width.unwrap_or(100),
-      height: cli.height.unwrap_or(40),
-      options: initial_options.clone(),
-      mode_options: mode_options.clone(),
-    })?;
+    export::export(
+      playlist,
+      ExportConfig {
+        format: ExportFormat::Asciinema,
+        path: path.clone(),
+        fps: cli.fps,
+        seconds: export_seconds(cli.seconds),
+        width: cli.width.unwrap_or(100),
+        height: cli.height.unwrap_or(40),
+        options: initial_options.clone(),
+        mode_options: mode_options.clone(),
+      },
+    )?;
     println!("wrote {}", path.display());
   }
 
@@ -145,18 +171,21 @@ pub fn run() -> std::io::Result<()> {
 
   let (playlist, run_seconds) = make_interactive_playlist(&name, cli.seconds, favorite_filter)?;
 
-  runner::run(playlist, RunConfig {
-    fps: cli.fps,
-    seconds: run_seconds,
-    width: cli.width,
-    height: cli.height,
-    options: initial_options,
-    mode_options,
-    saved_mode_options,
-    favorites,
-    no_status: cli.no_status,
-    settings_path: settings::DEFAULT_PATH.to_string(),
-  })
+  runner::run(
+    playlist,
+    RunConfig {
+      fps: cli.fps,
+      seconds: run_seconds,
+      width: cli.width,
+      height: cli.height,
+      options: initial_options,
+      mode_options,
+      saved_mode_options,
+      favorites,
+      no_status: cli.no_status,
+      settings_path: settings::DEFAULT_PATH.to_string(),
+    },
+  )
 }
 
 fn make_playlist(name: &str, favorite_filter: Option<&[String]>) -> std::io::Result<Playlist> {
@@ -190,7 +219,11 @@ fn make_playlist(name: &str, favorite_filter: Option<&[String]>) -> std::io::Res
   Ok(playlist)
 }
 
-fn make_interactive_playlist(name: &str, seconds: f64, favorite_filter: Option<&[String]>) -> std::io::Result<(Playlist, f64)> {
+fn make_interactive_playlist(
+  name: &str,
+  seconds: f64,
+  favorite_filter: Option<&[String]>,
+) -> std::io::Result<(Playlist, f64)> {
   let clip = if seconds > 0.0 { seconds } else { crate::playlist::CLIP_SECONDS };
   let result = match name {
     "random" => match favorite_filter {
@@ -218,7 +251,11 @@ mod tests {
 }
 
 fn export_seconds(seconds: f64) -> f64 {
-  if seconds > 0.0 { seconds } else { 5.0 }
+  if seconds > 0.0 {
+    seconds
+  } else {
+    5.0
+  }
 }
 
 fn print_mode_list(favorites_only: bool, favorites: &[String]) {

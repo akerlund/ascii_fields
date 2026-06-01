@@ -7,7 +7,8 @@ pub struct Plasma;
 
 impl Animation for Plasma {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    let w = ctx.width; let h = ctx.height;
+    let w = ctx.width;
+    let h = ctx.height;
     let mut grid = vec![0.0_f64; w * h];
     let t = ctx.elapsed;
     let freq = ctx.options.scale.max(0.4);
@@ -26,7 +27,8 @@ impl Animation for Plasma {
         let mut value = (x + t).sin();
         value += (y * 1.3 - t * 0.8).sin();
         value += ((x + y) * 0.7 + t * 0.5).sin();
-        let dx = u - cx; let dy = v - cy;
+        let dx = u - cx;
+        let dy = v - cy;
         let d = (dx * dx + dy * dy).sqrt() * 10.0 * freq;
         value += (d - t * 1.6).sin();
         let level = 0.5 + 0.5 * value / 4.0;

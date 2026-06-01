@@ -1,11 +1,18 @@
+use super::fractal_base::{axes, iteration_cap, mandelbrot_cell};
 use crate::animation::{Animation, FrameContext};
 use crate::core::{clamp, render_field, FieldStyle};
-use super::fractal_base::{axes, iteration_cap, mandelbrot_cell};
 
 const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "fire" };
 const TH: &[(f64, char)] = &[
-  (0.04, ' '), (0.13, '.'), (0.25, ':'), (0.38, '-'), (0.52, '='),
-  (0.66, '+'), (0.78, '*'), (0.90, '#'), (1.01, '@'),
+  (0.04, ' '),
+  (0.13, '.'),
+  (0.25, ':'),
+  (0.38, '-'),
+  (0.52, '='),
+  (0.66, '+'),
+  (0.78, '*'),
+  (0.90, '#'),
+  (1.01, '@'),
 ];
 const CYCLE_SECONDS: f64 = 28.0;
 const DEPTH: f64 = 15.0;

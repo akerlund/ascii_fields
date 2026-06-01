@@ -16,7 +16,9 @@ pub fn axes(width: usize, height: usize, cx: f64, cy: f64, scale: f64) -> (Vec<f
 #[inline]
 pub fn smooth(i: usize, zr2: f64, zi2: f64, max_iter: usize) -> f64 {
   let mag2 = zr2 + zi2;
-  if mag2 <= 1.0 { return i as f64 / max_iter as f64; }
+  if mag2 <= 1.0 {
+    return i as f64 / max_iter as f64;
+  }
   let nu = i as f64 + 1.0 - (0.5 * mag2.ln()).ln() / LN_2;
   (nu / max_iter as f64).clamp(0.0, 1.0)
 }
@@ -27,26 +29,38 @@ pub fn iteration_cap(width: usize, height: usize, lo: usize, hi: usize) -> usize
 }
 
 pub fn mandelbrot_cell(cr: f64, ci: f64, max_iter: usize, ship: bool) -> f64 {
-  let mut zr = 0.0_f64; let mut zi = 0.0_f64;
+  let mut zr = 0.0_f64;
+  let mut zi = 0.0_f64;
   for i in 0..max_iter {
     let (mut sr, mut si) = (zr, zi);
-    if ship { sr = sr.abs(); si = si.abs(); }
-    let zr2 = sr * sr; let zi2 = si * si;
-    if zr2 + zi2 > 16.0 { return smooth(i, zr2, zi2, max_iter); }
+    if ship {
+      sr = sr.abs();
+      si = si.abs();
+    }
+    let zr2 = sr * sr;
+    let zi2 = si * si;
+    if zr2 + zi2 > 16.0 {
+      return smooth(i, zr2, zi2, max_iter);
+    }
     let nzi = 2.0 * sr * si + ci;
     let nzr = zr2 - zi2 + cr;
-    zr = nzr; zi = nzi;
+    zr = nzr;
+    zi = nzi;
   }
   0.0
 }
 
 pub fn julia_cell(mut zr: f64, mut zi: f64, cr: f64, ci: f64, max_iter: usize) -> f64 {
   for i in 0..max_iter {
-    let zr2 = zr * zr; let zi2 = zi * zi;
-    if zr2 + zi2 > 16.0 { return smooth(i, zr2, zi2, max_iter); }
+    let zr2 = zr * zr;
+    let zi2 = zi * zi;
+    if zr2 + zi2 > 16.0 {
+      return smooth(i, zr2, zi2, max_iter);
+    }
     let nzi = 2.0 * zr * zi + ci;
     let nzr = zr2 - zi2 + cr;
-    zr = nzr; zi = nzi;
+    zr = nzr;
+    zi = nzi;
   }
   0.0
 }

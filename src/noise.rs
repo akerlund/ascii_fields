@@ -3,8 +3,8 @@
 
 #[inline]
 pub fn hash01(ix: i64, iy: i64, seed: i64) -> f64 {
-  let mut v = (ix.wrapping_mul(374761393) + iy.wrapping_mul(668265263)
-               + seed.wrapping_mul(1442695040888963407)) as u64;
+  let mut v =
+    (ix.wrapping_mul(374761393) + iy.wrapping_mul(668265263) + seed.wrapping_mul(1442695040888963407)) as u64;
   v &= 0xFFFFFFFF;
   v = (v ^ (v >> 13)).wrapping_mul(1274126177);
   v &= 0xFFFFFFFF;
@@ -44,7 +44,11 @@ pub fn fbm_seeded(x: f64, y: f64, octaves: u32, seed: i64) -> f64 {
     amp *= 0.5;
     freq *= 2.0;
   }
-  if norm > 0.0 { total / norm } else { 0.0 }
+  if norm > 0.0 {
+    total / norm
+  } else {
+    0.0
+  }
 }
 
 /// Cheap 2D star hash matching Python's `star_noise`.

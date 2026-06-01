@@ -6,15 +6,23 @@ use crate::noise::fbm;
 
 const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "ice" };
 const TH: &[(f64, char)] = &[
-  (0.18, ' '), (0.30, '.'), (0.42, ':'), (0.52, '-'), (0.62, '='),
-  (0.72, '+'), (0.82, '*'), (0.92, '#'), (1.01, '@'),
+  (0.18, ' '),
+  (0.30, '.'),
+  (0.42, ':'),
+  (0.52, '-'),
+  (0.62, '='),
+  (0.72, '+'),
+  (0.82, '*'),
+  (0.92, '#'),
+  (1.01, '@'),
 ];
 
 pub struct Clouds;
 
 impl Animation for Clouds {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    let w = ctx.width; let h = ctx.height;
+    let w = ctx.width;
+    let h = ctx.height;
     let drift = ctx.elapsed * 0.06;
     let freq = 3.2 * ctx.options.scale.max(0.4);
     let contrast = ctx.options.contrast;

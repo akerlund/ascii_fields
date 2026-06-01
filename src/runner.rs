@@ -12,8 +12,8 @@ use crossterm::{
   event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers},
   execute, queue,
   terminal::{
-    self, disable_raw_mode, enable_raw_mode, Clear, ClearType,
-    DisableLineWrap, EnableLineWrap, EnterAlternateScreen, LeaveAlternateScreen,
+    self, disable_raw_mode, enable_raw_mode, Clear, ClearType, DisableLineWrap, EnableLineWrap,
+    EnterAlternateScreen, LeaveAlternateScreen,
   },
 };
 
@@ -105,7 +105,9 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
       // input
       while event::poll(Duration::ZERO)? {
         if let Event::Key(KeyEvent { code, modifiers, kind, .. }) = event::read()? {
-          if kind == KeyEventKind::Release { continue; }
+          if kind == KeyEventKind::Release {
+            continue;
+          }
           match (code, modifiers) {
             (KeyCode::Char('q'), _) | (KeyCode::Esc, _) => return Ok(()),
             (KeyCode::Char('c'), m) if m.contains(KeyModifiers::CONTROL) => return Ok(()),
@@ -177,10 +179,8 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
       let name = playlist.name();
       if name != current_name {
         current_name = name.to_string();
-        active.options = mode_options
-          .get(current_name.as_str())
-          .cloned()
-          .unwrap_or_else(|| cfg.options.clone());
+        active.options =
+          mode_options.get(current_name.as_str()).cloned().unwrap_or_else(|| cfg.options.clone());
         enforce_charset_support(&current_name, &mut active.options);
         last_dims = (0, 0);
       }
@@ -251,9 +251,8 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
         } else {
           "play".to_string()
         };
-        let shown_state = if !save_msg.is_empty() && Instant::now() < save_until {
-          save_msg.clone()
-        } else { state };
+        let shown_state =
+          if !save_msg.is_empty() && Instant::now() < save_until { save_msg.clone() } else { state };
         let line1 = format!(
           "{}|{}|{}|{}|{}|{}|{}",
           cell(&format!(" {}", playlist.title()), 22),
@@ -267,31 +266,31 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
         let line2 = format!(
           "{}|{}|{}|{}|{}|{}|{}",
           cell(" [n/p]switch", 22),
-          cell(" [t/T]",       20),
-          cell(" [1/2]",       15),
-          cell(" [3/4]",       17),
-          cell(" [5/6]",       14),
-          cell(" [c]",          18),
+          cell(" [t/T]", 20),
+          cell(" [1/2]", 15),
+          cell(" [3/4]", 17),
+          cell(" [5/6]", 14),
+          cell(" [c]", 18),
           " [+/-]",
         );
         let line3 = format!(
           "{}|{}|{}|{}|{}|{}|{}",
           cell(" [i] Menu [q]quit", 22),
-          cell(" [s]save",          20),
-          cell(" [f] Favorite",     15),
-          cell("",                  17),
-          cell("",                  14),
-          cell("",                  18),
+          cell(" [s]save", 20),
+          cell(" [f] Favorite", 15),
+          cell("", 17),
+          cell("", 14),
+          cell("", 18),
           " [_]pause",
         );
         let line4 = format!(
           "{}|{}|{}|{}|{}|{}|{}",
           cell(&format!(" cpu = {:>5.1}%", cpu_pct), 22),
           cell(&format!(" fps = {:>2.0}/{:<2.0}", fps_actual, cfg.fps), 20),
-          cell("",                  15),
-          cell("",                  17),
-          cell("",                  14),
-          cell("",                  18),
+          cell("", 15),
+          cell("", 17),
+          cell("", 14),
+          cell("", 18),
           "",
         );
 
@@ -305,10 +304,14 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
            \x1b[{};1H\x1b[48;2;0;0;0m{}\x1b[0m\
            \x1b[{};1H\x1b[48;2;0;0;0m{}\x1b[0m\
            \x1b[{};1H\x1b[48;2;0;0;0m{}\x1b[0m",
-          row1 + 1, fit(&line1, cw),
-          row2 + 1, fit(&line2, cw),
-          row3 + 1, fit(&line3, cw),
-          row4 + 1, fit(&line4, cw),
+          row1 + 1,
+          fit(&line1, cw),
+          row2 + 1,
+          fit(&line2, cw),
+          row3 + 1,
+          fit(&line3, cw),
+          row4 + 1,
+          fit(&line4, cw),
         );
       }
 
@@ -351,7 +354,9 @@ fn fit(text: &str, width: usize) -> String {
   } else {
     let mut s = String::with_capacity(width);
     s.push_str(text);
-    for _ in 0..(width - n) { s.push(' '); }
+    for _ in 0..(width - n) {
+      s.push(' ');
+    }
     s
   }
 }
@@ -365,7 +370,9 @@ fn cell(content: &str, width: usize) -> String {
   } else {
     let mut s = String::with_capacity(width);
     s.push_str(content);
-    for _ in 0..(width - n) { s.push(' '); }
+    for _ in 0..(width - n) {
+      s.push(' ');
+    }
     s
   }
 }

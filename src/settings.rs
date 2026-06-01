@@ -24,12 +24,18 @@ struct SavedFile {
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct SavedMode {
-  #[serde(default)] pub theme: Option<String>,
-  #[serde(default)] pub scale: Option<f64>,
-  #[serde(default)] pub contrast: Option<f64>,
-  #[serde(default)] pub brightness: Option<f64>,
-  #[serde(default)] pub speed: Option<f64>,
-  #[serde(default)] pub charset: Option<String>,
+  #[serde(default)]
+  pub theme: Option<String>,
+  #[serde(default)]
+  pub scale: Option<f64>,
+  #[serde(default)]
+  pub contrast: Option<f64>,
+  #[serde(default)]
+  pub brightness: Option<f64>,
+  #[serde(default)]
+  pub speed: Option<f64>,
+  #[serde(default)]
+  pub charset: Option<String>,
 }
 
 impl SavedMode {
@@ -45,17 +51,31 @@ impl SavedMode {
   }
 
   pub fn apply(&self, options: &mut RenderOptions) {
-    if let Some(ref v) = self.theme { options.theme = v.clone(); }
-    if let Some(v) = self.scale { options.scale = v; }
-    if let Some(v) = self.contrast { options.contrast = v; }
-    if let Some(v) = self.brightness { options.brightness = v; }
-    if let Some(v) = self.speed { options.speed = v; }
-    if let Some(ref v) = self.charset { options.charset = normalize_charset(v); }
+    if let Some(ref v) = self.theme {
+      options.theme = v.clone();
+    }
+    if let Some(v) = self.scale {
+      options.scale = v;
+    }
+    if let Some(v) = self.contrast {
+      options.contrast = v;
+    }
+    if let Some(v) = self.brightness {
+      options.brightness = v;
+    }
+    if let Some(v) = self.speed {
+      options.speed = v;
+    }
+    if let Some(ref v) = self.charset {
+      options.charset = normalize_charset(v);
+    }
   }
 }
 
 pub fn load(path: &str) -> SavedConfig {
-  if !Path::new(path).exists() { return SavedConfig::default(); }
+  if !Path::new(path).exists() {
+    return SavedConfig::default();
+  }
   let data = match std::fs::read_to_string(path) {
     Ok(s) => s,
     Err(_) => return SavedConfig::default(),
@@ -63,11 +83,13 @@ pub fn load(path: &str) -> SavedConfig {
   parse(&data)
 }
 
-pub fn save(path: &str, options_by_mode: &BTreeMap<String, RenderOptions>, favorites: &[String]) -> std::io::Result<()> {
-  let modes: BTreeMap<String, SavedMode> = options_by_mode
-    .iter()
-    .map(|(k, v)| (k.clone(), SavedMode::from(v)))
-    .collect();
+pub fn save(
+  path: &str,
+  options_by_mode: &BTreeMap<String, RenderOptions>,
+  favorites: &[String],
+) -> std::io::Result<()> {
+  let modes: BTreeMap<String, SavedMode> =
+    options_by_mode.iter().map(|(k, v)| (k.clone(), SavedMode::from(v))).collect();
   let data = SavedFile { favorites: normalize_favorites(favorites.to_vec()), modes };
   let json = serde_json::to_string_pretty(&data)
     .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
@@ -81,14 +103,9 @@ fn parse(data: &str) -> SavedConfig {
   };
 
   if value.get("modes").is_some() || value.get("favorites").is_some() {
-    let modes = value
-      .get("modes")
-      .and_then(|v| serde_json::from_value(v.clone()).ok())
-      .unwrap_or_default();
-    let favorites = value
-      .get("favorites")
-      .and_then(|v| serde_json::from_value(v.clone()).ok())
-      .unwrap_or_default();
+    let modes = value.get("modes").and_then(|v| serde_json::from_value(v.clone()).ok()).unwrap_or_default();
+    let favorites =
+      value.get("favorites").and_then(|v| serde_json::from_value(v.clone()).ok()).unwrap_or_default();
     return SavedConfig { favorites: normalize_favorites(favorites), modes };
   }
 
@@ -123,10 +140,12 @@ mod tests {
 
   #[test]
   fn reads_structured_file_with_deduped_favorites() {
-    let saved = parse(r#"{
+    let saved = parse(
+      r#"{
       "favorites": ["plasma", "caustics", "plasma", ""],
       "modes": {"caustics":{"theme":"bathymetry","charset":"blocks"}}
-    }"#);
+    }"#,
+    );
     assert_eq!(saved.favorites, vec!["plasma", "caustics"]);
     assert_eq!(saved.modes["caustics"].theme.as_deref(), Some("bathymetry"));
     assert_eq!(saved.modes["caustics"].charset.as_deref(), Some("blocks"));

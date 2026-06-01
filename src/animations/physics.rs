@@ -8,7 +8,9 @@ use super::field_common::{aspect, dims, pulse, FrameScratch, FIELD_TH, LINE_TH};
 
 const CONVECTION_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "infrared" };
 #[derive(Default)]
-pub struct Convection { scratch: FrameScratch }
+pub struct Convection {
+  scratch: FrameScratch,
+}
 impl Animation for Convection {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
@@ -36,7 +38,9 @@ impl Animation for Convection {
 
 const SCHLIEREN_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "xray" };
 #[derive(Default)]
-pub struct Schlieren { scratch: FrameScratch }
+pub struct Schlieren {
+  scratch: FrameScratch,
+}
 impl Animation for Schlieren {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
@@ -79,7 +83,9 @@ impl Animation for Schlieren {
 
 const FERRO_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "copper" };
 #[derive(Default)]
-pub struct Ferrofluid { scratch: FrameScratch }
+pub struct Ferrofluid {
+  scratch: FrameScratch,
+}
 impl Animation for Ferrofluid {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
@@ -114,7 +120,9 @@ impl Animation for Ferrofluid {
 
 const RECONNECT_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "toxic" };
 #[derive(Default)]
-pub struct Reconnection { scratch: FrameScratch }
+pub struct Reconnection {
+  scratch: FrameScratch,
+}
 impl Animation for Reconnection {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);

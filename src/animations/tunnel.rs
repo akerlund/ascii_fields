@@ -6,15 +6,23 @@ use crate::noise::fbm;
 
 const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "nebula" };
 const TH: &[(f64, char)] = &[
-  (0.10, ' '), (0.20, '.'), (0.32, ':'), (0.44, '-'), (0.56, '='),
-  (0.68, '+'), (0.80, '*'), (0.90, '#'), (1.01, '@'),
+  (0.10, ' '),
+  (0.20, '.'),
+  (0.32, ':'),
+  (0.44, '-'),
+  (0.56, '='),
+  (0.68, '+'),
+  (0.80, '*'),
+  (0.90, '#'),
+  (1.01, '@'),
 ];
 
 pub struct Tunnel;
 
 impl Animation for Tunnel {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    let w = ctx.width; let h = ctx.height;
+    let w = ctx.width;
+    let h = ctx.height;
     let t = ctx.elapsed;
     let ax = w as f64 / (h as f64 * 2.0).max(1.0);
     let cx = 0.5 + 0.22 * (t * 0.6).sin();

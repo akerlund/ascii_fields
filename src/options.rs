@@ -1,9 +1,7 @@
 //! Per-mode render knobs. Mutable so the runner can tune them live from keys.
 
-pub const CHARSET_CYCLE: &[&str] = &[
-  "scene", "clean", "soft", "dense", "minimal",
-  "smooth", "sharp", "matrix", "braille", "blocks",
-];
+pub const CHARSET_CYCLE: &[&str] =
+  &["scene", "clean", "soft", "dense", "minimal", "smooth", "sharp", "matrix", "braille", "blocks"];
 
 pub fn normalize_charset(name: &str) -> String {
   if CHARSET_CYCLE.iter().any(|charset| *charset == name) {
