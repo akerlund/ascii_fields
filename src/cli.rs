@@ -30,7 +30,7 @@ pub struct Cli {
   #[arg(long)] pub width: Option<usize>,
   #[arg(long)] pub height: Option<usize>,
   #[arg(long, default_value_t = 24.0)] pub fps: f64,
-  /// Runtime limit for single interactive modes; per-scene duration for interactive playlists; total clip length for exports.
+  /// Per-scene duration for interactive playlists; total clip length for exports.
   #[arg(long, default_value_t = 0.0)] pub seconds: f64,
   #[arg(long)] pub scale: Option<f64>,
   #[arg(long)] pub contrast: Option<f64>,
@@ -189,9 +189,20 @@ fn make_interactive_playlist(name: &str, seconds: f64, favorite_filter: Option<&
       Some(names) => (Playlist::cycle_with_clip_from(clip, names).ok_or_else(no_favorites_error)?, 0.0),
       None => (Playlist::cycle_with_clip(clip), 0.0),
     },
-    _ => (make_playlist(name, favorite_filter)?, seconds),
+    _ => (make_playlist(name, favorite_filter)?, 0.0),
   };
   Ok(result)
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn single_interactive_modes_ignore_seconds() {
+    let (_, run_seconds) = make_interactive_playlist("plasma", 9.0, None).unwrap();
+    assert_eq!(run_seconds, 0.0);
+  }
 }
 
 fn export_seconds(seconds: f64) -> f64 {

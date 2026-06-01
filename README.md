@@ -36,10 +36,69 @@ Or build and run in one command:
 ```bash
 cargo run --release -- galaxy
 cargo run --release -- magnetic --theme scene
-cargo run --release -- plasma --seconds 5
+cargo run --release -- random --seconds 5
 ```
 
 `--release` matters. Debug builds are much slower for the per-cell math.
+
+## Options
+
+Common examples:
+
+```bash
+./target/release/ascii-fields galaxy --width 120 --height 36
+./target/release/ascii-fields waves --fps 18
+./target/release/ascii-fields flares --theme scene
+./target/release/ascii-fields black-hole --contrast 1.2
+./target/release/ascii-fields areas --scale 0.8
+./target/release/ascii-fields night-sky --brightness 1.3
+./target/release/ascii-fields wave-plane --charset dense
+```
+
+CLI options:
+
+| Name | Value | Description |
+| --- | --- | --- |
+| `--list` | | Print available modes and playlists, then exit |
+| `--favorites` | | Restrict listing, `random`, `cycle`, and scene switching to saved favorites |
+| `--width` | `<WIDTH>` | Render at this many terminal columns, capped by the current terminal size |
+| `--height` | `<HEIGHT>` | Render at this many terminal rows, with HUD rows reserved in interactive mode |
+| `--fps` | `<FPS>` | Desired frame rate; defaults to `24` |
+| `--seconds` | `<SECONDS>` | Per-scene duration for interactive playlists, or total duration for exports |
+| `--scale` | `<SCALE>` | Scene-specific scale or density multiplier |
+| `--contrast` | `<CONTRAST>` | Multiply contrast before mapping brightness to glyphs/colors |
+| `--brightness` | `<BRIGHTNESS>` | Multiply final brightness |
+| `--speed` | `<SPEED>` | Animation time multiplier |
+| `--theme` | `<THEME>` | Force a color theme, or use `scene` for each mode's default palette |
+| `--no-status` | | Start with the HUD hidden |
+| `--blocks` | | Render `wave-plane` as solid colored cells instead of text glyphs |
+| `--charset` | `<clean\|soft\|dense>` | Choose the `wave-plane` character ramp |
+| `--scroll` | | Add drifting sample motion to `wave-plane` |
+| `--export-gif` | `<PATH>` | Render an animated GIF and exit |
+| `--export-asciinema` | `<PATH>` | Render an asciinema v2 `.cast` file and exit |
+
+How `--seconds` works:
+
+| Run Type | Meaning |
+| --- | --- |
+| Interactive `random` / `cycle` | Time each scene stays active before advancing |
+| Export mode | Total exported clip duration |
+| Single interactive mode | Ignored; runs until `q` / `Esc` |
+
+```bash
+./target/release/ascii-fields random --seconds 4
+./target/release/ascii-fields cycle --seconds 15
+./target/release/ascii-fields plasma --seconds 5 --export-gif plasma.gif
+```
+
+Use `--favorites` to restrict mode listing and playlists to scenes you saved
+with `f`:
+
+```bash
+./target/release/ascii-fields --list --favorites
+./target/release/ascii-fields random --favorites
+./target/release/ascii-fields cycle --favorites --seconds 6
+```
 
 ## Modes
 
@@ -181,50 +240,6 @@ advancing:
 ./target/release/ascii-fields cycle --seconds 15
 ```
 
-## Options
-
-Common examples:
-
-```bash
-./target/release/ascii-fields galaxy --width 120 --height 36
-./target/release/ascii-fields waves --fps 18
-./target/release/ascii-fields flares --seconds 10
-./target/release/ascii-fields black-hole --contrast 1.2
-./target/release/ascii-fields areas --scale 0.8
-./target/release/ascii-fields night-sky --brightness 1.3
-```
-
-CLI options:
-
-```text
---list
---favorites
---width <WIDTH>
---height <HEIGHT>
---fps <FPS>
---seconds <SECONDS>
---scale <SCALE>
---contrast <CONTRAST>
---brightness <BRIGHTNESS>
---speed <SPEED>
---theme <THEME>
---no-status
---blocks
---charset <CHARSET>
---scroll
---export-gif <PATH>
---export-asciinema <PATH>
-```
-
-Use `--favorites` to restrict mode listing and playlists to scenes you saved
-with `f`:
-
-```bash
-./target/release/ascii-fields --list --favorites
-./target/release/ascii-fields random --favorites
-./target/release/ascii-fields cycle --favorites --seconds 6
-```
-
 ## Color Themes
 
 By default, everything renders in grayscale. Use `--theme scene` to let each
@@ -248,11 +263,28 @@ bathymetry, geologic, stellar, dusk, xray
 
 ## Wave-Plane Character Modes
 
-`wave-plane` renders with the `clean` character ramp by default. Switch ramps
-or use the smooth block look:
+`--charset` chooses the brightness-to-character ramp used by `wave-plane`.
+It changes the glyphs, not the color theme. The flag is currently specific to
+`wave-plane`; other modes keep their own built-in glyph ramps.
+
+Available charset values:
+
+| Charset | Look | Best For |
+| --- | --- | --- |
+| `clean` | Long, detailed ASCII ramp | Default wave-plane look with the smoothest text shading |
+| `soft` | Shorter, lighter ramp | Less visual noise, easier to read in small terminals |
+| `dense` | Compact high-contrast ramp | Stronger texture and darker wave bands |
+
+Unknown charset values fall back to `clean`.
+
+`--blocks` bypasses `--charset` and renders `wave-plane` as solid colored
+terminal cells instead of text glyphs. `--scroll` keeps the same charset but
+slowly shifts the sampled wave field, giving the plane a drifting motion.
 
 ```bash
 ./target/release/ascii-fields wave-plane
+./target/release/ascii-fields wave-plane --charset clean
+./target/release/ascii-fields wave-plane --charset soft
 ./target/release/ascii-fields wave-plane --charset dense
 ./target/release/ascii-fields wave-plane --scroll
 ./target/release/ascii-fields wave-plane --blocks
@@ -376,7 +408,7 @@ renderer handles character mapping, palette lookup, and ANSI batching.
 cargo check
 cargo test
 cargo build --release
-./target/release/ascii-fields galaxy --width 60 --height 20 --seconds 1
+./target/release/ascii-fields galaxy --width 60 --height 20
 ```
 
 Quick export smoke test:
