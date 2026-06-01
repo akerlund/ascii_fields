@@ -31,6 +31,7 @@ pub struct RunConfig {
   pub height: Option<usize>,
   pub options: RenderOptions,
   pub mode_options: BTreeMap<String, RenderOptions>,
+  pub favorites: Vec<String>,
   pub no_status: bool,
   pub settings_path: String,
 }
@@ -59,7 +60,7 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
   let mut hud_buf = String::new();
   let mut save_msg = String::new();
   let mut save_until = Instant::now();
-  let mut current_name = String::new();
+  let mut favorites = cfg.favorites.clone();
   let mut fps_actual = cfg.fps;
   let mut fps_frames = 0_u32;
   let mut prev_fps_wall = Instant::now();
@@ -74,6 +75,7 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
   if !mode_options.contains_key(&initial_name) {
     mode_options.insert(initial_name.clone(), cfg.options.clone());
   }
+  let mut current_name = initial_name.clone();
   let mut active = Active { options: mode_options[&initial_name].clone() };
 
   let result = (|| -> io::Result<()> {
@@ -117,9 +119,23 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
             (KeyCode::Char('r'), _) => playlist.restart(virtual_t),
             (KeyCode::Char('s'), _) => {
               mode_options.insert(current_name.clone(), active.options.clone());
-              match settings::save(&cfg.settings_path, &mode_options) {
+              match settings::save(&cfg.settings_path, &mode_options, &favorites) {
                 Ok(()) => save_msg = format!("saved {}", cfg.settings_path),
                 Err(e) => save_msg = format!("save error: {}", e),
+              }
+              save_until = Instant::now() + Duration::from_millis(2500);
+            }
+            (KeyCode::Char('f'), _) => {
+              let favorite_name = playlist.name().to_string();
+              if favorites.iter().any(|name| name == &favorite_name) {
+                save_msg = format!("already favorite {}", favorite_name);
+              } else {
+                favorites.push(favorite_name.clone());
+                mode_options.insert(current_name.clone(), active.options.clone());
+                match settings::save(&cfg.settings_path, &mode_options, &favorites) {
+                  Ok(()) => save_msg = format!("favorited {}", favorite_name),
+                  Err(e) => save_msg = format!("favorite error: {}", e),
+                }
               }
               save_until = Instant::now() + Duration::from_millis(2500);
             }
@@ -241,7 +257,7 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
           "{}|{}|{}|{}|{}|{}|{}",
           cell(" [i] Menu [q]quit", 22),
           cell(" [s]save",          20),
-          cell("",                  15),
+          cell(" [f] Favorite",     15),
           cell("",                  17),
           cell("",                  16),
           cell("",                  15),

@@ -198,6 +198,7 @@ CLI options:
 
 ```text
 --list
+--favorites
 --width <WIDTH>
 --height <HEIGHT>
 --fps <FPS>
@@ -213,6 +214,15 @@ CLI options:
 --scroll
 --export-gif <PATH>
 --export-asciinema <PATH>
+```
+
+Use `--favorites` to restrict mode listing and playlists to scenes you saved
+with `f`:
+
+```bash
+./target/release/ascii-fields --list --favorites
+./target/release/ascii-fields random --favorites
+./target/release/ascii-fields cycle --favorites --seconds 6
 ```
 
 ## Color Themes
@@ -268,6 +278,7 @@ live-editable parameters, and CPU usage. Toggle it with `i`, or start hidden:
 | `5` `6` | Brightness down / up |
 | `+` `-` | Motion speed up / down |
 | `s` | Save current per-mode settings to `ascii_fields.json` |
+| `f` | Add the current animation to favorites in `ascii_fields.json` |
 | `q` / `Esc` | Quit |
 
 Edits to `scale`, `contrast`, `brightness`, `speed`, and `theme` stick to the
@@ -276,28 +287,33 @@ and the first scene keeps its values.
 
 ## Saving Settings
 
-Pressing `s` writes one JSON file in the working directory:
+Pressing `s` or `f` writes one JSON file in the working directory:
 
 ```text
 ascii_fields.json
 ```
 
-The file is keyed by mode name:
+The file stores favorites plus per-mode settings:
 
 ```json
 {
-  "dna": {
-    "theme": "scene",
-    "scale": 1.2,
-    "contrast": 1.3,
-    "brightness": 1.0,
-    "speed": 1.0
+  "favorites": ["dna", "caustics"],
+  "modes": {
+    "dna": {
+      "theme": "scene",
+      "scale": 1.2,
+      "contrast": 1.3,
+      "brightness": 1.0,
+      "speed": 1.0
+    }
   }
 }
 ```
 
 If `ascii_fields.json` is missing or unreadable, built-in defaults are used.
-Explicit command-line options still override saved values.
+Explicit command-line options still override saved values. Older files keyed
+directly by mode name are still loaded and will be rewritten to this structure
+the next time settings or favorites are saved.
 
 ## Exporting
 

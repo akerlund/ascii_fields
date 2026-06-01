@@ -1,373 +1,537 @@
 {
-  "areas": {
-    "brightness": 1.0,
-    "contrast": 1.6927,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "ice"
-  },
-  "aurora": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "aurora"
-  },
-  "black-hole": {
-    "brightness": 1.1033,
-    "contrast": 1.1562,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "fire"
-  },
-  "burning-ship": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "grayscale"
-  },
-  "chladni": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "fire"
-  },
-  "circuit": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "scene"
-  },
-  "clouds": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "ice"
-  },
-  "cpu": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 3.0518,
-    "theme": "scene"
-  },
-  "curl": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "aurora"
-  },
-  "dla": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "scene"
-  },
-  "dna": {
-    "brightness": 1.1166,
-    "contrast": 3.7577,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "fire"
-  },
-  "doppler": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "grayscale"
-  },
-  "double-slit": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "amber"
-  },
-  "drops": {
-    "brightness": 1.1077,
-    "contrast": 0.9612,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "amber"
-  },
-  "drum": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "fire"
-  },
-  "feynman": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 3.8147,
-    "theme": "grayscale"
-  },
-  "fire": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "fire"
-  },
-  "flares": {
-    "brightness": 1.4714,
-    "contrast": 1.691,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "fire"
-  },
-  "flower-sphere": {
-    "brightness": 1.0,
-    "contrast": 1.4158,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "fire"
-  },
-  "galaxy": {
-    "brightness": 1.3377,
-    "contrast": 1.2718,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "plasma"
-  },
-  "gwaves": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "fire"
-  },
-  "hypercube": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "fire"
-  },
-  "julia": {
-    "brightness": 3.7754,
-    "contrast": 1.6927,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "grayscale"
-  },
-  "karman": {
-    "brightness": 1.6299,
-    "contrast": 2.2847,
-    "scale": 3.4523,
-    "speed": 1.5625,
-    "theme": "ice"
-  },
-  "lava": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "scene"
-  },
-  "lensing": {
-    "brightness": 2.6041,
-    "contrast": 1.0532,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "plasma"
-  },
-  "life": {
-    "brightness": 1.2297,
-    "contrast": 0.121,
-    "scale": 5.0,
-    "speed": 1.0,
-    "theme": "aurora"
-  },
-  "lightning": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "ice"
-  },
-  "lightspeed": {
-    "brightness": 1.7787,
-    "contrast": 1.8601,
-    "scale": 1.0,
-    "speed": 0.64,
-    "theme": "scene"
-  },
-  "longitudinal": {
-    "brightness": 1.6105,
-    "contrast": 1.691,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "nebula"
-  },
-  "lorenz": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "fire"
-  },
-  "mach": {
-    "brightness": 1.6202,
-    "contrast": 5.0,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "amber"
-  },
-  "magnetic": {
-    "brightness": 1.8149,
-    "contrast": 1.3432,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "ice"
-  },
-  "mandelbrot": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "ice"
-  },
-  "molecule": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "grayscale"
-  },
-  "network": {
-    "brightness": 3.1484,
-    "contrast": 1.4865,
-    "scale": 1.6384,
-    "speed": 1.9531,
-    "theme": "copper"
-  },
-  "newton": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "grayscale"
-  },
-  "night-sky": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "grayscale"
-  },
-  "orbitals": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "plasma"
-  },
-  "phyllotaxis": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 3.0518,
-    "theme": "nebula"
-  },
-  "plasma": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "amber"
-  },
-  "qfield": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "plasma"
-  },
-  "rain": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "grayscale"
-  },
-  "rd": {
-    "brightness": 1.1066,
-    "contrast": 0.4992,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "nebula"
-  },
-  "sierpinski": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "grayscale"
-  },
-  "starfield": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "grayscale"
-  },
-  "storm": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "scene"
-  },
-  "tunnel": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 5.9605,
-    "theme": "fire"
-  },
-  "vax_lamp": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "scene"
-  },
-  "wave-plane": {
-    "brightness": 1.3323,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "fire"
-  },
-  "wave-well": {
-    "brightness": 1.003,
-    "contrast": 0.792,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "nebula"
-  },
-  "waves": {
-    "brightness": 0.9173,
-    "contrast": 1.7736,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "nebula"
-  },
-  "whirlpool": {
-    "brightness": 1.0,
-    "contrast": 1.05,
-    "scale": 1.0,
-    "speed": 1.0,
-    "theme": "ice"
+  "favorites": [
+    "clouds",
+    "flower-sphere",
+    "areas",
+    "waves",
+    "flares",
+    "caustics",
+    "orbitals",
+    "qfield",
+    "wave-well",
+    "penrose",
+    "plasma",
+    "wave-plane",
+    "aurora",
+    "supernova",
+    "tunnel",
+    "magnetic",
+    "ferrofluid",
+    "lava",
+    "network",
+    "schlieren",
+    "convection",
+    "longitudinal",
+    "lensing",
+    "rd",
+    "chladni",
+    "topography",
+    "dunes",
+    "quasicrystal",
+    "moire",
+    "voronoi",
+    "reaction-rings",
+    "nbody",
+    "strange",
+    "lorenz"
+  ],
+  "modes": {
+    "areas": {
+      "theme": "ice",
+      "scale": 1.0,
+      "contrast": 1.6927,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "aurora": {
+      "theme": "aurora",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "black-hole": {
+      "theme": "fire",
+      "scale": 1.0,
+      "contrast": 1.1562,
+      "brightness": 1.1033,
+      "speed": 1.0
+    },
+    "burning-ship": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "caustics": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "chladni": {
+      "theme": "fire",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "circuit": {
+      "theme": "scene",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "clouds": {
+      "theme": "ice",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "convection": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "cpu": {
+      "theme": "scene",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 3.0518
+    },
+    "curl": {
+      "theme": "aurora",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "dla": {
+      "theme": "scene",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "dna": {
+      "theme": "fire",
+      "scale": 1.0,
+      "contrast": 3.7577,
+      "brightness": 1.1166,
+      "speed": 1.0
+    },
+    "doppler": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "double-slit": {
+      "theme": "amber",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "drops": {
+      "theme": "amber",
+      "scale": 1.0,
+      "contrast": 0.9612,
+      "brightness": 1.1077,
+      "speed": 1.0
+    },
+    "drum": {
+      "theme": "fire",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "dunes": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "ferrofluid": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "feynman": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 3.8147
+    },
+    "fire": {
+      "theme": "fire",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "flares": {
+      "theme": "fire",
+      "scale": 1.0,
+      "contrast": 1.691,
+      "brightness": 1.4714,
+      "speed": 1.0
+    },
+    "flower-sphere": {
+      "theme": "fire",
+      "scale": 1.0,
+      "contrast": 1.4158,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "galaxy": {
+      "theme": "plasma",
+      "scale": 1.0,
+      "contrast": 1.2718,
+      "brightness": 1.3377,
+      "speed": 1.0
+    },
+    "gwaves": {
+      "theme": "fire",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "hypercube": {
+      "theme": "fire",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "julia": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.6927,
+      "brightness": 3.7754,
+      "speed": 1.0
+    },
+    "karman": {
+      "theme": "ice",
+      "scale": 3.4523,
+      "contrast": 2.2847,
+      "brightness": 1.6299,
+      "speed": 1.5625
+    },
+    "lava": {
+      "theme": "scene",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "lensing": {
+      "theme": "plasma",
+      "scale": 1.0,
+      "contrast": 1.0532,
+      "brightness": 2.6041,
+      "speed": 1.0
+    },
+    "life": {
+      "theme": "aurora",
+      "scale": 5.0,
+      "contrast": 0.121,
+      "brightness": 1.2297,
+      "speed": 1.0
+    },
+    "lightning": {
+      "theme": "ice",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "lightspeed": {
+      "theme": "scene",
+      "scale": 1.0,
+      "contrast": 1.8601,
+      "brightness": 1.7787,
+      "speed": 0.64
+    },
+    "longitudinal": {
+      "theme": "nebula",
+      "scale": 1.0,
+      "contrast": 1.691,
+      "brightness": 1.6105,
+      "speed": 1.0
+    },
+    "lorenz": {
+      "theme": "fire",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "mach": {
+      "theme": "amber",
+      "scale": 1.0,
+      "contrast": 5.0,
+      "brightness": 1.6202,
+      "speed": 1.0
+    },
+    "magnetic": {
+      "theme": "ice",
+      "scale": 1.0,
+      "contrast": 1.3432,
+      "brightness": 1.8149,
+      "speed": 1.0
+    },
+    "mandelbrot": {
+      "theme": "ice",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "moire": {
+      "theme": "grayscale",
+      "scale": 1.0061753507644,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "molecule": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "nbody": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "network": {
+      "theme": "copper",
+      "scale": 1.6384,
+      "contrast": 1.4865,
+      "brightness": 3.1484,
+      "speed": 1.9531
+    },
+    "newton": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "night-sky": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "orbitals": {
+      "theme": "plasma",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "penrose": {
+      "theme": "fire",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "phyllotaxis": {
+      "theme": "nebula",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 3.0518
+    },
+    "plasma": {
+      "theme": "amber",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "pulsar": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "qfield": {
+      "theme": "plasma",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "quasicrystal": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "rain": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "rd": {
+      "theme": "nebula",
+      "scale": 1.0,
+      "contrast": 0.4992,
+      "brightness": 1.1066,
+      "speed": 1.0
+    },
+    "reaction-rings": {
+      "theme": "stellar",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "reconnection": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "schlieren": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "seismograph": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "sierpinski": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "solar-wind": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "starfield": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "storm": {
+      "theme": "scene",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "strange": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "supernova": {
+      "theme": "scene",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "topography": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "tunnel": {
+      "theme": "fire",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 5.9605
+    },
+    "vax_lamp": {
+      "theme": "scene",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "voronoi": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    },
+    "wave-plane": {
+      "theme": "fire",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.3323,
+      "speed": 1.0
+    },
+    "wave-well": {
+      "theme": "nebula",
+      "scale": 1.0,
+      "contrast": 0.792,
+      "brightness": 1.003,
+      "speed": 1.0
+    },
+    "waves": {
+      "theme": "nebula",
+      "scale": 1.0,
+      "contrast": 1.7736,
+      "brightness": 0.9173,
+      "speed": 1.0
+    },
+    "whirlpool": {
+      "theme": "ice",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0
+    }
   }
 }

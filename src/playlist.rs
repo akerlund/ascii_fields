@@ -22,37 +22,78 @@ pub struct Playlist {
 
 impl Playlist {
   pub fn single(start_name: &str) -> Self {
-    Self::new(false, false, CLIP_SECONDS, Some(start_name))
+    Self::new(false, false, CLIP_SECONDS, Some(start_name), None)
+      .expect("registry should contain at least one mode")
   }
-  pub fn random() -> Self { Self::new(true, true, CLIP_SECONDS, None) }
-  pub fn cycle() -> Self { Self::new(true, false, CLIP_SECONDS, None) }
+  pub fn single_from(start_name: &str, names: &[String]) -> Option<Self> {
+    Self::new(false, false, CLIP_SECONDS, Some(start_name), Some(names))
+  }
+  pub fn random() -> Self {
+    Self::new(true, true, CLIP_SECONDS, None, None)
+      .expect("registry should contain at least one mode")
+  }
+  pub fn cycle() -> Self {
+    Self::new(true, false, CLIP_SECONDS, None, None)
+      .expect("registry should contain at least one mode")
+  }
+  pub fn random_from(names: &[String]) -> Option<Self> {
+    Self::new(true, true, CLIP_SECONDS, None, Some(names))
+  }
+  pub fn cycle_from(names: &[String]) -> Option<Self> {
+    Self::new(true, false, CLIP_SECONDS, None, Some(names))
+  }
   pub fn random_with_clip(clip: f64) -> Self {
-    Self::new(true, true, clip.max(0.1), None)
+    Self::new(true, true, clip.max(0.1), None, None)
+      .expect("registry should contain at least one mode")
   }
   pub fn cycle_with_clip(clip: f64) -> Self {
-    Self::new(true, false, clip.max(0.1), None)
+    Self::new(true, false, clip.max(0.1), None, None)
+      .expect("registry should contain at least one mode")
+  }
+  pub fn random_with_clip_from(clip: f64, names: &[String]) -> Option<Self> {
+    Self::new(true, true, clip.max(0.1), None, Some(names))
+  }
+  pub fn cycle_with_clip_from(clip: f64, names: &[String]) -> Option<Self> {
+    Self::new(true, false, clip.max(0.1), None, Some(names))
   }
 
-  fn new(auto: bool, shuffle: bool, clip: f64, start_name: Option<&str>) -> Self {
+  fn new(auto: bool, shuffle: bool, clip: f64, start_name: Option<&str>, allowed_names: Option<&[String]>) -> Option<Self> {
     let entries = registry::MODES;
-    let mut order: Vec<usize> = (0..entries.len()).collect();
+    let mut order: Vec<usize> = match allowed_names {
+      Some(names) => {
+        let mut out = Vec::new();
+        for name in names {
+          if let Some(idx) = entries.iter().position(|m| m.name == name.as_str()) {
+            if !out.contains(&idx) {
+              out.push(idx);
+            }
+          }
+        }
+        out
+      }
+      None => (0..entries.len()).collect(),
+    };
+    if order.is_empty() {
+      return None;
+    }
     let mut rng = Pcg32::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7);
     if shuffle { order.shuffle(&mut rng); }
     if let Some(name) = start_name {
-      if let Some(target) = entries.iter().position(|m| m.name == name) {
-        if let Some(at) = order.iter().position(|&i| i == target) {
-          order.swap(0, at);
-        }
+      let target = entries.iter().position(|m| m.name == name)?;
+      if let Some(at) = order.iter().position(|&i| i == target) {
+        order.swap(0, at);
+      } else {
+        return None;
       }
     }
     let current = (entries[order[0]].factory)();
-    Self { entries, order, pos: 0, auto, shuffle, clip, start: 0.0, current, rng }
+    Some(Self { entries, order, pos: 0, auto, shuffle, clip, start: 0.0, current, rng })
   }
 
   pub fn current(&mut self) -> &mut Box<dyn Animation> { &mut self.current }
   pub fn name(&self) -> &'static str { self.entries[self.order[self.pos]].name }
   pub fn title(&self) -> String {
-    format!("{}  ({}/{})", self.name(), self.pos + 1, self.entries.len())
+    format!("{}  ({}/{})", self.name(), self.pos + 1, self.order.len())
   }
   pub fn scene_elapsed(&self, virtual_time: f64) -> f64 { virtual_time - self.start }
 

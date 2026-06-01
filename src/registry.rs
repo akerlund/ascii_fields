@@ -83,6 +83,6 @@ pub static MODES: &[ModeInfo] = &[
   ModeInfo { name: "drum",           description: "Vibrational eigenmodes of a circular drum (Bessel)",     factory: || Box::new(drum::Drum::default()) },
 ];
 
-pub fn create(name: &str) -> Option<Box<dyn Animation>> {
-  MODES.iter().find(|m| m.name == name).map(|m| (m.factory)())
+pub fn info(name: &str) -> Option<&'static ModeInfo> {
+  MODES.iter().find(|m| m.name == name)
 }
