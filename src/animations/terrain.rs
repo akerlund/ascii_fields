@@ -2,16 +2,17 @@ use crate::animation::{Animation, FrameContext};
 use crate::core::{clamp, render_field, FieldStyle};
 use crate::noise::fbm_seeded;
 
-use super::field_common::{aspect, dims, pulse, FIELD_TH, LINE_TH};
+use super::field_common::{aspect, dims, pulse, FrameScratch, FIELD_TH, LINE_TH};
 
 const SEISMO_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "geologic" };
-pub struct Seismograph;
+#[derive(Default)]
+pub struct Seismograph { scratch: FrameScratch }
 impl Animation for Seismograph {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
     let ax = aspect(ctx);
     let t = ctx.elapsed;
-    let mut grid = vec![0.0; w * h];
+    let grid = self.scratch.grid(w * h);
     let epicenters = [(0.22, 0.72, 0.0), (0.70, 0.58, 2.4)];
     for row in 0..h {
       let v = row as f64 / dh;
@@ -34,17 +35,18 @@ impl Animation for Seismograph {
         grid[base + col] = clamp(value * ctx.options.contrast);
       }
     }
-    render_field(ctx, &grid, LINE_TH, &SEISMO_STYLE, out);
+    render_field(ctx, grid, LINE_TH, &SEISMO_STYLE, out);
   }
 }
 
 const CAUSTICS_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "bathymetry" };
-pub struct Caustics;
+#[derive(Default)]
+pub struct Caustics { scratch: FrameScratch }
 impl Animation for Caustics {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
     let t = ctx.elapsed * 0.55;
-    let mut grid = vec![0.0; w * h];
+    let grid = self.scratch.grid(w * h);
     for row in 0..h {
       let v = row as f64 / dh;
       let base = row * w;
@@ -57,17 +59,18 @@ impl Animation for Caustics {
         grid[base + col] = clamp(value * 0.65 * ctx.options.contrast);
       }
     }
-    render_field(ctx, &grid, LINE_TH, &CAUSTICS_STYLE, out);
+    render_field(ctx, grid, LINE_TH, &CAUSTICS_STYLE, out);
   }
 }
 
 const DUNES_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "dusk" };
-pub struct Dunes;
+#[derive(Default)]
+pub struct Dunes { scratch: FrameScratch }
 impl Animation for Dunes {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
     let t = ctx.elapsed * 0.18;
-    let mut grid = vec![0.0; w * h];
+    let grid = self.scratch.grid(w * h);
     for row in 0..h {
       let v = row as f64 / dh;
       let base = row * w;
@@ -80,17 +83,18 @@ impl Animation for Dunes {
         grid[base + col] = clamp(shade * ctx.options.contrast);
       }
     }
-    render_field(ctx, &grid, FIELD_TH, &DUNES_STYLE, out);
+    render_field(ctx, grid, FIELD_TH, &DUNES_STYLE, out);
   }
 }
 
 const TOPO_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "geologic" };
-pub struct Topography;
+#[derive(Default)]
+pub struct Topography { scratch: FrameScratch }
 impl Animation for Topography {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
     let t = ctx.elapsed * 0.12;
-    let mut grid = vec![0.0; w * h];
+    let grid = self.scratch.grid(w * h);
     for row in 0..h {
       let v = row as f64 / dh;
       let base = row * w;
@@ -102,6 +106,6 @@ impl Animation for Topography {
         grid[base + col] = clamp((contour * 0.85 + river * 0.75 + elev * 0.20) * ctx.options.contrast);
       }
     }
-    render_field(ctx, &grid, LINE_TH, &TOPO_STYLE, out);
+    render_field(ctx, grid, LINE_TH, &TOPO_STYLE, out);
   }
 }

@@ -4,10 +4,13 @@ use crate::animation::{Animation, FrameContext};
 use crate::core::{clamp, density_char, render_field, render_glyph_field, FieldStyle};
 use crate::noise::{fbm_seeded, star_noise};
 
-use super::field_common::{aspect, dims, pulse, put, FIELD_TH, LINE_TH};
+use super::field_common::{aspect, dims, pulse, put, FrameScratch, FIELD_TH, LINE_TH};
 
 const NBODY_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "nebula" };
-pub struct NBody;
+const STELLAR_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "stellar" };
+
+#[derive(Default)]
+pub struct NBody { scratch: FrameScratch }
 impl Animation for NBody {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
@@ -19,8 +22,7 @@ impl Animation for NBody {
       (0.50 + 0.32 * (t * 0.73 + 4.0).cos(), 0.50 + 0.10 * (t * 0.73 + 4.0).sin(), 0.55),
       (0.50 + 0.10 * (t * 2.3 + 1.0).cos(), 0.50 + 0.34 * (t * 2.3 + 1.0).sin(), 0.35),
     ];
-    let mut grid = vec![0.0; w * h];
-    let mut glyphs = vec![' '; w * h];
+    let (grid, glyphs) = self.scratch.grid_and_glyphs(w * h);
     for row in 0..h {
       let v = row as f64 / dh;
       for col in 0..w {
@@ -38,21 +40,21 @@ impl Animation for NBody {
       *glyph = density_char(grid[idx], FIELD_TH);
     }
     for &(bx, by, mass) in &bodies {
-      put(&mut grid, &mut glyphs, w, h, (bx * dw).round() as i64, (by * dh).round() as i64, 1.0, if mass > 0.7 { '@' } else { '*' });
+      put(grid, glyphs, w, h, (bx * dw).round() as i64, (by * dh).round() as i64, 1.0, if mass > 0.7 { '@' } else { '*' });
     }
-    render_glyph_field(ctx, &grid, &glyphs, &NBODY_STYLE, out);
+    render_glyph_field(ctx, grid, glyphs, &NBODY_STYLE, out);
   }
 }
 
-const PULSAR_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "stellar" };
-pub struct Pulsar;
+#[derive(Default)]
+pub struct Pulsar { scratch: FrameScratch }
 impl Animation for Pulsar {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
     let ax = aspect(ctx);
     let t = ctx.elapsed;
     let beam = t * 2.8;
-    let mut grid = vec![0.0; w * h];
+    let grid = self.scratch.grid(w * h);
     for row in 0..h {
       let v = row as f64 / dh;
       let base = row * w;
@@ -69,19 +71,19 @@ impl Animation for Pulsar {
         grid[base + col] = clamp((beam_level + star + core) * ctx.options.contrast);
       }
     }
-    render_field(ctx, &grid, LINE_TH, &PULSAR_STYLE, out);
+    render_field(ctx, grid, LINE_TH, &STELLAR_STYLE, out);
   }
 }
 
-const SUPERNOVA_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "stellar" };
-pub struct Supernova;
+#[derive(Default)]
+pub struct Supernova { scratch: FrameScratch }
 impl Animation for Supernova {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
     let ax = aspect(ctx);
     let age = (ctx.elapsed * 0.22) % 1.0;
     let radius = 0.04 + age * 0.62;
-    let mut grid = vec![0.0; w * h];
+    let grid = self.scratch.grid(w * h);
     for row in 0..h {
       let v = row as f64 / dh;
       let base = row * w;
@@ -97,32 +99,34 @@ impl Animation for Supernova {
         grid[base + col] = clamp((shell + core) * ctx.options.contrast);
       }
     }
-    render_field(ctx, &grid, FIELD_TH, &SUPERNOVA_STYLE, out);
+    render_field(ctx, grid, FIELD_TH, &STELLAR_STYLE, out);
   }
 }
 
 const SOLAR_WIND_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "aurora" };
-pub struct SolarWind;
+#[derive(Default)]
+pub struct SolarWind { scratch: FrameScratch }
 impl Animation for SolarWind {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
     let ax = aspect(ctx);
+    let sun_x = 0.63;
     let t = ctx.elapsed * 0.9;
-    let mut grid = vec![0.0; w * h];
+    let grid = self.scratch.grid(w * h);
     for row in 0..h {
       let v = row as f64 / dh;
       let base = row * w;
       for col in 0..w {
         let u = col as f64 / dw;
-        let dx = (u - 0.63) * ax;
+        let dx = (u - sun_x) * ax;
         let dy = v - 0.5;
         let r = (dx * dx + dy * dy).sqrt();
-        let bow = pulse(r - 0.17, 0.0006) * if u < 0.63 { 1.0 } else { 0.25 };
+        let bow = pulse(r - 0.17, 0.0006) * if u < sun_x { 1.0 } else { 0.25 };
         let stream = ((v * 28.0 + 2.0 * (u * 5.0 + t).sin()).sin().abs()).powf(12.0) * (1.0 - u).max(0.0);
-        let wake = pulse(dy + 0.10 * (u * 9.0 - t).sin(), 0.002) * if u > 0.63 { 0.7 } else { 0.0 };
+        let wake = pulse(dy + 0.10 * (u * 9.0 - t).sin(), 0.002) * if u > sun_x { 0.7 } else { 0.0 };
         grid[base + col] = clamp((0.45 * stream + bow + wake) * ctx.options.contrast);
       }
     }
-    render_field(ctx, &grid, LINE_TH, &SOLAR_WIND_STYLE, out);
+    render_field(ctx, grid, LINE_TH, &SOLAR_WIND_STYLE, out);
   }
 }
