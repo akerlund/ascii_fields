@@ -1,9 +1,8 @@
-//! Wave-plane: the original cyclic grayscale wave. Char ramp by default;
-//! falls back to coloured blocks if `options.blocks` is set.
+//! Wave-plane: the original cyclic wave with a long scene-specific ASCII ramp.
 
 use std::f64::consts::PI;
 use crate::animation::{Animation, FrameContext};
-use crate::core::{clamp, render_block_field, render_field, shade, FieldStyle};
+use crate::core::{clamp, render_field, shade, FieldStyle};
 
 const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "ocean" };
 
@@ -21,8 +20,6 @@ const WAVES: &[(f64, f64, f64, f64, f64)] = &[
 ];
 
 const RAMP_CLEAN: &str = " .'`^\",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
-const RAMP_SOFT:  &str = " .'`^\",:-_~+ito+xzMW#@$8";
-const RAMP_DENSE: &str = " .,:;irsXA253hMHGS#9B&@";
 
 fn ramp_thresholds(ramp: &str) -> Vec<(f64, char)> {
   let chars: Vec<char> = ramp.chars().collect();
@@ -33,20 +30,12 @@ fn ramp_thresholds(ramp: &str) -> Vec<(f64, char)> {
   }).collect()
 }
 
-fn ramp_for(charset: &str) -> &'static str {
-  match charset {
-    "soft" => RAMP_SOFT,
-    "dense" => RAMP_DENSE,
-    _ => RAMP_CLEAN,
-  }
-}
-
 pub struct WavePlane;
 
-fn sample_uv(u: f64, v: f64, phase: f64, scroll: bool) -> (f64, f64) {
+fn sample_uv(u: f64, v: f64, elapsed: f64, scroll: bool) -> (f64, f64) {
   if !scroll { return (u, v); }
-  ((u + 0.08 * (2.0 * PI * phase).cos()).rem_euclid(1.0),
-   (v + 0.08 * (2.0 * PI * phase).sin()).rem_euclid(1.0))
+  ((u + elapsed * 0.055).rem_euclid(1.0),
+   (v + elapsed * 0.025).rem_euclid(1.0))
 }
 
 fn wave_height(u: f64, v: f64, phase: f64, scale: f64) -> f64 {
@@ -70,7 +59,7 @@ fn levels(ctx: &FrameContext) -> Vec<f64> {
     let base = row * w;
     for col in 0..w {
       let u = col as f64 / w as f64;
-      let (su, sv) = sample_uv(u, v, ctx.phase, ctx.options.scroll);
+      let (su, sv) = sample_uv(u, v, ctx.elapsed, ctx.options.scroll);
       g[base + col] = clamp(shade(wave_height(su, sv, ctx.phase, ctx.options.scale), contrast));
     }
   }
@@ -80,11 +69,7 @@ fn levels(ctx: &FrameContext) -> Vec<f64> {
 impl Animation for WavePlane {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let g = levels(ctx);
-    if ctx.options.blocks {
-      render_block_field(ctx, &g, out);
-    } else {
-      let th = ramp_thresholds(ramp_for(&ctx.options.charset));
-      render_field(ctx, &g, &th, &STYLE, out);
-    }
+    let th = ramp_thresholds(RAMP_CLEAN);
+    render_field(ctx, &g, &th, &STYLE, out);
   }
 }

@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use clap::Parser;
 
 use crate::export::{self, ExportConfig, ExportFormat};
-use crate::options::RenderOptions;
+use crate::options::{normalize_charset, RenderOptions};
 use crate::playlist::Playlist;
 use crate::registry;
 use crate::runner::{self, RunConfig};
@@ -38,8 +38,7 @@ pub struct Cli {
   #[arg(long)] pub speed: Option<f64>,
   #[arg(long)] pub theme: Option<String>,
   #[arg(long)] pub no_status: bool,
-  #[arg(long, default_value_t = false)] pub blocks: bool,
-  #[arg(long, default_value = "clean")] pub charset: String,
+  #[arg(long, value_name = "scene|clean|soft|dense|minimal|blocks")] pub charset: Option<String>,
   #[arg(long, default_value_t = false)] pub scroll: bool,
 
   /// Export an animated GIF clip instead of running interactively.
@@ -71,22 +70,34 @@ pub fn run() -> std::io::Result<()> {
     None
   };
 
-  let make_options = |base_name: &str| -> RenderOptions {
+  let make_saved_options = |base_name: &str| -> RenderOptions {
     let mut opt = RenderOptions::default();
     if let Some(entry) = saved.modes.get(base_name) {
       entry.apply(&mut opt);
     }
+    apply_charset_support(base_name, &mut opt);
+    opt
+  };
+
+  let make_options = |base_name: &str| -> RenderOptions {
+    let mut opt = make_saved_options(base_name);
     if let Some(v) = cli.scale { opt.scale = v; }
     if let Some(v) = cli.contrast { opt.contrast = v; }
     if let Some(v) = cli.brightness { opt.brightness = v; }
     if let Some(v) = cli.speed { opt.speed = v; }
     if let Some(ref v) = cli.theme { opt.theme = v.clone(); }
-    opt.blocks = cli.blocks;
     opt.scroll = cli.scroll;
-    opt.charset = cli.charset.clone();
+    if let Some(ref v) = cli.charset {
+      opt.charset = normalize_charset(v);
+    }
+    apply_charset_support(base_name, &mut opt);
     opt
   };
 
+  let saved_mode_options: BTreeMap<String, RenderOptions> = registry::MODES
+    .iter()
+    .map(|m| (m.name.to_string(), make_saved_options(m.name)))
+    .collect();
   let mode_options: BTreeMap<String, RenderOptions> = registry::MODES
     .iter()
     .map(|m| (m.name.to_string(), make_options(m.name)))
@@ -141,6 +152,7 @@ pub fn run() -> std::io::Result<()> {
     height: cli.height,
     options: initial_options,
     mode_options,
+    saved_mode_options,
     favorites,
     no_status: cli.no_status,
     settings_path: settings::DEFAULT_PATH.to_string(),
@@ -251,6 +263,13 @@ fn known_favorites(saved: &[String]) -> Vec<String> {
 
 fn contains_name(names: &[String], needle: &str) -> bool {
   names.iter().any(|name| name == needle)
+}
+
+fn apply_charset_support(mode: &str, options: &mut RenderOptions) {
+  options.charset = normalize_charset(&options.charset);
+  if !registry::supports_charset(mode) {
+    options.charset = "scene".to_string();
+  }
 }
 
 fn no_favorites_error() -> io::Error {

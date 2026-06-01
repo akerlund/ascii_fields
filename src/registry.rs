@@ -86,3 +86,10 @@ pub static MODES: &[ModeInfo] = &[
 pub fn info(name: &str) -> Option<&'static ModeInfo> {
   MODES.iter().find(|m| m.name == name)
 }
+
+pub fn supports_charset(name: &str) -> bool {
+  !matches!(
+    name,
+    "circuit" | "cpu" | "dna" | "doppler" | "feynman" | "nbody" | "network" | "rain"
+  )
+}

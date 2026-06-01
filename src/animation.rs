@@ -2,11 +2,14 @@
 
 use crate::options::RenderOptions;
 
+pub const THEME_COLOR_STEPS: usize = 8;
+
 pub struct FrameContext<'a> {
   pub width: usize,
   pub height: usize,
   pub elapsed: f64,
   pub phase: f64,
+  pub color_steps: usize,
   pub options: &'a RenderOptions,
 }
 

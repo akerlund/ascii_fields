@@ -1,5 +1,18 @@
 //! Per-mode render knobs. Mutable so the runner can tune them live from keys.
 
+pub const CHARSET_CYCLE: &[&str] = &[
+  "scene", "clean", "soft", "dense", "minimal",
+  "smooth", "sharp", "matrix", "braille", "blocks",
+];
+
+pub fn normalize_charset(name: &str) -> String {
+  if CHARSET_CYCLE.iter().any(|charset| *charset == name) {
+    name.to_string()
+  } else {
+    "scene".to_string()
+  }
+}
+
 #[derive(Clone, Debug)]
 pub struct RenderOptions {
   pub scale: f64,
@@ -9,10 +22,11 @@ pub struct RenderOptions {
   /// Theme name. `"grayscale"` keeps the classic mono look, `"scene"` defers
   /// to each animation's `default_theme`, anything else forces that palette.
   pub theme: String,
-  /// Wave-plane character ramp ("clean" | "soft" | "dense").
+  /// Density-field rendering mode. One of `CHARSET_CYCLE`. "scene" defers to
+  /// each animation's preferred thresholds; "blocks" switches to the bg-cell
+  /// renderer; the others select a foreground glyph ramp.
   pub charset: String,
   pub scroll: bool,
-  pub blocks: bool,
 }
 
 impl Default for RenderOptions {
@@ -23,9 +37,8 @@ impl Default for RenderOptions {
       brightness: 1.0,
       speed: 1.0,
       theme: "grayscale".into(),
-      charset: "clean".into(),
+      charset: "scene".into(),
       scroll: false,
-      blocks: false,
     }
   }
 }

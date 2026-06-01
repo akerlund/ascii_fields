@@ -1,6 +1,5 @@
-//! Frame loop: alt-screen, raw mode, key polling, two-line HUD pinned to
-//! the bottom rows, pause (skip render), per-mode option swapping, settings
-//! save/load.
+//! Frame loop: alt-screen, raw mode, key polling, HUD pinned to
+//! the bottom rows, pause (skip render), settings save/load.
 
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
@@ -18,9 +17,10 @@ use crossterm::{
   },
 };
 
-use crate::animation::FrameContext;
-use crate::options::RenderOptions;
+use crate::animation::{FrameContext, THEME_COLOR_STEPS};
+use crate::options::{normalize_charset, RenderOptions, CHARSET_CYCLE};
 use crate::playlist::Playlist;
+use crate::registry;
 use crate::settings;
 use crate::themes::THEME_CYCLE;
 
@@ -31,6 +31,7 @@ pub struct RunConfig {
   pub height: Option<usize>,
   pub options: RenderOptions,
   pub mode_options: BTreeMap<String, RenderOptions>,
+  pub saved_mode_options: BTreeMap<String, RenderOptions>,
   pub favorites: Vec<String>,
   pub no_status: bool,
   pub settings_path: String,
@@ -70,13 +71,21 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
   let mut last_dims = (0_u16, 0_u16);
 
   let mut mode_options = cfg.mode_options.clone();
+  let mut saved_mode_options = cfg.saved_mode_options.clone();
   // Use the entry for the starting mode, or fall back to the CLI-built default.
   let initial_name = playlist.name().to_string();
   if !mode_options.contains_key(&initial_name) {
     mode_options.insert(initial_name.clone(), cfg.options.clone());
   }
+  if !saved_mode_options.contains_key(&initial_name) {
+    let mut options = RenderOptions::default();
+    enforce_charset_support(&initial_name, &mut options);
+    saved_mode_options.insert(initial_name.clone(), options);
+  }
   let mut current_name = initial_name.clone();
   let mut active = Active { options: mode_options[&initial_name].clone() };
+  enforce_charset_support(&initial_name, &mut active.options);
+  mode_options.insert(initial_name.clone(), active.options.clone());
 
   let result = (|| -> io::Result<()> {
     execute!(stdout, DisableLineWrap)?;
@@ -108,18 +117,17 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
               active.options.speed = (active.options.speed * 0.8).max(0.1);
             }
             (KeyCode::Char('n'), _) | (KeyCode::Tab, _) => {
-              // stash, switch, load
-              mode_options.insert(current_name.clone(), active.options.clone());
               playlist.go_next(virtual_t);
             }
             (KeyCode::Char('p'), _) => {
-              mode_options.insert(current_name.clone(), active.options.clone());
               playlist.go_prev(virtual_t);
             }
             (KeyCode::Char('r'), _) => playlist.restart(virtual_t),
             (KeyCode::Char('s'), _) => {
+              enforce_charset_support(&current_name, &mut active.options);
               mode_options.insert(current_name.clone(), active.options.clone());
-              match settings::save(&cfg.settings_path, &mode_options, &favorites) {
+              saved_mode_options.insert(current_name.clone(), active.options.clone());
+              match settings::save(&cfg.settings_path, &saved_mode_options, &favorites) {
                 Ok(()) => save_msg = format!("saved {}", cfg.settings_path),
                 Err(e) => save_msg = format!("save error: {}", e),
               }
@@ -131,8 +139,7 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
                 save_msg = format!("already favorite {}", favorite_name);
               } else {
                 favorites.push(favorite_name.clone());
-                mode_options.insert(current_name.clone(), active.options.clone());
-                match settings::save(&cfg.settings_path, &mode_options, &favorites) {
+                match settings::save(&cfg.settings_path, &saved_mode_options, &favorites) {
                   Ok(()) => save_msg = format!("favorited {}", favorite_name),
                   Err(e) => save_msg = format!("favorite error: {}", e),
                 }
@@ -145,6 +152,15 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
             }
             (KeyCode::Char('t'), _) => cycle_theme(&mut active.options.theme, 1),
             (KeyCode::Char('T'), _) => cycle_theme(&mut active.options.theme, -1),
+            (KeyCode::Char('c'), _) => {
+              if registry::supports_charset(playlist.name()) {
+                cycle_charset(&mut active.options.charset);
+              } else {
+                active.options.charset = "scene".to_string();
+                save_msg = format!("charset locked for {}", playlist.name());
+                save_until = Instant::now() + Duration::from_millis(2500);
+              }
+            }
             (KeyCode::Char('1'), _) => step_param(&mut active.options.scale, 0.91),
             (KeyCode::Char('2'), _) => step_param(&mut active.options.scale, 1.10),
             (KeyCode::Char('3'), _) => step_param(&mut active.options.contrast, 0.91),
@@ -160,18 +176,18 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
       playlist.maybe_advance(virtual_t);
       let name = playlist.name();
       if name != current_name {
-        if !current_name.is_empty() {
-          mode_options.insert(current_name.clone(), active.options.clone());
-        }
         current_name = name.to_string();
-        let entry = mode_options.entry(current_name.clone()).or_insert_with(|| cfg.options.clone());
-        active.options = entry.clone();
+        active.options = mode_options
+          .get(current_name.as_str())
+          .cloned()
+          .unwrap_or_else(|| cfg.options.clone());
+        enforce_charset_support(&current_name, &mut active.options);
         last_dims = (0, 0);
       }
 
       // dimensions + HUD reserve
       let (cols, rows) = terminal::size().unwrap_or((100, 40));
-      let hud_lines: u16 = if hud_visible { 3 } else { 0 };
+      let hud_lines: u16 = if hud_visible { 4 } else { 0 };
       let drawable_cols = cols.max(1) as usize;
       let drawable_rows = rows.saturating_sub(hud_lines).max(1) as usize;
       let cw = cfg.width.unwrap_or(drawable_cols).clamp(1, drawable_cols);
@@ -188,7 +204,12 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
       if !paused {
         last_frame.clear();
         let ctx = FrameContext {
-          width: cw, height: ch, elapsed: elapsed_scene, phase, options: &active.options,
+          width: cw,
+          height: ch,
+          elapsed: elapsed_scene,
+          phase,
+          color_steps: THEME_COLOR_STEPS,
+          options: &active.options,
         };
         playlist.current().render(&ctx, &mut last_frame);
       }
@@ -219,7 +240,7 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
         prev_wall = now_wall;
       }
 
-      // HUD: three rows with vertical column separators. Each cell is a
+      // HUD rows with vertical column separators. Each cell is a
       // fixed width so the `|` markers line up across rows.
       hud_buf.clear();
       if hud_visible {
@@ -239,8 +260,8 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
           cell(&format!(" theme = {}", active.options.theme), 20),
           cell(&format!(" scale = {:>4.2}", active.options.scale), 15),
           cell(&format!(" contrast = {:>4.2}", active.options.contrast), 17),
-          cell(&format!(" Bright = {:>4.2}", active.options.brightness), 16),
-          cell(&format!(" cpu = {:>5.1}%", cpu_pct), 15),
+          cell(&format!(" Bright = {:>4.2}", active.options.brightness), 14),
+          cell(&format!(" Charset = {}", active.options.charset), 18),
           format!(" {}", shown_state),
         );
         let line2 = format!(
@@ -249,8 +270,8 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
           cell(" [t/T]",       20),
           cell(" [1/2]",       15),
           cell(" [3/4]",       17),
-          cell(" [5/6]",       16),
-          cell(&format!(" fps = {:>2.0}/{:<2.0}", fps_actual, cfg.fps), 15),
+          cell(" [5/6]",       14),
+          cell(" [c]",          18),
           " [+/-]",
         );
         let line3 = format!(
@@ -259,22 +280,35 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
           cell(" [s]save",          20),
           cell(" [f] Favorite",     15),
           cell("",                  17),
-          cell("",                  16),
-          cell("",                  15),
+          cell("",                  14),
+          cell("",                  18),
           " [_]pause",
         );
+        let line4 = format!(
+          "{}|{}|{}|{}|{}|{}|{}",
+          cell(&format!(" cpu = {:>5.1}%", cpu_pct), 22),
+          cell(&format!(" fps = {:>2.0}/{:<2.0}", fps_actual, cfg.fps), 20),
+          cell("",                  15),
+          cell("",                  17),
+          cell("",                  14),
+          cell("",                  18),
+          "",
+        );
 
-        let row1 = rows.saturating_sub(3).max(0);
-        let row2 = rows.saturating_sub(2).max(0);
-        let row3 = rows.saturating_sub(1).max(0);
+        let row1 = rows.saturating_sub(4).max(0);
+        let row2 = rows.saturating_sub(3).max(0);
+        let row3 = rows.saturating_sub(2).max(0);
+        let row4 = rows.saturating_sub(1).max(0);
         let _ = write!(
           hud_buf,
           "\x1b[{};1H\x1b[48;2;0;0;0m{}\x1b[0m\
+           \x1b[{};1H\x1b[48;2;0;0;0m{}\x1b[0m\
            \x1b[{};1H\x1b[48;2;0;0;0m{}\x1b[0m\
            \x1b[{};1H\x1b[48;2;0;0;0m{}\x1b[0m",
           row1 + 1, fit(&line1, cw),
           row2 + 1, fit(&line2, cw),
           row3 + 1, fit(&line3, cw),
+          row4 + 1, fit(&line4, cw),
         );
       }
 
@@ -345,4 +379,18 @@ fn cycle_theme(name: &mut String, direction: i32) {
   let n = THEME_CYCLE.len() as i32;
   let next = ((idx + direction).rem_euclid(n)) as usize;
   *name = THEME_CYCLE[next].to_string();
+}
+
+fn cycle_charset(name: &mut String) {
+  let current = normalize_charset(name);
+  let idx = CHARSET_CYCLE.iter().position(|c| *c == current.as_str()).unwrap_or(0);
+  let next = (idx + 1) % CHARSET_CYCLE.len();
+  *name = CHARSET_CYCLE[next].to_string();
+}
+
+fn enforce_charset_support(mode: &str, options: &mut RenderOptions) {
+  options.charset = normalize_charset(&options.charset);
+  if !registry::supports_charset(mode) {
+    options.charset = "scene".to_string();
+  }
 }

@@ -6,7 +6,7 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::options::RenderOptions;
+use crate::options::{normalize_charset, RenderOptions};
 
 pub const DEFAULT_PATH: &str = "ascii_fields.json";
 
@@ -29,6 +29,7 @@ pub struct SavedMode {
   #[serde(default)] pub contrast: Option<f64>,
   #[serde(default)] pub brightness: Option<f64>,
   #[serde(default)] pub speed: Option<f64>,
+  #[serde(default)] pub charset: Option<String>,
 }
 
 impl SavedMode {
@@ -39,6 +40,7 @@ impl SavedMode {
       contrast: Some(options.contrast),
       brightness: Some(options.brightness),
       speed: Some(options.speed),
+      charset: Some(normalize_charset(&options.charset)),
     }
   }
 
@@ -48,6 +50,7 @@ impl SavedMode {
     if let Some(v) = self.contrast { options.contrast = v; }
     if let Some(v) = self.brightness { options.brightness = v; }
     if let Some(v) = self.speed { options.speed = v; }
+    if let Some(ref v) = self.charset { options.charset = normalize_charset(v); }
   }
 }
 
@@ -111,19 +114,45 @@ mod tests {
 
   #[test]
   fn reads_legacy_mode_map() {
-    let saved = parse(r#"{"plasma":{"theme":"scene","scale":1.2}}"#);
+    let saved = parse(r#"{"plasma":{"theme":"scene","scale":1.2,"charset":"dense"}}"#);
     assert!(saved.favorites.is_empty());
     assert_eq!(saved.modes["plasma"].theme.as_deref(), Some("scene"));
     assert_eq!(saved.modes["plasma"].scale, Some(1.2));
+    assert_eq!(saved.modes["plasma"].charset.as_deref(), Some("dense"));
   }
 
   #[test]
   fn reads_structured_file_with_deduped_favorites() {
     let saved = parse(r#"{
       "favorites": ["plasma", "caustics", "plasma", ""],
-      "modes": {"caustics":{"theme":"bathymetry"}}
+      "modes": {"caustics":{"theme":"bathymetry","charset":"blocks"}}
     }"#);
     assert_eq!(saved.favorites, vec!["plasma", "caustics"]);
     assert_eq!(saved.modes["caustics"].theme.as_deref(), Some("bathymetry"));
+    assert_eq!(saved.modes["caustics"].charset.as_deref(), Some("blocks"));
+  }
+
+  #[test]
+  fn saved_mode_round_trips_charset() {
+    let mut options = RenderOptions::default();
+    options.charset = "blocks".to_string();
+    let saved = SavedMode::from(&options);
+
+    let mut applied = RenderOptions::default();
+    saved.apply(&mut applied);
+
+    assert_eq!(saved.charset.as_deref(), Some("blocks"));
+    assert_eq!(applied.charset, "blocks");
+  }
+
+  #[test]
+  fn unknown_charset_falls_back_to_scene_when_applied() {
+    let saved = SavedMode { charset: Some("sparkles".to_string()), ..SavedMode::default() };
+    let mut applied = RenderOptions::default();
+    applied.charset = "dense".to_string();
+
+    saved.apply(&mut applied);
+
+    assert_eq!(applied.charset, "scene");
   }
 }

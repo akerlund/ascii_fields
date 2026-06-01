@@ -9,9 +9,10 @@ use font8x8::{UnicodeFonts, BASIC_FONTS};
 use gif::{Encoder, Frame, Repeat};
 use serde_json::json;
 
-use crate::animation::FrameContext;
-use crate::options::RenderOptions;
+use crate::animation::{FrameContext, THEME_COLOR_STEPS};
+use crate::options::{normalize_charset, RenderOptions};
 use crate::playlist::Playlist;
+use crate::registry;
 
 const DEFAULT_FG: Rgb = (240, 240, 240);
 const DEFAULT_BG: Rgb = (0, 0, 0);
@@ -68,6 +69,7 @@ pub fn export(mut playlist: Playlist, cfg: ExportConfig) -> io::Result<()> {
     mode_options.insert(initial_name.clone(), cfg.options.clone());
   }
   let mut active = Active { options: mode_options[&initial_name].clone() };
+  enforce_charset_support(&initial_name, &mut active.options);
 
   let mut current_name = String::new();
   let mut virtual_t = 0.0_f64;
@@ -137,6 +139,7 @@ where
         .get(current_name.as_str())
         .cloned()
         .unwrap_or_else(RenderOptions::default);
+      enforce_charset_support(current_name.as_str(), &mut active.options);
     }
 
     let elapsed_scene = playlist.scene_elapsed(*virtual_t);
@@ -147,6 +150,7 @@ where
       height,
       elapsed: elapsed_scene,
       phase,
+      color_steps: THEME_COLOR_STEPS,
       options: &active.options,
     };
     playlist.current().render(&ctx, frame_buf);
@@ -155,6 +159,13 @@ where
     *virtual_t += frame_dt * active.options.speed;
   }
   Ok(())
+}
+
+fn enforce_charset_support(mode: &str, options: &mut RenderOptions) {
+  options.charset = normalize_charset(&options.charset);
+  if !registry::supports_charset(mode) {
+    options.charset = "scene".to_string();
+  }
 }
 
 struct CastSink {
