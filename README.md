@@ -10,8 +10,7 @@ modes in all.
 
 ## Requirements
 
-- Rust **1.80 or newer** (1.75 also works if you pin `rayon` to `1.10` and
-  `rayon-core` to `1.12.1` in `Cargo.lock`)
+- Rust **1.80 or newer** (rayon dependency floor)
 - Cargo (ships with the rustup toolchain)
 - A terminal with ANSI 256-color support
 - Truecolor support for named color themes
@@ -63,6 +62,45 @@ sudo apt remove rustc cargo
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 source "$HOME/.cargo/env"
 rustup component add rustfmt clippy
+```
+
+### Gotcha: System-wide `RUSTUP_HOME` / `CARGO_HOME`
+
+Some hardened setups (corporate images, EDA workstations, shared dev hosts)
+set `RUSTUP_HOME` and `CARGO_HOME` to a read-only system path such as
+`/opt/rust/.rustup`. Rustup then errors with:
+
+```text
+error: could not create home directory: '/opt/rust/.rustup': Permission denied
+```
+
+The fix is to point both vars at your user home before installing, and persist
+the override in your shell rc so future shells inherit it:
+
+```bash
+# Install rustup with explicit per-user paths
+mkdir -p "$HOME/.rustup" "$HOME/.cargo"
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o /tmp/rustup-init.sh
+RUSTUP_HOME="$HOME/.rustup" CARGO_HOME="$HOME/.cargo" \
+  sh /tmp/rustup-init.sh -y --no-modify-path
+
+# Persist the overrides at the END of ~/.bashrc (or ~/.zshrc), AFTER any
+# system-level rust setup that would otherwise win on shell startup.
+cat >> ~/.bashrc <<'EOF'
+
+# rustup overrides -- must run after any system-wide /opt/rust setup
+export RUSTUP_HOME="$HOME/.rustup"
+export CARGO_HOME="$HOME/.cargo"
+. "$HOME/.cargo/env"
+EOF
+```
+
+Then open a new terminal (or `source ~/.bashrc`) and verify:
+
+```bash
+echo "$RUSTUP_HOME"        # /home/<you>/.rustup
+echo "$CARGO_HOME"         # /home/<you>/.cargo
+rustc --version
 ```
 
 ## Build And Run
@@ -465,8 +503,10 @@ asciinema play plasma.cast
 ```text
 Cargo.toml
 Cargo.lock
+rustfmt.toml
 src/
-  main.rs              entrypoint
+  main.rs              binary entry; calls into the library
+  lib.rs               library surface; re-exports all modules
   cli.rs               clap CLI
   options.rs           RenderOptions
   animation.rs         Animation trait and FrameContext
@@ -476,12 +516,18 @@ src/
   themes.rs            gradient palettes
   runner.rs            terminal loop, keys, HUD
   playlist.rs          single / random / cycle scene providers
-  settings.rs          ascii_fields.json load/save
+  settings.rs          XDG-aware settings load/save
   registry.rs          mode-name -> animation factory
   animations/
     fractal_base.rs    shared escape-time helpers
     *.rs               one animation module, or grouped native Rust modes
+benches/
+  animations.rs        criterion bench for the rendering hot path
 ```
+
+The lib/bin split lets the criterion bench (and any future external
+consumers) reach the rendering pipeline without rebuilding it from
+scratch. `main.rs` is intentionally a 6-line wrapper around `cli::run`.
 
 Each animation builds a grid of brightness levels in `[0, 1]` and hands it to
 `render_field()` or `render_glyph_field()`. The shared renderer handles
@@ -527,6 +573,8 @@ order of magnitude faster.
 The project ships a [`rustfmt.toml`](rustfmt.toml) at the repo root. `cargo
 fmt` reads it automatically — there is nothing to wire up. Settings of note:
 
+- `tab_spaces = 2` — matches the rest of the codebase. Without this,
+  rustfmt's default of 4 spaces would reflow every file.
 - `max_width = 110` — wider than the default 100 so the dense math in the
   animation modules does not get awkwardly line-wrapped.
 - `use_small_heuristics = "Max"` — keeps short blocks and literals on one
@@ -572,3 +620,62 @@ let (cw, ch, ax, t) = (
 
 The header comment inside `rustfmt.toml` documents this so the convention is
 discoverable from the file itself.
+
+### Benchmarking
+
+The renderer is benched with [`criterion`](https://github.com/bheisler/criterion.rs)
+against a fixed 160 x 50 frame, one `render()` call per iteration, scene-default
+theme. Source: [`benches/animations.rs`](benches/animations.rs).
+
+```bash
+# Run all benches
+cargo bench --bench animations
+
+# Save a labelled baseline (useful before a refactor)
+cargo bench --bench animations -- --save-baseline main
+
+# Compare current numbers against a saved baseline
+cargo bench --bench animations -- --baseline main
+```
+
+Criterion prints per-mode regressions and improvements with statistical
+confidence, which is the signal to watch for an FPS regression on a future
+change. Reports go to `target/criterion/` if you want the HTML view.
+
+#### Baseline (release profile, 2026-06-01)
+
+Wall time per `render()` call on a 160 x 50 frame. "Equivalent FPS" is just
+`1 / time` — the theoretical upper bound if rendering were the only cost.
+In practice the terminal emulator becomes the bottleneck long before any of
+these numbers do.
+
+| Mode | Render time | Equivalent FPS | Notes |
+| --- | ---: | ---: | --- |
+| `cpu` | 16 us | 62 500 | Glyph-locked, no charset cycle |
+| `rd` | 189 us | 5 291 | Double-buffered Gray-Scott |
+| `plasma` | 305 us | 3 279 | Trig-heavy, single-threaded |
+| `storm` | 342 us | 2 923 | rayon row-parallel |
+| `clouds` | 353 us | 2 833 | rayon row-parallel |
+| `tunnel` | 368 us | 2 717 | rayon row-parallel |
+| `whirlpool` | 420 us | 2 381 | rayon row-parallel |
+| `lava` | 437 us | 2 290 | rayon row-parallel |
+| `aurora` | 641 us | 1 562 | rayon row-parallel |
+| `galaxy` | 1 192 us | 840 | Slowest sampled mode |
+
+Even the slowest sampled mode (`galaxy`) renders at ~35x the 24 FPS target.
+After the rayon + LUT + push_u8 pass, the rendering pipeline is no longer
+the FPS bottleneck — the limit is now terminal throughput, not Rust code.
+
+#### What is sampled and why
+
+`BENCH_MODES` in [`benches/animations.rs`](benches/animations.rs) picks ten
+modes that together exercise the renderer's notable code paths:
+
+- The six rayon-parallelised density fields (`lava`, `storm`, `aurora`,
+  `clouds`, `tunnel`, `whirlpool`) — the main subjects of the perf work.
+- `plasma` as a single-threaded trig-heavy baseline.
+- `galaxy` as the slowest density field overall.
+- `rd` to exercise the double-buffered stateful path.
+- `cpu` to exercise `render_glyph_field` and the charset-locked branch.
+
+Adding modes is a one-line edit to that list.
