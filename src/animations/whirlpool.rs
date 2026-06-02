@@ -33,7 +33,7 @@ impl Animation for Whirlpool {
     let cy_mid = (h as f64 - 1.0) * 0.5;
     grid.par_chunks_mut(w).enumerate().for_each(|(row, row_slice)| {
       let py = ((row as f64 - cy_mid) * 2.0) / radius;
-      for col in 0..w {
+      for (col, slot) in row_slice.iter_mut().enumerate() {
         let px = (col as f64 - cx_mid) / radius;
         let r = (px * px + py * py).sqrt() + 1e-4;
         let theta = py.atan2(px);
@@ -43,9 +43,9 @@ impl Animation for Whirlpool {
         let surface = 0.45 * spiral + 0.45 * foam;
         let throat = 1.0 - (-(r * r) / 0.02).exp();
         let rim = (-((r - 0.16).powi(2)) / 0.01).exp() * 0.6;
-        let edge = (1.0 - (r - 1.0) * 2.5).max(0.0).min(1.0);
+        let edge = (1.0 - (r - 1.0) * 2.5).clamp(0.0, 1.0);
         let level = (surface * throat + rim) * edge;
-        row_slice[col] = clamp(level * 1.5 * contrast);
+        *slot = clamp(level * 1.5 * contrast);
       }
     });
     render_field(ctx, &grid, TH, &STYLE, out);

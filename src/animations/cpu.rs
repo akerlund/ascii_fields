@@ -7,8 +7,8 @@ const STAGES: &[&str] = &["IF", "ID", "EX", "MEM", "WB"];
 const PROGRAM: &[&str] = &["LD", "ADD", "MUL", "ST", "BR", "XOR", "LD", "SUB"];
 
 fn make_putters<'a>(
-  grid: &'a mut Vec<f64>,
-  glyphs: &'a mut Vec<char>,
+  grid: &'a mut [f64],
+  glyphs: &'a mut [char],
   w: usize,
   h: usize,
 ) -> impl FnMut(i64, i64, f64, char) + 'a {
@@ -88,8 +88,8 @@ impl Animation for Cpu {
     let stage_w = ((w as i64 - margin * 2) / 7).max(6);
     let stage_h = ((h / 5) as i64).max(4);
     let top = ((h / 6) as i64).max(1);
-    let gap = (((w as i64 - margin * 2 - stage_w * STAGES.len() as i64) / (STAGES.len() as i64 - 1).max(1))
-      .max(1)) as i64;
+    let gap =
+      ((w as i64 - margin * 2 - stage_w * STAGES.len() as i64) / (STAGES.len() as i64 - 1).max(1)).max(1);
     let mut stage_pos: Vec<(i64, i64)> = Vec::new();
     for (idx, name) in STAGES.iter().enumerate() {
       let col = margin + idx as i64 * (stage_w + gap);
@@ -109,7 +109,7 @@ impl Animation for Cpu {
     bx(&mut put, alu_col, reg_row, stage_w, reg_h, "ALU", 0.42);
     bx(&mut put, mem_col, reg_row, reg_w, reg_h, "CACHE", 0.36);
 
-    let active_reg = (ctx.elapsed * 1.5) as i64 % ((reg_h - 2).max(2) as i64);
+    let active_reg = (ctx.elapsed * 1.5) as i64 % (reg_h - 2).max(2);
     for idx in 0..(reg_h - 2).max(2) {
       let row = reg_row + 1 + idx;
       let hot = if idx == active_reg { 0.95 } else { 0.33 };
@@ -167,6 +167,9 @@ impl Animation for Cpu {
       }
     }
 
+    // Each entry: (from_xy, to_xy, glyph, phase). Spelling the tuple out keeps
+    // the layout legible inline; an alias would just bounce the reader.
+    #[allow(clippy::type_complexity)]
     let routes: &[((i64, i64), (i64, i64), char, f64)] = &[
       ((reg_col + reg_w, reg_row + reg_h / 2), (alu_col, reg_row + reg_h / 2), '@', 0.00),
       ((alu_col + stage_w, reg_row + reg_h / 2), (mem_col, reg_row + reg_h / 2), '*', 0.22),

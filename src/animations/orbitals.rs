@@ -47,13 +47,9 @@ fn orb_4fz3(_x: f64, z: f64, r: f64) -> f64 {
   z * (5.0 * z * z - 3.0 * r * r) * (-0.25 * r).exp()
 }
 
+#[derive(Default)]
 pub struct Orbitals {
   norm: HashMap<usize, f64>,
-}
-impl Default for Orbitals {
-  fn default() -> Self {
-    Self { norm: HashMap::new() }
-  }
 }
 
 impl Orbitals {

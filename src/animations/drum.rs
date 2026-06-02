@@ -59,13 +59,9 @@ fn bessel_j(n: usize, x: f64) -> f64 {
   total
 }
 
+#[derive(Default)]
 pub struct Drum {
   profile: HashMap<(usize, u64), Vec<f64>>,
-}
-impl Default for Drum {
-  fn default() -> Self {
-    Self { profile: HashMap::new() }
-  }
 }
 
 impl Drum {

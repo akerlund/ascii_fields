@@ -86,8 +86,8 @@ impl Animation for Lorenz {
     self.z = z;
     let contrast = ctx.options.contrast;
     let mut out_grid = vec![0.0_f64; ctx.width * ctx.height];
-    for i in 0..out_grid.len() {
-      out_grid[i] = clamp(self.grid[i] * contrast);
+    for (slot, &cell) in out_grid.iter_mut().zip(self.grid.iter()) {
+      *slot = clamp(cell * contrast);
     }
     render_field(ctx, &out_grid, TH, &STYLE, out);
   }

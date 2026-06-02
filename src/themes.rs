@@ -222,6 +222,9 @@ macro_rules! palette_slot {
 }
 
 pub fn palette_table(name: &str) -> &'static [(u8, u8, u8)] {
+  // The local tuple type is the actual return shape of each arm; aliasing it
+  // would just hide the type that makes the match readable.
+  #[allow(clippy::type_complexity)]
   let (slot, stops): (&'static OnceLock<Vec<(u8, u8, u8)>>, Stops) = match name {
     "mono" => (palette_slot!(mono), MONO),
     "fire" => (palette_slot!(fire), FIRE),

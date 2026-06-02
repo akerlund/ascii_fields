@@ -6,7 +6,7 @@ use crate::noise::value_noise;
 
 use super::field_common::{aspect, dims, pulse, FrameScratch, FIELD_TH, LINE_TH};
 
-const PHI: f64 = 1.6180339887498949;
+const PHI: f64 = 1.618_033_988_749_895;
 
 const QUASI_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "toxic" };
 #[derive(Default)]

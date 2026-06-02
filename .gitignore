@@ -16,3 +16,6 @@
 *.swo
 .DS_Store
 Thumbs.db
+
+# Local diagnostic logs (clippy / bench / etc.)
+*.log

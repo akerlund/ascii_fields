@@ -88,7 +88,7 @@ impl Animation for Lava {
       let sin_v7 = (v * 7.0).sin() * 1.6;
       let v_drift = v * 2.4 - drift; // fbm Y argument is row-only
       let base_heat = 0.16 + 0.22 * one_minus_v; // row-only part of `heat`
-      for col in 0..w {
+      for (col, slot) in row_slice.iter_mut().enumerate() {
         let u = col as f64 / dw;
         let convection = fbm(u * 3.0 + elapsed_conv, v_drift, 4);
         let cracks = (u * 18.0 + sin_v7 - elapsed_crack).sin().abs();
@@ -107,7 +107,7 @@ impl Animation for Lava {
             heat += ring * (0.60 + 0.30 * sparks);
           }
         }
-        row_slice[col] = clamp(heat * contrast);
+        *slot = clamp(heat * contrast);
       }
     });
     render_field(ctx, &grid, TH, &STYLE, out);

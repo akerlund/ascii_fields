@@ -34,7 +34,7 @@ impl Animation for Aurora {
     let t = ctx.elapsed;
     grid.par_chunks_mut(w).enumerate().for_each(|(row, row_slice)| {
       let v = row as f64 / dh;
-      for col in 0..w {
+      for (col, slot) in row_slice.iter_mut().enumerate() {
         let u = col as f64 / dw;
         let mut value = 0.04;
         for &(centre, thick, freq, speed, weight) in CURTAINS {
@@ -46,7 +46,7 @@ impl Animation for Aurora {
           let fade = (1.0 - v * 0.4).clamp(0.0, 1.0);
           value += weight * band * rays * fade;
         }
-        row_slice[col] = clamp(value * contrast);
+        *slot = clamp(value * contrast);
       }
     });
     render_field(ctx, &grid, TH, &STYLE, out);

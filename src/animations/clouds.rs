@@ -35,7 +35,7 @@ impl Animation for Clouds {
       let vfreq = v * freq;
       let vfreq14 = v * freq * 1.4;
       let vfreq_drift = vfreq - drift * 0.6;
-      for col in 0..w {
+      for (col, slot) in row_slice.iter_mut().enumerate() {
         let u = col as f64 / dw;
         let ufreq = u * freq;
         let wx = fbm(ufreq + drift, vfreq, 3);
@@ -43,7 +43,7 @@ impl Animation for Clouds {
         let n = fbm(ufreq + drift + wx * 1.5, vfreq14 + wy * 1.5, 5);
         let cloud = ((n - 0.42) / 0.58).max(0.0);
         let level = glow + cloud * 0.95;
-        row_slice[col] = clamp(level * contrast);
+        *slot = clamp(level * contrast);
       }
     });
     render_field(ctx, &grid, TH, &STYLE, out);

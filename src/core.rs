@@ -189,9 +189,9 @@ fn write_bg_rgb_escape(out: &mut String, (r, g, b): (u8, u8, u8)) {
 /// linear threshold scan / ramp index with a single array index.
 fn build_glyph_lut(thresholds: &[(f64, char)], charset: &str) -> [char; 256] {
   let mut lut = [' '; 256];
-  for i in 0..256 {
+  for (i, slot) in lut.iter_mut().enumerate() {
     let level = i as f64 / 255.0;
-    lut[i] = charset_char(level, thresholds, charset);
+    *slot = charset_char(level, thresholds, charset);
   }
   lut
 }

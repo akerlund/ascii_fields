@@ -19,16 +19,12 @@ const TH: &[(f64, char)] = &[
 const STRIKE_PERIOD: f64 = 2.6;
 const STRIKE_DURATION: f64 = 0.55;
 
+#[derive(Default)]
 pub struct Lightning {
   strike_idx: Option<i64>,
   centers: Vec<Vec<f64>>,
   w: usize,
   h: usize,
-}
-impl Default for Lightning {
-  fn default() -> Self {
-    Self { strike_idx: None, centers: Vec::new(), w: 0, h: 0 }
-  }
 }
 
 impl Lightning {
@@ -37,18 +33,18 @@ impl Lightning {
     let mut centers: Vec<Vec<f64>> = (0..height).map(|_| Vec::new()).collect();
     let mut x: f64 = rng.gen_range(width as f64 * 0.25..width as f64 * 0.75);
     let mut main = Vec::with_capacity(height);
-    for row in 0..height {
+    for centers_row in centers.iter_mut() {
       x += rng.gen_range(-1.6..1.6);
       if rng.gen::<f64>() < 0.12 {
         x += rng.gen_range(-4.0..4.0);
       }
       x = x.clamp(0.0, width as f64 - 1.0);
       main.push(x);
-      centers[row].push(x);
+      centers_row.push(x);
     }
     let n_branches = if height >= 6 { rng.gen_range(2..=4) } else { 0 };
     for _ in 0..n_branches {
-      let start = rng.gen_range(1..(height - 1)) as usize;
+      let start = rng.gen_range(1..(height - 1));
       let mut bx = main[start];
       let direction: f64 = if rng.gen::<bool>() { -1.0 } else { 1.0 };
       let length = rng.gen_range(3..(4_usize.max(height / 3) + 1));

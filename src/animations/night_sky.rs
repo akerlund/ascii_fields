@@ -85,6 +85,9 @@ fn meteor_state(elapsed: f64, w: usize, h: usize) -> Option<Meteor> {
   Some(Meteor { head_x: start_x + dx * p, head_y: start_y + dy * p, dx, dy, fade: 1.0 - p })
 }
 
+// `along > 0.6 || along < -10.0` mirrors "outside the meteor's body along
+// the trail direction"; converting to !RangeInclusive::contains hides intent.
+#[allow(clippy::manual_range_contains)]
 fn meteor_brightness(m: &Meteor, col: f64, row: f64) -> f64 {
   let length = (m.dx * m.dx + m.dy * m.dy).sqrt();
   let ux = m.dx / length;

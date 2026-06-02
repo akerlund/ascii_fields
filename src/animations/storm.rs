@@ -43,7 +43,7 @@ impl Animation for Storm {
       let dy = (y - cy) / 0.25;
       let abs_dy = dy.abs();
       let streamer_y = (-((abs_dy - 0.75).powi(2)) / 0.10).exp();
-      for col in 0..w {
+      for (col, slot) in row_slice.iter_mut().enumerate() {
         let x = (col as f64 / dw - 0.5) * 2.0 * ax;
         let wind = fbm(x * 1.8 + band_drift, y * 5.0 + shear, 3);
         let mut value = band_base + 0.18 * wind;
@@ -59,7 +59,7 @@ impl Animation for Storm {
         value += wall * (0.42 + 0.22 * swirl);
         value -= eye * 0.55;
         value += streamer_y * (1.0 - dx.abs() * 0.9).max(0.0) * 0.18;
-        row_slice[col] = clamp(value * contrast);
+        *slot = clamp(value * contrast);
       }
     });
     render_field(ctx, &grid, TH, &STYLE, out);

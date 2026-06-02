@@ -150,6 +150,10 @@ impl Animation for Circuit {
     bx(&mut grid, &mut glyphs, mem_b.0, mem_b.1, mem_b.2, mem_b.3, "RAM", 0.44);
     bx(&mut grid, &mut glyphs, io_b.0, io_b.1, io_b.2, io_b.3, "IO", 0.48);
     bx(&mut grid, &mut glyphs, rf_b.0, rf_b.1, rf_b.2, rf_b.3, "ADC", 0.42);
+    // Each entry: ((from_xy, to_xy), speed, phase, glyph). Spelling the tuple
+    // out keeps the layout legible inline; an alias would just bounce the
+    // reader to another file.
+    #[allow(clippy::type_complexity)]
     let paths: &[(((i64, i64), (i64, i64)), f64, f64, char)] = &[
       (((left, rows[0]), (right, rows[0])), 3.8, 0.00, '>'),
       (((right, rows[4]), (left, rows[4])), 4.4, 0.19, '<'),

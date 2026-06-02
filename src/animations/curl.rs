@@ -94,8 +94,8 @@ impl Animation for Curl {
     self.particles = new;
     let contrast = ctx.options.contrast;
     let mut grid = vec![0.0_f64; w * h];
-    for i in 0..grid.len() {
-      grid[i] = clamp(self.trail[i] * contrast);
+    for (slot, &trail) in grid.iter_mut().zip(self.trail.iter()) {
+      *slot = clamp(trail * contrast);
     }
     render_field(ctx, &grid, TH, &STYLE, out);
   }

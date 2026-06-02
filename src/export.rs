@@ -441,7 +441,7 @@ fn xterm_256(idx: u8) -> Rgb {
 }
 
 fn io_other<E: std::fmt::Display>(err: E) -> io::Error {
-  io::Error::new(io::ErrorKind::Other, err.to_string())
+  io::Error::other(err.to_string())
 }
 
 fn io_invalid(message: &str) -> io::Error {

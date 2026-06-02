@@ -50,8 +50,8 @@ impl Animation for Rain {
     let chars: Vec<char> = GLYPHS.chars().collect();
     let n = chars.len();
     let mut heads = vec![0.0_f64; w];
-    for c in 0..w {
-      heads[c] = ((self.offsets[c] + ctx.elapsed * self.speeds[c] * speed_mul)
+    for (c, head) in heads.iter_mut().enumerate() {
+      *head = ((self.offsets[c] + ctx.elapsed * self.speeds[c] * speed_mul)
         % (h as f64 + self.lengths[c] as f64)
         + h as f64
         + self.lengths[c] as f64)

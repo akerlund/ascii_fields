@@ -63,6 +63,9 @@ fn diagrams() -> Vec<Vec<Element>> {
   ]
 }
 
+// The `< low || >= high` shape mirrors the geometric reasoning of these angle
+// buckets; converting to `!Range::contains` reads worse, not better, here.
+#[allow(clippy::manual_range_contains)]
 fn line_char(angle: f64) -> char {
   let a = (angle.to_degrees() + 360.0) % 180.0;
   if a < 22.5 || a >= 157.5 {
@@ -75,6 +78,7 @@ fn line_char(angle: f64) -> char {
     '/'
   }
 }
+#[allow(clippy::manual_range_contains)]
 fn arrow_char(angle: f64) -> char {
   let d = (angle.to_degrees() + 360.0) % 360.0;
   if d < 45.0 || d >= 315.0 {

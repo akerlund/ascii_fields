@@ -115,8 +115,8 @@ impl Animation for Rd {
     }
     let contrast = ctx.options.contrast;
     let mut grid = vec![0.0_f64; ctx.width * ctx.height];
-    for i in 0..grid.len() {
-      grid[i] = clamp(self.v[i] * 4.0 * contrast);
+    for (slot, &v) in grid.iter_mut().zip(self.v.iter()) {
+      *slot = clamp(v * 4.0 * contrast);
     }
     render_field(ctx, &grid, TH, &STYLE, out);
   }

@@ -4,7 +4,7 @@ pub const CHARSET_CYCLE: &[&str] =
   &["scene", "clean", "soft", "dense", "minimal", "smooth", "sharp", "matrix", "braille", "blocks"];
 
 pub fn normalize_charset(name: &str) -> String {
-  if CHARSET_CYCLE.iter().any(|charset| *charset == name) {
+  if CHARSET_CYCLE.contains(&name) {
     name.to_string()
   } else {
     "scene".to_string()

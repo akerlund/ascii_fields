@@ -35,7 +35,7 @@ impl Animation for Tunnel {
     grid.par_chunks_mut(w).enumerate().for_each(|(row, row_slice)| {
       let v = row as f64 / dh;
       let dy = v - cy;
-      for col in 0..w {
+      for (col, slot) in row_slice.iter_mut().enumerate() {
         let u = col as f64 / dw;
         let dx = (u - cx) * ax;
         let r = (dx * dx + dy * dy).sqrt() + 1e-4;
@@ -46,7 +46,7 @@ impl Animation for Tunnel {
         let grime = fbm(angle * 2.0, depth * 0.4, 3);
         let wall = 0.35 * ring + 0.35 * stripe + 0.30 * grime;
         let lighting = (r * 2.2).clamp(0.0, 1.0);
-        row_slice[col] = clamp(wall * lighting * 1.4 * contrast);
+        *slot = clamp(wall * lighting * 1.4 * contrast);
       }
     });
     render_field(ctx, &grid, TH, &STYLE, out);

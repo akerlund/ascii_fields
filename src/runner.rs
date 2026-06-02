@@ -255,14 +255,14 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
         let shown_state =
           if !save_msg.is_empty() && Instant::now() < save_until { save_msg.clone() } else { state };
         let line1 = format!(
-          "{}|{}|{}|{}|{}|{}|{}",
+          "{}|{}|{}|{}|{}|{}| {}",
           cell(&format!(" {}", playlist.title()), 22),
           cell(&format!(" theme = {}", active.options.theme), 20),
           cell(&format!(" scale = {:>4.2}", active.options.scale), 15),
           cell(&format!(" contrast = {:>4.2}", active.options.contrast), 17),
           cell(&format!(" Bright = {:>4.2}", active.options.brightness), 14),
           cell(&format!(" Charset = {}", active.options.charset), 18),
-          format!(" {}", shown_state),
+          shown_state,
         );
         let line2 = format!(
           "{}|{}|{}|{}|{}|{}|{}",
@@ -295,10 +295,10 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
           "",
         );
 
-        let row1 = rows.saturating_sub(4).max(0);
-        let row2 = rows.saturating_sub(3).max(0);
-        let row3 = rows.saturating_sub(2).max(0);
-        let row4 = rows.saturating_sub(1).max(0);
+        let row1 = rows.saturating_sub(4);
+        let row2 = rows.saturating_sub(3);
+        let row3 = rows.saturating_sub(2);
+        let row4 = rows.saturating_sub(1);
         let _ = write!(
           hud_buf,
           "\x1b[{};1H\x1b[48;2;0;0;0m{}\x1b[0m\

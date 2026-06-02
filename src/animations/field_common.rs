@@ -69,7 +69,10 @@ impl FrameScratch {
   }
 }
 
+// 8-arg primitive: bundling these into a struct would just add a binding
+// layer in every caller without buying any clarity.
 #[inline]
+#[allow(clippy::too_many_arguments)]
 pub(super) fn put(
   grid: &mut [f64],
   glyphs: &mut [char],
