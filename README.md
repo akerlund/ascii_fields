@@ -388,10 +388,19 @@ setting edits.
 
 ## Saving Settings
 
-Pressing `s` or `f` writes one JSON file in the working directory:
+Pressing `s` or `f` writes one JSON file, picked from the first writable
+location in this order:
 
-```text
-ascii_fields.json
+| Order | Path | When |
+| --- | --- | --- |
+| 1 | `$XDG_CONFIG_HOME/ascii-fields/ascii_fields.json` | If `XDG_CONFIG_HOME` is set and non-empty |
+| 2 | `$HOME/.config/ascii-fields/ascii_fields.json` | Otherwise, on Linux / macOS |
+| 3 | `./ascii_fields.json` | Last-resort fallback (CI, no `$HOME`) |
+
+Override the path explicitly for testing or alternate profiles:
+
+```bash
+./target/release/ascii-fields plasma --settings-path /tmp/test-settings.json
 ```
 
 The file stores favorites plus per-mode settings:
@@ -412,10 +421,16 @@ The file stores favorites plus per-mode settings:
 }
 ```
 
-If `ascii_fields.json` is missing or unreadable, built-in defaults are used.
-Explicit command-line options still override saved values. Older files keyed
-directly by mode name are still loaded and will be rewritten to this structure
-the next time settings or favorites are saved.
+If the settings file is missing or unreadable, built-in defaults are used.
+Explicit command-line options still override saved values.
+
+**Migrating from older versions.** Pre-XDG installs wrote `./ascii_fields.json`
+to whichever directory the binary was launched from. On first run after
+upgrading, if no file is at the canonical XDG path but `./ascii_fields.json`
+exists, the legacy file is read so nothing is lost. The next `s` / `f`
+keypress writes to the canonical path; you can then delete the legacy file.
+Older files keyed directly by mode name (the original 2024 format) are still
+loaded and will be rewritten to the current structure on next save.
 
 ## Exporting
 

@@ -51,6 +51,11 @@ pub struct Cli {
   #[arg(long, default_value_t = false)]
   pub scroll: bool,
 
+  /// Override the settings file location. Defaults to the XDG config dir:
+  /// $XDG_CONFIG_HOME/ascii-fields/ascii_fields.json (or $HOME/.config/...).
+  #[arg(long, value_name = "PATH")]
+  pub settings_path: Option<PathBuf>,
+
   /// Export an animated GIF clip instead of running interactively.
   #[arg(long, value_name = "PATH")]
   pub export_gif: Option<PathBuf>,
@@ -62,7 +67,8 @@ pub struct Cli {
 
 pub fn run() -> std::io::Result<()> {
   let cli = Cli::parse();
-  let saved = settings::load(settings::DEFAULT_PATH);
+  let settings_path = cli.settings_path.clone().unwrap_or_else(settings::default_path);
+  let saved = settings::load(&settings_path);
   let favorites = known_favorites(&saved.favorites);
 
   if cli.list {
@@ -183,7 +189,7 @@ pub fn run() -> std::io::Result<()> {
       saved_mode_options,
       favorites,
       no_status: cli.no_status,
-      settings_path: settings::DEFAULT_PATH.to_string(),
+      settings_path,
     },
   )
 }
@@ -312,6 +318,6 @@ fn apply_charset_support(mode: &str, options: &mut RenderOptions) {
 fn no_favorites_error() -> io::Error {
   io::Error::new(
     ErrorKind::InvalidInput,
-    format!("no favorites saved in {}; press f while running a mode", settings::DEFAULT_PATH),
+    format!("no favorites saved in {}; press f while running a mode", settings::default_path().display()),
   )
 }

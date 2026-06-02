@@ -4,6 +4,7 @@
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::io::{self, BufWriter, Write};
+use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
 use cpu_time::ProcessTime;
@@ -34,7 +35,7 @@ pub struct RunConfig {
   pub saved_mode_options: BTreeMap<String, RenderOptions>,
   pub favorites: Vec<String>,
   pub no_status: bool,
-  pub settings_path: String,
+  pub settings_path: PathBuf,
 }
 
 struct Active {
@@ -130,7 +131,7 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
               mode_options.insert(current_name.clone(), active.options.clone());
               saved_mode_options.insert(current_name.clone(), active.options.clone());
               match settings::save(&cfg.settings_path, &saved_mode_options, &favorites) {
-                Ok(()) => save_msg = format!("saved {}", cfg.settings_path),
+                Ok(()) => save_msg = format!("saved {}", cfg.settings_path.display()),
                 Err(e) => save_msg = format!("save error: {}", e),
               }
               save_until = Instant::now() + Duration::from_millis(2500);

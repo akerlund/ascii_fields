@@ -1,14 +1,47 @@
 //! Persist per-mode RenderOptions and favorites to a single JSON file.
+//!
+//! The canonical location follows the XDG Base Directory spec:
+//!   $XDG_CONFIG_HOME/ascii-fields/ascii_fields.json
+//!   $HOME/.config/ascii-fields/ascii_fields.json   (fallback)
+//!   ./ascii_fields.json                            (last-resort fallback)
+//!
+//! On first load, if no file exists at the canonical path but the legacy
+//! `./ascii_fields.json` does, it is read so existing users do not lose their
+//! settings. The next `s` or `f` keypress writes to the canonical path; the
+//! user can then delete the legacy file at their leisure.
 
 use std::collections::BTreeMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::options::{normalize_charset, RenderOptions};
 
-pub const DEFAULT_PATH: &str = "ascii_fields.json";
+pub const SETTINGS_FILE: &str = "ascii_fields.json";
+
+/// Resolve the canonical settings path for the current user.
+pub fn default_path() -> PathBuf {
+  if let Some(dir) = config_dir() {
+    return dir.join("ascii-fields").join(SETTINGS_FILE);
+  }
+  PathBuf::from(SETTINGS_FILE)
+}
+
+fn config_dir() -> Option<PathBuf> {
+  if let Some(v) = nonempty_env("XDG_CONFIG_HOME") {
+    return Some(PathBuf::from(v));
+  }
+  nonempty_env("HOME").map(|h| PathBuf::from(h).join(".config"))
+}
+
+fn nonempty_env(name: &str) -> Option<String> {
+  std::env::var(name).ok().filter(|v| !v.is_empty())
+}
+
+fn legacy_path() -> PathBuf {
+  PathBuf::from(SETTINGS_FILE)
+}
 
 #[derive(Clone, Debug, Default)]
 pub struct SavedConfig {
@@ -72,22 +105,40 @@ impl SavedMode {
   }
 }
 
-pub fn load(path: &str) -> SavedConfig {
-  if !Path::new(path).exists() {
-    return SavedConfig::default();
+pub fn load(path: &Path) -> SavedConfig {
+  if path.exists() {
+    return read_file(path);
   }
-  let data = match std::fs::read_to_string(path) {
-    Ok(s) => s,
-    Err(_) => return SavedConfig::default(),
-  };
-  parse(&data)
+  // First-run migration: pick up the pre-XDG ./ascii_fields.json if present.
+  let legacy = legacy_path();
+  if legacy != path && legacy.exists() {
+    eprintln!(
+      "ascii-fields: reading legacy settings from {}; press `s` or `f` to migrate to {}",
+      legacy.display(),
+      path.display()
+    );
+    return read_file(&legacy);
+  }
+  SavedConfig::default()
+}
+
+fn read_file(path: &Path) -> SavedConfig {
+  match std::fs::read_to_string(path) {
+    Ok(s) => parse(&s),
+    Err(_) => SavedConfig::default(),
+  }
 }
 
 pub fn save(
-  path: &str,
+  path: &Path,
   options_by_mode: &BTreeMap<String, RenderOptions>,
   favorites: &[String],
 ) -> std::io::Result<()> {
+  if let Some(parent) = path.parent() {
+    if !parent.as_os_str().is_empty() {
+      std::fs::create_dir_all(parent)?;
+    }
+  }
   let modes: BTreeMap<String, SavedMode> =
     options_by_mode.iter().map(|(k, v)| (k.clone(), SavedMode::from(v))).collect();
   let data = SavedFile { favorites: normalize_favorites(favorites.to_vec()), modes };
@@ -173,5 +224,54 @@ mod tests {
     saved.apply(&mut applied);
 
     assert_eq!(applied.charset, "scene");
+  }
+
+  // The env-var-driven tests run with a global mutex to avoid races between
+  // each other; `cargo test` parallelises modules by default.
+  use std::sync::Mutex;
+  static ENV_GUARD: Mutex<()> = Mutex::new(());
+
+  fn with_env<F: FnOnce()>(xdg: Option<&str>, home: Option<&str>, body: F) {
+    let _g = ENV_GUARD.lock().unwrap();
+    let prev_xdg = std::env::var("XDG_CONFIG_HOME").ok();
+    let prev_home = std::env::var("HOME").ok();
+    match xdg {
+      Some(v) => std::env::set_var("XDG_CONFIG_HOME", v),
+      None => std::env::remove_var("XDG_CONFIG_HOME"),
+    }
+    match home {
+      Some(v) => std::env::set_var("HOME", v),
+      None => std::env::remove_var("HOME"),
+    }
+    body();
+    match prev_xdg {
+      Some(v) => std::env::set_var("XDG_CONFIG_HOME", v),
+      None => std::env::remove_var("XDG_CONFIG_HOME"),
+    }
+    match prev_home {
+      Some(v) => std::env::set_var("HOME", v),
+      None => std::env::remove_var("HOME"),
+    }
+  }
+
+  #[test]
+  fn default_path_prefers_xdg_config_home() {
+    with_env(Some("/x/config"), Some("/h"), || {
+      assert_eq!(default_path(), PathBuf::from("/x/config/ascii-fields/ascii_fields.json"));
+    });
+  }
+
+  #[test]
+  fn default_path_falls_back_to_home_dot_config() {
+    with_env(None, Some("/h"), || {
+      assert_eq!(default_path(), PathBuf::from("/h/.config/ascii-fields/ascii_fields.json"));
+    });
+  }
+
+  #[test]
+  fn default_path_last_resort_is_cwd() {
+    with_env(Some(""), Some(""), || {
+      assert_eq!(default_path(), PathBuf::from("ascii_fields.json"));
+    });
   }
 }
