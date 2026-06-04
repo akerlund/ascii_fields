@@ -83,16 +83,36 @@ impl Animation for Dla {
     self.last = ctx.elapsed;
     let scale = ctx.options.scale.max(1.0) as usize;
     let walkers = (40.max(self.w * self.h / 40)) * scale;
-    let cap = (self.w as f64 * self.h as f64 * 0.55) as usize;
-    let size: usize = self.cluster.iter().filter(|&&b| b).count();
-    if size >= cap {
-      self.seed(ctx.width, ctx.height);
-    } else {
-      for _ in 0..walkers {
-        self.walk_one();
+
+    // Continuous growth + continuous decay rather than grow-then-reset.
+    //
+    // Lifetime is measured in generations (i.e. growth steps). When the
+    // cluster has reached steady-state size, each frame's growth balances
+    // an equal number of deaths at the tail of the age window, so the
+    // dendrite gracefully wanders -- new tips form, old branches melt --
+    // instead of the picture going fully black.
+    let target_size = (self.w as f64 * self.h as f64 * 0.32) as usize;
+    let lifetime: i32 = (target_size as i32 * 8).max(2000);
+    for _ in 0..walkers {
+      self.walk_one();
+    }
+    let cutoff = self.gen - lifetime;
+    if cutoff > 0 {
+      for idx in 0..self.cluster.len() {
+        if self.cluster[idx] && self.age[idx] < cutoff {
+          self.cluster[idx] = false;
+          self.age[idx] = 0;
+        }
       }
     }
-    let max_age = self.gen.max(1) as f64;
+
+    // Brightness: freshness within the current age window. Newest cells
+    // are brightest; old cells about to die are dimmest. With the
+    // continuous lifecycle this gives a moving "tip lit, trunk dim"
+    // gradient that travels through the dendrite.
+    let max_age = self.gen as f64;
+    let min_age = cutoff.max(0) as f64;
+    let span = (max_age - min_age).max(1.0);
     let contrast = ctx.options.contrast;
     let mut grid = vec![0.0_f64; ctx.width * ctx.height];
     for r in 0..ctx.height {
@@ -100,7 +120,8 @@ impl Animation for Dla {
       for c in 0..ctx.width {
         let a = self.age[base + c];
         if a > 0 {
-          grid[base + c] = clamp((0.22 + 0.78 * a as f64 / max_age) * contrast);
+          let freshness = ((a as f64 - min_age) / span).clamp(0.0, 1.0);
+          grid[base + c] = clamp((0.18 + 0.78 * freshness) * contrast);
         }
       }
     }
