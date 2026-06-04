@@ -22,8 +22,6 @@
 //! Persistent accumulator with exponential fade so each frame's freshly
 //! drawn points add to a gradually-decaying impression.
 
-use std::f64::consts::PI;
-
 use rand::{Rng, SeedableRng};
 use rand_pcg::Pcg32;
 
@@ -43,11 +41,13 @@ const TH: &[(f64, char)] = &[
   (1.01, '@'),
 ];
 
-const N_SEEDS: usize = 80;
-const WALK_LENGTH: usize = 120;
-const TRANSIENT: usize = 30;
-const FADE_RATE: f64 = 1.6;
-const VIEW_SCALE: f64 = 0.35;
+const N_SEEDS: usize = 120;
+const WALK_LENGTH: usize = 180;
+const TRANSIENT: usize = 40;
+const FADE_RATE: f64 = 1.4;
+/// The Maskit-slice limit set lives roughly in the strip |Re z| < 2,
+/// |Im z| < 1.5. Pick a screen scale that fits that without clipping.
+const VIEW_SCALE: f64 = 0.20;
 
 type Cx = (f64, f64);
 
@@ -88,39 +88,36 @@ impl Mob {
   }
 }
 
-/// Build the two generators with time-varying parameters. The recipe is the
-/// classic quasi-Fuchsian deformation of a 4-times-punctured sphere group:
-/// two near-parabolic transformations whose conjugacy invariants we let
-/// drift slightly to morph the limit set without losing its overall shape.
+/// Build the two generators using the Maskit-slice parameterization for the
+/// once-punctured torus group. For a complex parameter μ:
+///
+///   T_a = ((−iμ − 1, −iμ), (i, 0))
+///   T_b = ((1, −2i), (0, 1))
+///
+/// T_b is parabolic at infinity (translation by −2i). T_a is parabolic
+/// along the Maskit boundary; μ drifts slowly inside the slice so the
+/// limit set deforms continuously without leaving the discrete-group
+/// regime.
 fn generators(t: f64) -> [Mob; 4] {
-  let s = 1.0 + 0.18 * (t * 0.15).sin();
-  let phi = 0.55 + 0.20 * (t * 0.11).cos();
-  // g1: matrix [ s, 1; 0, 1/s ] — hyperbolic, fixed points 0 and ∞
-  let g1 = Mob { a: (s, 0.0), b: (1.0, 0.0), c: (0.0, 0.0), d: (1.0 / s, 0.0) };
-  // g2: conjugate g1 by a rotation+translation that moves fixed points
-  // off the real axis. Result is a hyperbolic with two complex fixed
-  // points -- the kind of conjugate that produces a quasi-Fuchsian limit
-  // set.
-  let cos_p = phi.cos();
-  let sin_p = phi.sin();
-  let rot = Mob { a: (cos_p, sin_p), b: (0.0, 0.0), c: (0.0, 0.0), d: (cos_p, -sin_p) };
-  let trans = Mob { a: (1.0, 0.0), b: (0.4, 0.2), c: (0.0, 0.0), d: (1.0, 0.0) };
-  // g2 = trans * rot * g1 * rot^{-1} * trans^{-1}
-  let conj = compose(trans, rot);
-  let conj_inv = compose(rot.inverse(), trans.inverse());
-  let g2 = compose(compose(conj, g1), conj_inv);
-  [g1, g1.inverse(), g2, g2.inverse()]
-}
+  // Maskit slice parameter -- staying around μ ≈ 1.9 + 0.05i keeps us inside
+  // the discrete locus where the limit set is a beautiful Apollonian-ish
+  // fractal curve rather than the degenerate two-attractor regime.
+  let mu_re = 1.92 + 0.06 * (t * 0.08).sin();
+  let mu_im = 0.05 + 0.04 * (t * 0.11).cos();
+  // i · μ = (−mu_im, mu_re)
+  let i_mu = (-mu_im, mu_re);
+  let neg_i_mu = (mu_im, -mu_re);
+  let neg_i_mu_minus_1 = (neg_i_mu.0 - 1.0, neg_i_mu.1);
 
-#[inline]
-fn compose(a: Mob, b: Mob) -> Mob {
-  // (a · b)(z) = a(b(z)); in matrix terms it's a * b.
-  Mob {
-    a: cadd(cmul(a.a, b.a), cmul(a.b, b.c)),
-    b: cadd(cmul(a.a, b.b), cmul(a.b, b.d)),
-    c: cadd(cmul(a.c, b.a), cmul(a.d, b.c)),
-    d: cadd(cmul(a.c, b.b), cmul(a.d, b.d)),
-  }
+  let g1 = Mob { a: neg_i_mu_minus_1, b: neg_i_mu, c: (0.0, 1.0), d: (0.0, 0.0) };
+  // T_b = ((1, -2i), (0, 1)).
+  let g2 = Mob { a: (1.0, 0.0), b: (0.0, -2.0), c: (0.0, 0.0), d: (1.0, 0.0) };
+
+  // Silence the dead-code warning on the now-unused `i_mu` value -- kept
+  // visible above so the slice formula reads cleanly.
+  let _ = i_mu;
+
+  [g1, g1.inverse(), g2, g2.inverse()]
 }
 
 /// Which letter undoes letter `i`? Pairs are (0, 1) and (2, 3).
@@ -173,10 +170,13 @@ impl Animation for Kleinian {
     let gens = generators(t);
 
     for seed_idx in 0..N_SEEDS {
-      // Spread the seed points around a circle in C so all four
-      // generators get reached.
-      let seed_angle = 2.0 * PI * seed_idx as f64 / N_SEEDS as f64;
-      let mut z: Cx = (1.6 * seed_angle.cos(), 1.6 * seed_angle.sin());
+      // Spread seed points across the strip where the Maskit-slice limit
+      // set lives. A wide rectangle (re ∈ [-2, 2], im ∈ [-1.5, 1.5])
+      // makes sure every iterate region of the limit set has a starter.
+      let su = (seed_idx as f64 + 0.5) / N_SEEDS as f64;
+      let re = -2.0 + 4.0 * (su * 7.0).fract();
+      let im = -1.4 + 2.8 * su;
+      let mut z: Cx = (re, im);
       let mut prev: usize = usize::MAX;
 
       for step in 0..WALK_LENGTH {

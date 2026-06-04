@@ -191,6 +191,11 @@ pub static MODES: &[ModeInfo] = &[
     factory: || Box::new(mobius::Mobius2),
   },
   ModeInfo {
+    name: "mobius3",
+    description: "Flat checkerboard plane bent onto a rolling sphere (stereographic)",
+    factory: || Box::new(mobius::Mobius3),
+  },
+  ModeInfo {
     name: "hopf",
     description: "Hopf fibration: linked great circles in S³ projected to ℝ³",
     factory: || Box::new(hopf::HopfFibration::default()),

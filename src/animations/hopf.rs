@@ -39,8 +39,9 @@ const TH: &[(f64, char)] = &[
   (1.01, '@'),
 ];
 
-/// Per-second decay applied to the persistent accumulator.
-const FADE_RATE: f64 = 1.5;
+/// Per-second decay applied to the persistent accumulator. Bumped so the
+/// centre, where many fibers cross, drains fast enough not to saturate.
+const FADE_RATE: f64 = 3.5;
 const N_FIBERS: usize = 64;
 const PTS_PER_FIBER: usize = 100;
 /// Drop fiber samples whose stereographic denominator is too small (close
@@ -144,9 +145,11 @@ impl Animation for HopfFibration {
         if !(0.0..1.0).contains(&screen_u) || !(0.0..1.0).contains(&screen_v) {
           continue;
         }
-        // Depth fade so far points dim, near ones bright.
-        let depth_fade = 1.0 / (1.0 + 0.35 * s3 * s3);
-        let weight = 0.16 * depth_fade;
+        // Strong depth fade so near fibers dominate the visible field --
+        // without this, every fiber piles into the centre with equal
+        // weight and the result looks like a uniform blob.
+        let depth_fade = 1.0 / (1.0 + 1.4 * s3 * s3);
+        let weight = 0.06 * depth_fade;
 
         let cx_i = (screen_u * dw) as i64;
         let cy_i = (screen_v * dh) as i64;
@@ -168,10 +171,17 @@ impl Animation for HopfFibration {
       }
     }
 
+    // Log tone-map: ln(1 + K·v) / ln(1 + K) compresses the high end so the
+    // overlapping centre does not saturate to a single character while
+    // dim outer arcs still register. K controls how aggressive the
+    // compression is.
     let contrast = ctx.options.contrast;
+    let k: f64 = 6.0;
+    let norm = (1.0 + k).ln();
     let mut grid = vec![0.0_f64; w * h];
     for (g, &v) in grid.iter_mut().zip(self.accumulator.iter()) {
-      *g = clamp(v * contrast);
+      let compressed = (1.0 + k * v).ln() / norm;
+      *g = clamp(compressed * contrast);
     }
     render_field(ctx, &grid, TH, &STYLE, out);
   }

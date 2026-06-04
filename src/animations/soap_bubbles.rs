@@ -37,6 +37,14 @@ const GROW_DURATION: f64 = 1.0;
 const POP_DURATION: f64 = 0.45;
 const MAX_BUBBLES: usize = 16;
 
+/// Smooth time-varying horizontal displacement representing integrated wind.
+/// Sum of three sinusoids at different rates so the wind never quite repeats
+/// and the bubbles see real drift instead of a clean oscillation.
+#[inline]
+fn wind_displacement(t: f64) -> f64 {
+  0.16 * (t * 0.07).sin() + 0.07 * (t * 0.19 + 1.7).sin() + 0.04 * (t * 0.43 + 3.1).sin()
+}
+
 #[derive(Clone, Copy)]
 struct Bubble {
   x: f64,
@@ -76,12 +84,16 @@ impl Animation for SoapBubbles {
 
     // Spawn new bubbles at jittered intervals until we have caught up to now.
     while ctx.elapsed >= self.next_spawn {
+      let r_target: f64 = self.rng.gen_range(0.06..0.16);
+      // Smaller bubbles rise faster (less buoyancy mass, similar surface
+      // tension) -- this is the visible coupling between size and speed.
+      let size_factor = (0.06_f64 / r_target.max(0.04)).clamp(0.5, 2.0);
       self.bubbles.push(Bubble {
         x: self.rng.gen_range(0.10..0.90),
-        y: self.rng.gen_range(0.90..1.05), // start at or just below the bottom edge
-        vx: self.rng.gen_range(-0.015..0.015),
-        vy: -self.rng.gen_range(0.030..0.060),
-        r_target: self.rng.gen_range(0.06..0.16),
+        y: self.rng.gen_range(0.90..1.05),
+        vx: self.rng.gen_range(-0.010..0.010),
+        vy: -self.rng.gen_range(0.025..0.055) * size_factor,
+        r_target,
         t0: self.next_spawn,
         lifetime: self.rng.gen_range(LIFETIME_MIN..LIFETIME_MAX),
         phase_seed: self.rng.gen_range(0.0..TAU),
@@ -96,6 +108,12 @@ impl Animation for SoapBubbles {
       self.bubbles.remove(0);
     }
 
+    // Global wind: a smooth time-varying horizontal drift that pushes all
+    // bubbles, weighted by their size (smaller bubbles get pushed harder
+    // because they have less momentum). The wind itself is a sum of three
+    // sinusoids at different rates so it never repeats cleanly.
+    let wind_phase = wind_displacement(ctx.elapsed);
+
     // Precompute the per-bubble live geometry once, so the inner cell loop is
     // a tight sum over a small Vec.
     let visible: Vec<(f64, f64, f64, f64)> = self
@@ -103,7 +121,10 @@ impl Animation for SoapBubbles {
       .iter()
       .filter_map(|b| {
         let age = ctx.elapsed - b.t0;
-        let bx = b.x + b.vx * age + b.wobble_amp * (age * b.wobble_freq * TAU).sin();
+        // Wind susceptibility: smaller bubbles drift more in the wind.
+        let wind_susceptibility = (0.08_f64 / b.r_target.max(0.04)).clamp(0.4, 3.0);
+        let wind_offset = (wind_phase - wind_displacement(b.t0)) * wind_susceptibility;
+        let bx = b.x + b.vx * age + b.wobble_amp * (age * b.wobble_freq * TAU).sin() + wind_offset;
         let by = b.y + b.vy * age;
         // Envelope: ease-out grow -> hold -> ease-in pop
         let r = if age < GROW_DURATION {

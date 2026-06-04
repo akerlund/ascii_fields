@@ -35,9 +35,15 @@ const TH: &[(f64, char)] = &[
   (1.01, '@'),
 ];
 
-const N_U: usize = 80;
-const N_V: usize = 140;
-const FADE_RATE: f64 = 2.0;
+/// Number of latitude circles rendered (u-coordinate stops). Sparse: with
+/// dense sampling the surface paints as a featureless silhouette; with
+/// sparse wireframe the deformation of each circle is legible.
+const N_LATITUDES: usize = 14;
+/// Number of meridians (v-coordinate stops).
+const N_MERIDIANS: usize = 20;
+/// Points sampled along each grid line so the curves draw smoothly.
+const PTS_PER_LINE: usize = 200;
+const FADE_RATE: f64 = 2.4;
 const VIEW_SCALE: f64 = 0.30;
 
 /// Point on the stylized eversion surface at parameters (u, v) and homotopy
@@ -113,46 +119,57 @@ impl Animation for SphereEversion {
     let (cy_rot, sy_rot) = (rot_y.cos(), rot_y.sin());
     let (cx_rot, sx_rot) = (rot_x.cos(), rot_x.sin());
 
-    for i in 0..N_U {
-      let u = PI * (i as f64 + 0.5) / N_U as f64;
-      for j in 0..N_V {
-        let v = TAU * j as f64 / N_V as f64;
-        let (p1, p2, p3) = eversion_point(u, v, t);
-
-        // 3D rotate: around y then around x.
-        let r1 = cy_rot * p1 + sy_rot * p3;
-        let r3 = -sy_rot * p1 + cy_rot * p3;
-        let r2 = p2;
-        let s1 = r1;
-        let s2 = cx_rot * r2 - sx_rot * r3;
-        let s3 = sx_rot * r2 + cx_rot * r3;
-
-        let screen_u = 0.5 + VIEW_SCALE * s1 / ax;
-        let screen_v = 0.5 - VIEW_SCALE * s2;
-        if !(0.0..1.0).contains(&screen_u) || !(0.0..1.0).contains(&screen_v) {
+    // Reusable closure: project (p1, p2, p3) to screen and splat.
+    let mut splat = |p1: f64, p2: f64, p3: f64| {
+      let r1 = cy_rot * p1 + sy_rot * p3;
+      let r3 = -sy_rot * p1 + cy_rot * p3;
+      let r2 = p2;
+      let s1 = r1;
+      let s2 = cx_rot * r2 - sx_rot * r3;
+      let s3 = sx_rot * r2 + cx_rot * r3;
+      let screen_u = 0.5 + VIEW_SCALE * s1 / ax;
+      let screen_v = 0.5 - VIEW_SCALE * s2;
+      if !(0.0..1.0).contains(&screen_u) || !(0.0..1.0).contains(&screen_v) {
+        return;
+      }
+      let depth_fade = 1.0 / (1.0 + 0.5 * s3 * s3);
+      let weight = 0.30 * depth_fade;
+      let cx_i = (screen_u * dw) as i64;
+      let cy_i = (screen_v * dh) as i64;
+      for dy in -1..=1_i64 {
+        let yy = cy_i + dy;
+        if yy < 0 || yy >= h as i64 {
           continue;
         }
-        // Depth fade: front of surface (smaller s3) brighter than back.
-        let depth_fade = 1.0 / (1.0 + 0.35 * s3 * s3);
-        let weight = 0.18 * depth_fade;
-
-        let cx_i = (screen_u * dw) as i64;
-        let cy_i = (screen_v * dh) as i64;
-        for dy in -1..=1_i64 {
-          let yy = cy_i + dy;
-          if yy < 0 || yy >= h as i64 {
+        for dx in -1..=1_i64 {
+          let xx = cx_i + dx;
+          if xx < 0 || xx >= w as i64 {
             continue;
           }
-          for dx in -1..=1_i64 {
-            let xx = cx_i + dx;
-            if xx < 0 || xx >= w as i64 {
-              continue;
-            }
-            let dist2 = (dx * dx + dy * dy) as f64;
-            let g = (-dist2 / 0.65).exp();
-            self.accumulator[yy as usize * w + xx as usize] += weight * g;
-          }
+          let dist2 = (dx * dx + dy * dy) as f64;
+          let g = (-dist2 / 0.55).exp();
+          self.accumulator[yy as usize * w + xx as usize] += weight * g;
         }
+      }
+    };
+
+    // Latitude lines: fix u, sweep v densely.
+    for i in 0..N_LATITUDES {
+      let u = PI * (i as f64 + 0.5) / N_LATITUDES as f64;
+      for j in 0..PTS_PER_LINE {
+        let v = TAU * j as f64 / PTS_PER_LINE as f64;
+        let (p1, p2, p3) = eversion_point(u, v, t);
+        splat(p1, p2, p3);
+      }
+    }
+    // Meridian lines: fix v, sweep u densely. Together they form a
+    // wireframe whose grid lines bend through the eversion.
+    for j in 0..N_MERIDIANS {
+      let v = TAU * j as f64 / N_MERIDIANS as f64;
+      for i in 0..PTS_PER_LINE {
+        let u = PI * (i as f64 + 0.5) / PTS_PER_LINE as f64;
+        let (p1, p2, p3) = eversion_point(u, v, t);
+        splat(p1, p2, p3);
       }
     }
 
