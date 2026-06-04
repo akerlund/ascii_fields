@@ -172,22 +172,63 @@ impl Animation for ReactionRings {
 }
 
 const STRANGE_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "spectrum" };
-#[derive(Default)]
+
 pub struct Strange {
-  scratch: FrameScratch,
+  /// Persistent accumulator across frames so the attractor's full shape stays
+  /// visible. Without this the picture is rebuilt every frame from 7k samples
+  /// and looks like sparkles ("flickers").
+  accumulator: Vec<f64>,
+  /// Carry the orbit's position across frames -- the attractor needs many
+  /// thousands of iterations to settle, doing a fresh start every frame
+  /// leaves the transient (which goes dark for the first ~100 points)
+  /// hanging in the picture.
+  x: f64,
+  y: f64,
+  w: usize,
+  h: usize,
+  last_elapsed: f64,
 }
+
+impl Default for Strange {
+  fn default() -> Self {
+    Self { accumulator: Vec::new(), x: 0.1, y: 0.0, w: 0, h: 0, last_elapsed: 0.0 }
+  }
+}
+
+/// Per-second decay applied to the accumulator. Tuned so the attractor leaves
+/// a fading trail (giving it depth) without the bright core looking stale.
+const STRANGE_FADE: f64 = 1.6;
+
 impl Animation for Strange {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
-    let grid = self.scratch.grid(w * h);
-    let t = ctx.elapsed * 0.18;
-    let a = -1.7 + 0.25 * t.sin();
-    let b = 1.8 + 0.20 * (t * 0.7).cos();
-    let c = -0.9 + 0.22 * (t * 1.1).sin();
-    let d = -1.4 + 0.18 * (t * 0.9).cos();
-    let mut x = 0.1;
-    let mut y = 0.0;
-    let samples = (7000.0 * ctx.options.scale.max(0.5)) as usize;
+    if w != self.w || h != self.h || ctx.elapsed < self.last_elapsed {
+      self.accumulator = vec![0.0_f64; w * h];
+      self.w = w;
+      self.h = h;
+      self.x = 0.1;
+      self.y = 0.0;
+    }
+    let dt = (ctx.elapsed - self.last_elapsed).clamp(0.0, 0.2);
+    self.last_elapsed = ctx.elapsed;
+    let decay = (-dt * STRANGE_FADE).exp();
+    for v in self.accumulator.iter_mut() {
+      *v *= decay;
+    }
+
+    // De Jong attractor parameter drift. Ranges constrained to the regime
+    // where the attractor stays bounded and visually rich -- the earlier
+    // unconstrained drift would occasionally produce a degenerate fixed
+    // point or a runaway orbit, which is what made the picture "go dark".
+    let t = ctx.elapsed * 0.10;
+    let a = -1.80 + 0.18 * t.sin();
+    let b = 1.85 + 0.15 * (t * 0.7).cos();
+    let c = -0.95 + 0.16 * (t * 1.1).sin();
+    let d = -1.45 + 0.14 * (t * 0.9).cos();
+
+    let samples = (24_000.0 * ctx.options.scale.max(0.5)) as usize;
+    let mut x = self.x;
+    let mut y = self.y;
     for _ in 0..samples {
       let nx = (a * y).sin() - (b * x).cos();
       let ny = (c * x).sin() - (d * y).cos();
@@ -197,12 +238,22 @@ impl Animation for Strange {
       let row = ((y + 2.0) / 4.0 * dh).round() as i64;
       if col >= 0 && (col as usize) < w && row >= 0 && (row as usize) < h {
         let idx = row as usize * w + col as usize;
-        grid[idx] = (grid[idx] + 0.16).min(1.0);
+        self.accumulator[idx] += 0.04;
       }
     }
-    for v in grid.iter_mut() {
-      *v = clamp(*v * ctx.options.contrast);
+    self.x = x;
+    self.y = y;
+
+    // Log tone-map so the bright core does not saturate to a single
+    // character while dim outer trails still register.
+    let contrast = ctx.options.contrast;
+    let k: f64 = 5.0;
+    let norm = (1.0 + k).ln();
+    let mut grid = vec![0.0_f64; w * h];
+    for (g, &v) in grid.iter_mut().zip(self.accumulator.iter()) {
+      let compressed = (1.0 + k * v).ln() / norm;
+      *g = clamp(compressed * contrast);
     }
-    render_field(ctx, grid, LINE_TH, &STRANGE_STYLE, out);
+    render_field(ctx, &grid, LINE_TH, &STRANGE_STYLE, out);
   }
 }
