@@ -1,7 +1,7 @@
 use std::f64::consts::TAU;
 
 use crate::animation::{Animation, FrameContext};
-use crate::core::{clamp, render_field, FieldStyle};
+use crate::core::{clamp, render_field, render_glyph_field, FieldStyle};
 use crate::noise::value_noise;
 
 use super::field_common::{aspect, dims, pulse, FrameScratch, FIELD_TH, LINE_TH};
@@ -178,6 +178,12 @@ pub struct Strange {
   /// visible. Without this the picture is rebuilt every frame from 7k samples
   /// and looks like sparkles ("flickers").
   accumulator: Vec<f64>,
+  /// Last-touch timestamp per cell, used to pick the glyph based on
+  /// recency rather than just brightness. Without this the saturated
+  /// interior of the attractor renders as one uniform character; with
+  /// it, the orbit's most recent visits get sharp glyphs while older
+  /// trails fade through softer characters in real time.
+  last_touch: Vec<f64>,
   /// Carry the orbit's position across frames -- the attractor needs many
   /// thousands of iterations to settle, doing a fresh start every frame
   /// leaves the transient (which goes dark for the first ~100 points)
@@ -191,7 +197,7 @@ pub struct Strange {
 
 impl Default for Strange {
   fn default() -> Self {
-    Self { accumulator: Vec::new(), x: 0.1, y: 0.0, w: 0, h: 0, last_elapsed: 0.0 }
+    Self { accumulator: Vec::new(), last_touch: Vec::new(), x: 0.1, y: 0.0, w: 0, h: 0, last_elapsed: 0.0 }
   }
 }
 
@@ -204,6 +210,7 @@ impl Animation for Strange {
     let (w, h, dw, dh) = dims(ctx);
     if w != self.w || h != self.h || ctx.elapsed < self.last_elapsed {
       self.accumulator = vec![0.0_f64; w * h];
+      self.last_touch = vec![ctx.elapsed - 100.0; w * h];
       self.w = w;
       self.h = h;
       self.x = 0.1;
@@ -239,6 +246,7 @@ impl Animation for Strange {
       if col >= 0 && (col as usize) < w && row >= 0 && (row as usize) < h {
         let idx = row as usize * w + col as usize;
         self.accumulator[idx] += 0.04;
+        self.last_touch[idx] = ctx.elapsed;
       }
     }
     self.x = x;
@@ -250,10 +258,29 @@ impl Animation for Strange {
     let k: f64 = 5.0;
     let norm = (1.0 + k).ln();
     let mut grid = vec![0.0_f64; w * h];
-    for (g, &v) in grid.iter_mut().zip(self.accumulator.iter()) {
+    let mut glyphs = vec![' '; w * h];
+    for (i, (g, &v)) in grid.iter_mut().zip(self.accumulator.iter()).enumerate() {
       let compressed = (1.0 + k * v).ln() / norm;
       *g = clamp(compressed * contrast);
+      // Glyph based on recency of last orbit visit: just-touched cells
+      // get sharp characters, older cells fade through softer glyphs.
+      // Without this the saturated interior of the attractor renders as
+      // a uniform '#' / '@' patch with no internal structure.
+      let age = (ctx.elapsed - self.last_touch[i]).max(0.0);
+      if *g > 0.04 {
+        glyphs[i] = match age {
+          a if a < 0.02 => '@',
+          a if a < 0.06 => '#',
+          a if a < 0.14 => '*',
+          a if a < 0.28 => '+',
+          a if a < 0.55 => '=',
+          a if a < 0.95 => '-',
+          a if a < 1.60 => ':',
+          a if a < 2.50 => '.',
+          _ => ' ',
+        };
+      }
     }
-    render_field(ctx, &grid, LINE_TH, &STRANGE_STYLE, out);
+    render_glyph_field(ctx, &grid, &glyphs, &STRANGE_STYLE, out);
   }
 }
