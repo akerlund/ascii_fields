@@ -501,6 +501,21 @@ The file stores favorites plus per-mode settings:
 If the settings file is missing or unreadable, built-in defaults are used.
 Explicit command-line options still override saved values.
 
+**Using the repo's starter config.** The repository ships an `ascii_fields.json`
+with a curated favorites list and per-mode tuning (contrast, speed, theme) for
+every animation. To use it as your personal starting point, copy it to the
+canonical config path before first run:
+
+```bash
+mkdir -p ~/.config/ascii-fields
+cp ascii_fields.json ~/.config/ascii-fields/ascii_fields.json
+```
+
+If you have `$XDG_CONFIG_HOME` set, replace `~/.config` with that path.
+
+You can then edit it freely with `s` and `f` inside the program. The repo copy
+is never written to by the binary, so it stays available as a reference.
+
 **Migrating from older versions.** Pre-XDG installs wrote `./ascii_fields.json`
 to whichever directory the binary was launched from. On first run after
 upgrading, if no file is at the canonical XDG path but `./ascii_fields.json`

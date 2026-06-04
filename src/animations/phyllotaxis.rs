@@ -11,7 +11,7 @@ impl Animation for Phyllotaxis {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let w = ctx.width;
     let h = ctx.height;
-    let seeds = (450.0 * ctx.options.scale.max(0.5)) as usize;
+    let seeds = (650.0 * ctx.options.scale.max(0.5)) as usize;
     let ax = w as f64 / (h as f64 * 2.0).max(1.0);
     let cx = w as f64 * 0.5;
     let cy = h as f64 * 0.5;
@@ -19,24 +19,43 @@ impl Animation for Phyllotaxis {
     let radius_world = (w as f64 * 0.5 / ax.max(0.1)).min(h as f64) * 0.95;
     let scale = radius_world / (seeds as f64).sqrt();
     let rot = ctx.elapsed * 0.18;
+    let pulse = ctx.elapsed * 0.55;
     let contrast = ctx.options.contrast;
     let mut grid = vec![0.0_f64; w * h];
+
     for n in 1..=seeds {
       let r = (n as f64).sqrt() * scale;
       let a = n as f64 * golden + rot;
       let px = cx + r * a.cos() * ax;
       let py = cy + r * a.sin() * 0.5;
-      let bright = clamp(0.55 + 0.45 * (ctx.elapsed * 0.55 + n as f64 * 0.06).sin());
+      // Centre seeds are brightest, edge seeds dim with a sinusoidal pulse
+      // travelling outward. (1 - sqrt(n/seeds)) gives a smooth inward falloff
+      // and the pulse adds movement so the flower visibly breathes.
+      let radial = 1.0 - (n as f64 / seeds as f64).sqrt();
+      let bright = clamp(0.45 + 0.45 * radial + 0.18 * (pulse - n as f64 * 0.02).sin());
+
+      // Splat each seed as a 3x3 Gaussian footprint so single seeds actually
+      // show up as dots instead of single-pixel marks below the rendering
+      // threshold.
       let ci = px.round() as i64;
       let ri = py.round() as i64;
-      if ci >= 0 && (ci as usize) < w && ri >= 0 && (ri as usize) < h {
-        let idx = (ri as usize) * w + (ci as usize);
-        if grid[idx] < bright {
-          grid[idx] = bright;
+      for dy in -1..=1_i64 {
+        let row = ri + dy;
+        if row < 0 || row >= h as i64 {
+          continue;
         }
-        let idx2 = (ri as usize) * w + (ci as usize + 1).min(w - 1);
-        if grid[idx2] < bright * 0.6 {
-          grid[idx2] = bright * 0.6;
+        for dx in -1..=1_i64 {
+          let col = ci + dx;
+          if col < 0 || col >= w as i64 {
+            continue;
+          }
+          let dist2 = (dx * dx + dy * dy) as f64;
+          let g = (-dist2 / 0.65).exp();
+          let idx = row as usize * w + col as usize;
+          let v = bright * g;
+          if grid[idx] < v {
+            grid[idx] = v;
+          }
         }
       }
     }
