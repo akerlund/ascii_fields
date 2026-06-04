@@ -5,7 +5,7 @@ Procedural ASCII animations for the terminal, now as a native Rust binary.
 `ascii-fields` renders animated scenes with ANSI escape codes: surf, solar
 flares, galaxies and black holes, quantum clouds, fractals, Game of Life,
 physics demos, DNA, molecules, reaction-diffusion, Chladni plates, curl-noise
-flow, DLA frost, the Lorenz attractor, drum eigenmodes, and more. There are 73
+flow, DLA frost, the Lorenz attractor, drum eigenmodes, and more. There are 75
 modes in all.
 
 ## Requirements
@@ -303,6 +303,8 @@ List everything:
 | --- | --- |
 | `hypercube` | Rotating 4D tesseract wireframe |
 | `tunnel` | Flight through a winding tunnel |
+| `cubic-roots` | Roots of monic cubics with linear term restricted to 8th roots of unity |
+| `mobius` | Möbius transformation flow on the unit disk |
 
 ### Playlists
 

@@ -1,5 +1,6 @@
 # Rust build output
 /target/
+/release/
 
 # Captured frames and recordings
 *.cast

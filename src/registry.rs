@@ -171,6 +171,16 @@ pub static MODES: &[ModeInfo] = &[
     factory: || Box::new(tunnel::Tunnel),
   },
   ModeInfo {
+    name: "cubic-roots",
+    description: "Roots of monic cubics with c restricted to 8th roots of unity",
+    factory: || Box::new(cubic_roots::CubicRoots::default()),
+  },
+  ModeInfo {
+    name: "mobius",
+    description: "Möbius transformation flow on the unit disk",
+    factory: || Box::new(mobius::Mobius),
+  },
+  ModeInfo {
     name: "lightspeed",
     description: "Jump to lightspeed star streaks",
     factory: || Box::new(lightspeed::Lightspeed::default()),
