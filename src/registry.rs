@@ -176,9 +176,19 @@ pub static MODES: &[ModeInfo] = &[
     factory: || Box::new(cubic_roots::CubicRoots::default()),
   },
   ModeInfo {
-    name: "mobius",
-    description: "Möbius transformation flow on the unit disk",
-    factory: || Box::new(mobius::Mobius),
+    name: "mobius0",
+    description: "Elliptic Möbius flow on the disk (rotating pole)",
+    factory: || Box::new(mobius::Mobius0),
+  },
+  ModeInfo {
+    name: "mobius1",
+    description: "Hyperbolic Möbius flow on the disk (sliding geodesic)",
+    factory: || Box::new(mobius::Mobius1),
+  },
+  ModeInfo {
+    name: "mobius2",
+    description: "Loxodromic Möbius flow on the disk (logarithmic spirals)",
+    factory: || Box::new(mobius::Mobius2),
   },
   ModeInfo {
     name: "lightspeed",
