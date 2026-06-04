@@ -2,6 +2,7 @@
 
 pub mod fractal_base;
 
+pub mod apollonian;
 pub mod areas;
 pub mod aurora;
 pub mod black_hole;
@@ -30,6 +31,7 @@ pub mod hopf;
 pub mod hypercube;
 pub mod julia;
 pub mod karman;
+pub mod kleinian;
 pub mod lava;
 pub mod lensing;
 pub mod life;
@@ -57,6 +59,7 @@ pub mod rd;
 pub mod sierpinski;
 pub mod soap_bubbles;
 pub mod space;
+pub mod sphere_eversion;
 pub mod starfield;
 pub mod storm;
 pub mod terrain;

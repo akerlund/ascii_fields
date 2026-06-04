@@ -196,6 +196,21 @@ pub static MODES: &[ModeInfo] = &[
     factory: || Box::new(hopf::HopfFibration::default()),
   },
   ModeInfo {
+    name: "sphere-eversion",
+    description: "Stylized sphere turning inside-out through a self-intersecting half-way shape",
+    factory: || Box::new(sphere_eversion::SphereEversion::default()),
+  },
+  ModeInfo {
+    name: "kleinian",
+    description: "Limit set of a quasi-Fuchsian Kleinian group (Cannon-Thurston flavoured)",
+    factory: || Box::new(kleinian::Kleinian::default()),
+  },
+  ModeInfo {
+    name: "apollonian",
+    description: "Apollonian gasket of mutually tangent circles",
+    factory: || Box::new(apollonian::Apollonian::default()),
+  },
+  ModeInfo {
     name: "lightspeed",
     description: "Jump to lightspeed star streaks",
     factory: || Box::new(lightspeed::Lightspeed::default()),
