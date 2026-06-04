@@ -26,6 +26,7 @@ pub mod fire;
 pub mod flares;
 pub mod galaxy;
 pub mod gwaves;
+pub mod hopf;
 pub mod hypercube;
 pub mod julia;
 pub mod karman;

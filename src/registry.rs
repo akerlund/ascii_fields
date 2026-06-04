@@ -191,6 +191,11 @@ pub static MODES: &[ModeInfo] = &[
     factory: || Box::new(mobius::Mobius2),
   },
   ModeInfo {
+    name: "hopf",
+    description: "Hopf fibration: linked great circles in S³ projected to ℝ³",
+    factory: || Box::new(hopf::HopfFibration::default()),
+  },
+  ModeInfo {
     name: "lightspeed",
     description: "Jump to lightspeed star streaks",
     factory: || Box::new(lightspeed::Lightspeed::default()),
