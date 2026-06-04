@@ -145,31 +145,159 @@ impl Animation for Supernova {
 }
 
 const SOLAR_WIND_STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "aurora" };
-#[derive(Default)]
-pub struct SolarWind {
-  scratch: FrameScratch,
+
+/// Solar wind redesigned as a particle simulation. Sun on the left emits
+/// charged particles that stream right; a planet's magnetosphere in the
+/// centre-right deflects them around a bow shock and into a downstream
+/// magnetotail. Replaces the previous "two halves of sines + a circle"
+/// rendering which did not look like solar wind to a viewer.
+const SOLARWIND_EARTH_X: f64 = 0.66;
+const SOLARWIND_EARTH_Y: f64 = 0.50;
+const SOLARWIND_EARTH_RADIUS: f64 = 0.045;
+const SOLARWIND_MAGNETOPAUSE: f64 = 0.13;
+const SOLARWIND_N_PARTICLES: usize = 500;
+
+#[derive(Clone, Copy)]
+struct SolarParticle {
+  x: f64,
+  y: f64,
+  vx: f64,
+  vy: f64,
 }
+
+pub struct SolarWind {
+  particles: Vec<SolarParticle>,
+  last: f64,
+  rng: rand_pcg::Pcg32,
+}
+
+impl Default for SolarWind {
+  fn default() -> Self {
+    use rand::SeedableRng;
+    Self { particles: Vec::new(), last: 0.0, rng: rand_pcg::Pcg32::seed_from_u64(0x501A_271E_D000) }
+  }
+}
+
+impl SolarWind {
+  fn fresh_particle(&mut self) -> SolarParticle {
+    use rand::Rng;
+    SolarParticle {
+      x: self.rng.gen_range(-0.05..0.02),
+      y: self.rng.gen_range(0.05..0.95),
+      vx: self.rng.gen_range(0.30..0.45),
+      vy: self.rng.gen_range(-0.010..0.010),
+    }
+  }
+}
+
 impl Animation for SolarWind {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
+    if ctx.elapsed < self.last {
+      self.particles.clear();
+    }
+    let dt = (ctx.elapsed - self.last).clamp(0.0, 0.1);
+    self.last = ctx.elapsed;
+
+    // Top up the particle population.
+    while self.particles.len() < SOLARWIND_N_PARTICLES {
+      let p = self.fresh_particle();
+      self.particles.push(p);
+    }
+
+    // Update each particle. Force model:
+    //   * Repulsion from the planet ∝ 1/r^3 so the bow shock has a sharp
+    //     standoff distance but the field reaches well upstream.
+    //   * Light damping to keep things stable.
+    //   * Forward drift restoration when far from the planet so particles
+    //     do not stall after deflection.
+    let mut respawn: Vec<usize> = Vec::new();
+    for (i, p) in self.particles.iter_mut().enumerate() {
+      let dx = p.x - SOLARWIND_EARTH_X;
+      let dy = p.y - SOLARWIND_EARTH_Y;
+      let r2 = dx * dx + dy * dy;
+      let r = r2.sqrt().max(SOLARWIND_EARTH_RADIUS * 0.5);
+      let push = (0.0010 / r.powi(3)).min(5.0);
+      p.vx += dx / r * push * dt * 60.0;
+      p.vy += dy / r * push * dt * 60.0;
+
+      p.vx *= 0.985;
+      p.vy *= 0.985;
+      // Restore forward drift when far from planet so the wind keeps blowing.
+      if r > SOLARWIND_MAGNETOPAUSE * 1.5 {
+        p.vx += (0.40 - p.vx) * 0.04;
+      }
+
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+
+      let inside_planet = r < SOLARWIND_EARTH_RADIUS * 0.7;
+      if p.x > 1.05 || !(-0.05..1.05).contains(&p.y) || inside_planet {
+        respawn.push(i);
+      }
+    }
+    for i in respawn {
+      self.particles[i] = self.fresh_particle();
+    }
+
+    // Render.
     let (w, h, dw, dh) = dims(ctx);
     let ax = aspect(ctx);
-    let sun_x = 0.63;
-    let t = ctx.elapsed * 0.9;
-    let grid = self.scratch.grid(w * h);
+    let mut grid = vec![0.0_f64; w * h];
+
+    // Background sun glow on the left.
     for row in 0..h {
       let v = row as f64 / dh;
       let base = row * w;
       for col in 0..w {
         let u = col as f64 / dw;
-        let dx = (u - sun_x) * ax;
-        let dy = v - 0.5;
-        let r = (dx * dx + dy * dy).sqrt();
-        let bow = pulse(r - 0.17, 0.0006) * if u < sun_x { 1.0 } else { 0.25 };
-        let stream = ((v * 28.0 + 2.0 * (u * 5.0 + t).sin()).sin().abs()).powf(12.0) * (1.0 - u).max(0.0);
-        let wake = pulse(dy + 0.10 * (u * 9.0 - t).sin(), 0.002) * if u > sun_x { 0.7 } else { 0.0 };
-        grid[base + col] = clamp((0.45 * stream + bow + wake) * ctx.options.contrast);
+        let dy = v - 0.50;
+        let dx = u * ax;
+        let glow = 0.55 * (-(dx * dx + dy * dy) / 0.06).exp();
+        grid[base + col] = grid[base + col].max(glow);
       }
     }
-    render_field(ctx, grid, LINE_TH, &SOLAR_WIND_STYLE, out);
+
+    // Particles: each painted as a single bright pixel with brightness
+    // proportional to speed, so the deflection arcs read as motion streaks
+    // when many particles cluster along the same streamline.
+    for p in &self.particles {
+      let col = (p.x * dw).round() as i64;
+      let row = (p.y * dh).round() as i64;
+      if col < 0 || col >= w as i64 || row < 0 || row >= h as i64 {
+        continue;
+      }
+      let speed = (p.vx * p.vx + p.vy * p.vy).sqrt();
+      let bright = (0.40 + 1.4 * speed).clamp(0.30, 1.0);
+      let idx = row as usize * w + col as usize;
+      if grid[idx] < bright {
+        grid[idx] = bright;
+      }
+    }
+
+    // Planet: solid disc + bright rim (atmosphere band).
+    for row in 0..h {
+      let v = row as f64 / dh;
+      let base = row * w;
+      for col in 0..w {
+        let u = col as f64 / dw;
+        let dx = (u - SOLARWIND_EARTH_X) * ax;
+        let dy = v - SOLARWIND_EARTH_Y;
+        let r = (dx * dx + dy * dy).sqrt();
+        if r < SOLARWIND_EARTH_RADIUS {
+          let depth = 1.0 - r / SOLARWIND_EARTH_RADIUS;
+          grid[base + col] = (0.55 + 0.35 * depth).max(grid[base + col]);
+        } else if r < SOLARWIND_EARTH_RADIUS * 1.6 {
+          let rim_d = (r - SOLARWIND_EARTH_RADIUS) / (SOLARWIND_EARTH_RADIUS * 0.6);
+          let rim = (1.0 - rim_d).max(0.0) * 0.45;
+          grid[base + col] = grid[base + col].max(rim);
+        }
+      }
+    }
+
+    let contrast = ctx.options.contrast;
+    for v in grid.iter_mut() {
+      *v = clamp(*v * contrast);
+    }
+    render_field(ctx, &grid, LINE_TH, &SOLAR_WIND_STYLE, out);
   }
 }
