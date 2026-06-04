@@ -137,13 +137,23 @@ pub static MODES: &[ModeInfo] = &[
   },
   ModeInfo {
     name: "supernova",
-    description: "Expanding stellar shock shell and filaments",
+    description: "Overlapping stellar shock shells, new seed each burst",
     factory: || Box::new(space::Supernova::default()),
   },
   ModeInfo {
     name: "solar-wind",
     description: "Charged particles flowing around a magnetosphere",
     factory: || Box::new(space::SolarWind::default()),
+  },
+  ModeInfo {
+    name: "cosmic-web",
+    description: "Large-scale filamentary structure of the universe",
+    factory: || Box::new(cosmic_web::CosmicWeb),
+  },
+  ModeInfo {
+    name: "soap-bubbles",
+    description: "Iridescent soap bubbles drifting upward",
+    factory: || Box::new(soap_bubbles::SoapBubbles::default()),
   },
   ModeInfo {
     name: "whirlpool",

@@ -12,13 +12,16 @@ if ! grep -qE '\.rs$|^Cargo\.toml$|^Cargo\.lock$|^rustfmt\.toml$|^benches/' <<<"
   exit 0
 fi
 
-# Make sure rustup-managed cargo is on PATH (the hook runs in a non-interactive
-# shell that does not source ~/.bashrc).
+# Make sure rustup-managed cargo is on PATH and pointed at user-writable
+# paths. The hook runs in a non-login, non-interactive shell that does not
+# source ~/.bashrc, so any /opt/rust/* paths the parent process injected
+# (Claude Code launcher, EDA workstation profile, etc) leak through here
+# and break cargo. Force the override unconditionally.
+export RUSTUP_HOME="$HOME/.rustup"
+export CARGO_HOME="$HOME/.cargo"
 if [ -f "$HOME/.cargo/env" ]; then
   . "$HOME/.cargo/env"
 fi
-export RUSTUP_HOME="${RUSTUP_HOME:-$HOME/.rustup}"
-export CARGO_HOME="${CARGO_HOME:-$HOME/.cargo}"
 
 echo "[pre-commit] cargo clippy --release -- -D warnings"
 if ! cargo clippy --release -- -D warnings; then
