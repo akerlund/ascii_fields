@@ -294,7 +294,7 @@ List everything:
 | `julia` | Morphing, zooming Julia set |
 | `burning-ship` | Endless zoom into the Burning Ship fractal |
 | `newton` | Newton's-method fractal with rotating roots |
-| `sierpinski` | Zooming Sierpinski triangle fractal |
+| `sierpinski` | Sierpinski triangle drawn live via the chaos game with rotating vertices |
 
 ### Geometry
 
@@ -465,14 +465,13 @@ setting edits.
 
 ## Saving Settings
 
-Pressing `s` or `f` writes one JSON file, picked from the first writable
-location in this order:
+Pressing `s` or `f` writes to `~/.config/ascii-fields/ascii_fields.json`. Two
+edge-case overrides:
 
-| Order | Path | When |
-| --- | --- | --- |
-| 1 | `$XDG_CONFIG_HOME/ascii-fields/ascii_fields.json` | If `XDG_CONFIG_HOME` is set and non-empty |
-| 2 | `$HOME/.config/ascii-fields/ascii_fields.json` | Otherwise, on Linux / macOS |
-| 3 | `./ascii_fields.json` | Last-resort fallback (CI, no `$HOME`) |
+| Condition | Path used instead |
+| --- | --- |
+| `$XDG_CONFIG_HOME` is set | `$XDG_CONFIG_HOME/ascii-fields/ascii_fields.json` |
+| No `$HOME` (CI / containers) | `./ascii_fields.json` |
 
 Override the path explicitly for testing or alternate profiles:
 
@@ -510,8 +509,6 @@ canonical config path before first run:
 mkdir -p ~/.config/ascii-fields
 cp ascii_fields.json ~/.config/ascii-fields/ascii_fields.json
 ```
-
-If you have `$XDG_CONFIG_HOME` set, replace `~/.config` with that path.
 
 You can then edit it freely with `s` and `f` inside the program. The repo copy
 is never written to by the binary, so it stays available as a reference.

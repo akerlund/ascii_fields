@@ -99,8 +99,8 @@ pub static MODES: &[ModeInfo] = &[
   },
   ModeInfo {
     name: "sierpinski",
-    description: "Zooming Sierpinski triangle fractal",
-    factory: || Box::new(sierpinski::Sierpinski),
+    description: "Sierpinski triangle drawn via the chaos game with rotating vertices",
+    factory: || Box::new(sierpinski::Sierpinski::default()),
   },
   ModeInfo {
     name: "penrose",
