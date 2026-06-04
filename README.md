@@ -251,7 +251,7 @@ List everything:
 | `magnetic` | Bar-magnet dipole field lines |
 | `ferrofluid` | Magnetic fluid spikes around moving field sources |
 | `schlieren` | Heat-haze and shockwave density gradients |
-| `seismograph` | Earthquake wavefronts through layered ground |
+| `seismograph` | Topographic contour map deformed by ongoing seismic events with varied positions and magnitudes |
 | `convection` | Rayleigh-Benard-like heat convection rolls |
 | `reconnection` | Magnetic field lines snapping and reconnecting |
 | `longitudinal` | Longitudinal compression wave |

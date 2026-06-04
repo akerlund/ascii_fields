@@ -37,11 +37,11 @@
   ],
   "modes": {
     "apollonian": {
-      "theme": "grayscale",
+      "theme": "scene",
       "scale": 1.0,
-      "contrast": 1.05,
-      "brightness": 1.0,
-      "speed": 1.0,
+      "contrast": 1.1666021138428433,
+      "brightness": 1.0030030010000004,
+      "speed": 3.0517578125,
       "charset": "scene"
     },
     "areas": {
@@ -111,8 +111,8 @@
     "convection": {
       "theme": "scene",
       "scale": 1.0,
-      "contrast": 1.0521010500000005,
-      "brightness": 1.0010000000000001,
+      "contrast": 1.0521010500000003,
+      "brightness": 1.001,
       "speed": 1.0,
       "charset": "scene"
     },
@@ -135,9 +135,9 @@
     "cubic-roots": {
       "theme": "fire",
       "scale": 1.0,
-      "contrast": 1.05,
-      "brightness": 1.0,
-      "speed": 1.0,
+      "contrast": 1.0112162993385156,
+      "brightness": 1.0050100100050017,
+      "speed": 3.0517578125,
       "charset": "scene"
     },
     "curl": {
@@ -185,7 +185,7 @@
       "scale": 1.0,
       "contrast": 0.9612,
       "brightness": 1.1077,
-      "speed": 0.40960000000000013,
+      "speed": 0.4096000000000002,
       "charset": "scene"
     },
     "drum": {
@@ -207,7 +207,7 @@
     "ferrofluid": {
       "theme": "scene",
       "scale": 1.0,
-      "contrast": 1.2755896280832715,
+      "contrast": 1.2755896280832717,
       "brightness": 1.105511011005502,
       "speed": 1.0,
       "charset": "scene"
@@ -287,16 +287,16 @@
     "karman": {
       "theme": "ice",
       "scale": 3.4523,
-      "contrast": 2.2847,
-      "brightness": 1.6299,
+      "contrast": 0.988499752373381,
+      "brightness": 4.55,
       "speed": 1.5625,
       "charset": "scene"
     },
     "kleinian": {
       "theme": "scene",
       "scale": 1.0,
-      "contrast": 1.05,
-      "brightness": 1.0,
+      "contrast": 5.0,
+      "brightness": 1.0030030010000002,
       "speed": 1.0,
       "charset": "scene"
     },
@@ -359,8 +359,8 @@
     "mach": {
       "theme": "amber",
       "scale": 1.0,
-      "contrast": 5.0,
-      "brightness": 1.6202,
+      "contrast": 4.1405,
+      "brightness": 1.114388006941972,
       "speed": 1.0,
       "charset": "scene"
     },
@@ -405,10 +405,10 @@
       "charset": "scene"
     },
     "mobius3": {
-      "theme": "scene",
+      "theme": "xray",
       "scale": 1.0,
-      "contrast": 1.2717705000000006,
-      "brightness": 2.357947691000002,
+      "contrast": 1.2781420829290666,
+      "brightness": 2.1478781312088118,
       "speed": 1.0,
       "charset": "scene"
     },
@@ -423,8 +423,8 @@
     "molecule": {
       "theme": "scene",
       "scale": 2.1500260093400216,
-      "contrast": 2.4758450755500023,
-      "brightness": 1.0,
+      "contrast": 2.5838050967865507,
+      "brightness": 2.156482539596096,
       "speed": 1.0,
       "charset": "scene"
     },
@@ -455,8 +455,8 @@
     "night-sky": {
       "theme": "scene",
       "scale": 1.0,
-      "contrast": 1.4017468440475513,
-      "brightness": 1.7733325610000015,
+      "contrast": 1.4017468440475511,
+      "brightness": 1.7733325610000017,
       "speed": 1.0,
       "charset": "scene"
     },
@@ -492,14 +492,6 @@
       "speed": 1.0,
       "charset": "scene"
     },
-    "pulsar": {
-      "theme": "grayscale",
-      "scale": 1.0,
-      "contrast": 1.05,
-      "brightness": 1.0,
-      "speed": 1.0,
-      "charset": "scene"
-    },
     "qfield": {
       "theme": "plasma",
       "scale": 1.0,
@@ -511,7 +503,7 @@
     "quasicrystal": {
       "theme": "scene",
       "scale": 1.0,
-      "contrast": 1.0552605105052517,
+      "contrast": 1.0552605105052515,
       "brightness": 1.1044066044011005,
       "speed": 1.0,
       "charset": "scene"
@@ -551,7 +543,7 @@
     "schlieren": {
       "theme": "scene",
       "scale": 1.0,
-      "contrast": 1.543463449980759,
+      "contrast": 2.262044621953947,
       "brightness": 1.4655641000000008,
       "speed": 1.0,
       "charset": "scene"
@@ -577,7 +569,7 @@
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0,
+      "speed": 1.5625,
       "charset": "scene"
     },
     "solar-wind": {
@@ -589,12 +581,12 @@
       "charset": "scene"
     },
     "sphere-eversion": {
-      "theme": "lava",
+      "theme": "nebula",
       "scale": 1.0,
-      "contrast": 0.37208710086185187,
-      "brightness": 0.6857496100000001,
+      "contrast": 0.409295810948037,
+      "brightness": 0.8305867851281004,
       "speed": 1.0,
-      "charset": "scene"
+      "charset": "braille"
     },
     "starfield": {
       "theme": "scene",
@@ -613,10 +605,10 @@
       "charset": "scene"
     },
     "strange": {
-      "theme": "lava",
+      "theme": "rose",
       "scale": 1.0,
       "contrast": 4.55,
-      "brightness": 5.0,
+      "brightness": 3.4287480500000003,
       "speed": 1.0,
       "charset": "scene"
     },
@@ -641,7 +633,7 @@
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.9531366400000003,
+      "speed": 1.0000059596800004,
       "charset": "scene"
     },
     "vax_lamp": {

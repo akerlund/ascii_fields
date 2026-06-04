@@ -282,7 +282,7 @@ pub static MODES: &[ModeInfo] = &[
   },
   ModeInfo {
     name: "seismograph",
-    description: "Earthquake wavefronts through layered ground",
+    description: "Topographic map deformed by ongoing seismic events at varied positions/magnitudes",
     factory: || Box::new(terrain::Seismograph::default()),
   },
   ModeInfo {
