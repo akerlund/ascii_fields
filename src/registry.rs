@@ -253,7 +253,7 @@ pub static MODES: &[ModeInfo] = &[
   ModeInfo {
     name: "vax_lamp",
     description: "Wax lamp blobs stretching and merging",
-    factory: || Box::new(vax_lamp::VaxLamp),
+    factory: || Box::new(vax_lamp::VaxLamp::default()),
   },
   ModeInfo {
     name: "circuit",
