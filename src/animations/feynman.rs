@@ -19,7 +19,23 @@ use rand_pcg::Pcg32;
 use crate::animation::{Animation, FrameContext};
 use crate::core::{render_glyph_field, FieldStyle};
 
-const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "ice" };
+// Spectrum palette + per-particle brightness offsets give each particle
+// type its own colour band: fermions sit in the mid range (greens/yellows),
+// photons up in the warm end (orange/red), gluons down in the cool end
+// (violet/blue). Brightness gradient inside each particle (head -> tail)
+// gives a small shimmer within the colour band so the trail still reads
+// as motion.
+const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme: "spectrum" };
+
+/// Per-type brightness centre: the head of a particle of this kind hits
+/// here, the trail tail fades to roughly this minus 0.20.
+fn type_brightness(kind: Kind) -> f64 {
+  match kind {
+    Kind::Gluon => 0.22,
+    Kind::Fermion => 0.55,
+    Kind::Photon => 0.90,
+  }
+}
 
 const TRAIL_SECONDS: f64 = 0.6;
 const TRAIL_STEPS: usize = 12;
@@ -241,6 +257,10 @@ impl Animation for Feynman {
       let pspeed = (perp_x * perp_x + perp_y * perp_y).sqrt().max(1e-6);
       let perp_nx = perp_x / pspeed;
       let perp_ny = perp_y / pspeed;
+      let kind_brightness = type_brightness(p.kind);
+      // Trail brightness shimmers in a +/-0.06 band around kind_brightness
+      // so each particle is recognisable as its colour without losing
+      // motion cues.
       for s in 0..TRAIL_STEPS {
         let frac = s as f64 / TRAIL_STEPS as f64;
         let dt_back = frac * trail_age;
@@ -253,16 +273,20 @@ impl Animation for Feynman {
         };
         tx += perp_nx * wiggle;
         ty += perp_ny * wiggle;
-        let brightness = (1.0 - frac).powi(2) * 0.85 + 0.10;
+        // Tail dims slightly within the colour band so the trail still
+        // has a brightness gradient inside its own hue.
+        let brightness = (kind_brightness - 0.10 * frac).clamp(0.05, 0.99);
         put(&mut grid, &mut glyphs, tx * dw, ty * dh, brightness, base_char);
       }
-      // Head: arrowhead for fermions, brighter blob for the others.
+      // Head: a bit brighter than the trail so the leading edge pops,
+      // still within the kind's colour band.
       let head_ch = match p.kind {
         Kind::Fermion => arrow_char(angle),
         Kind::Photon => '*',
         Kind::Gluon => '@',
       };
-      put(&mut grid, &mut glyphs, p.x * dw, p.y * dh, 1.0, head_ch);
+      let head_brightness = (kind_brightness + 0.06).clamp(0.05, 0.99);
+      put(&mut grid, &mut glyphs, p.x * dw, p.y * dh, head_brightness, head_ch);
     }
 
     // Vertex flashes: bright @ at the decay point that fades within

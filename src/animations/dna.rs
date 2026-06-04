@@ -17,6 +17,25 @@ const STYLE: FieldStyle = FieldStyle { gray_lo: 234, gray_hi: 255, default_theme
 const N_TURNS: f64 = 5.0;
 const PTS_PER_TURN: usize = 80;
 
+/// Watson-Crick base-pair sequence. Each entry is (base_a_strand, base_b_strand);
+/// A pairs with T, G with C, U pairs with A (we include a tiny pseudo-mRNA mix
+/// for visual variety). The rung sequence cycles through this list so a viewer
+/// who knows molecular biology sees a recognisable nucleotide pattern.
+const BASE_PAIRS: &[(char, char)] = &[
+  ('A', 'T'),
+  ('C', 'G'),
+  ('G', 'C'),
+  ('T', 'A'),
+  ('A', 'T'),
+  ('G', 'C'),
+  ('T', 'A'),
+  ('C', 'G'),
+  ('A', 'T'),
+  ('T', 'A'),
+  ('G', 'C'),
+  ('C', 'G'),
+];
+
 pub struct Dna;
 
 impl Animation for Dna {
@@ -87,15 +106,26 @@ impl Animation for Dna {
       put(&mut grid, &mut glyphs, sa.0, sa.1, bright_a, glyph_a);
       put(&mut grid, &mut glyphs, sb.0, sb.1, bright_b, glyph_b);
 
-      // Rung every quarter turn: draw a line connecting strand_a -> strand_b
-      // in screen space, depth-shaded along its length.
+      // Rung every quarter turn: draw a base-pair connection. The actual
+      // nucleotide letters get placed at each strand end (so the viewer
+      // sees A-T / G-C pairs explicitly) and a connecting bond fills the
+      // middle.
       if k % (PTS_PER_TURN / 4) == 0 {
+        let rung_idx = k / (PTS_PER_TURN / 4);
+        let (base_a, base_b) = BASE_PAIRS[rung_idx % BASE_PAIRS.len()];
         let dx = sb.0 - sa.0;
         let dy = sb.1 - sa.1;
         let dz = sb.2 - sa.2;
         let steps = (dx.abs() + dy.abs()).ceil() as i64;
         if steps >= 2 {
-          for i in 1..steps {
+          // First put nucleotide letters at each end (overriding any
+          // earlier strand glyph at the same position, since the base
+          // letters are what we want to see on a rung).
+          put(&mut grid, &mut glyphs, sa.0, sa.1, bright_a.max(0.8), base_a);
+          put(&mut grid, &mut glyphs, sb.0, sb.1, bright_b.max(0.8), base_b);
+          // Then the connecting hydrogen-bond glyph in between, but skip
+          // the two end positions so the base letters survive.
+          for i in 1..(steps - 1) {
             let s = i as f64 / steps as f64;
             let rx = sa.0 + dx * s;
             let ry = sa.1 + dy * s;

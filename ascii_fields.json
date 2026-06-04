@@ -117,10 +117,10 @@
       "charset": "scene"
     },
     "cosmic-web": {
-      "theme": "xray",
+      "theme": "scene",
       "scale": 1.0,
-      "contrast": 4.559104550000001,
-      "brightness": 4.189792449845662,
+      "contrast": 2.3559675146145516,
+      "brightness": 5.0,
       "speed": 4.096000000000001,
       "charset": "scene"
     },
@@ -135,8 +135,8 @@
     "cubic-roots": {
       "theme": "fire",
       "scale": 1.0,
-      "contrast": 1.0112162993385156,
-      "brightness": 1.0050100100050017,
+      "contrast": 1.9627118627447189,
+      "brightness": 1.0130782867162904,
       "speed": 3.0517578125,
       "charset": "scene"
     },
@@ -263,9 +263,9 @@
     "hopf": {
       "theme": "scene",
       "scale": 1.0,
-      "contrast": 1.05,
-      "brightness": 1.0,
-      "speed": 1.0,
+      "contrast": 0.9583693674555005,
+      "brightness": 1.0020010000000001,
+      "speed": 3.0517578125,
       "charset": "scene"
     },
     "hypercube": {
@@ -409,7 +409,7 @@
       "scale": 1.0,
       "contrast": 1.2781420829290666,
       "brightness": 2.147878131208812,
-      "speed": 1.0,
+      "speed": 4.76837158203125,
       "charset": "scene"
     },
     "moire": {
@@ -465,7 +465,7 @@
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0,
+      "speed": 3.814697265625,
       "charset": "scene"
     },
     "penrose": {

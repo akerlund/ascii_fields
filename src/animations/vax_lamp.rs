@@ -171,6 +171,32 @@ impl Animation for VaxLamp {
       }
     }
 
+    // Heat exchange between nearby blobs that haven't merged. When a cold
+    // blob falls past a warm one, they trade temperature -- the warm one
+    // cools, the cold one heats up, just like real wax blobs in convection.
+    // Newton's law of cooling between each pair, weighted by proximity.
+    let n = self.blobs.len();
+    let mut delta_temp = vec![0.0_f64; n];
+    for i in 0..n {
+      for j in (i + 1)..n {
+        let bi = self.blobs[i];
+        let bj = self.blobs[j];
+        let d = ((bi.x - bj.x).powi(2) + (bi.y - bj.y).powi(2)).sqrt();
+        let interaction_range = (bi.radius() + bj.radius()) * 1.5;
+        if d < interaction_range {
+          // Linear falloff in proximity weight.
+          let proximity = 1.0 - (d / interaction_range);
+          let exchange_rate = 0.6 * dt * proximity;
+          let diff = bi.temp - bj.temp;
+          delta_temp[i] -= exchange_rate * diff;
+          delta_temp[j] += exchange_rate * diff;
+        }
+      }
+    }
+    for (i, dt_val) in delta_temp.iter().enumerate() {
+      self.blobs[i].temp = (self.blobs[i].temp + dt_val).clamp(0.0, 1.0);
+    }
+
     // Merge pairs that overlap by more than 30% of their combined radius.
     let mut i = 0;
     while i < self.blobs.len() {
@@ -274,14 +300,28 @@ impl Animation for VaxLamp {
           if v > HEATER_Y {
             value += 0.20 * ((v - HEATER_Y) / (1.0 - HEATER_Y)).powi(2);
           }
-          // Blob contributions: Gaussian weighted by temperature so cold
-          // blobs are dimmer than hot ones.
+          // Blob contributions: Gaussian weighted by temperature, with
+          // velocity-driven stretching so fast-moving blobs deform
+          // toward elongated tear-drop shapes. The radial direction
+          // (relative to velocity) gives orthogonal axes for the
+          // anisotropic Gaussian.
           for b in &self.blobs {
             let dx = (u - b.x) * ax;
             let dy = v - b.y;
             let r = b.radius();
-            let inv_r = 1.0 / r.max(0.001);
-            let s = (dx * inv_r).powi(2) + (dy * inv_r).powi(2);
+            // Speed -> stretch factor. At rest the blob is round; at top
+            // speed it's about 2:1 elongated along its velocity.
+            let speed = (b.vx * b.vx + b.vy * b.vy).sqrt();
+            let stretch = (1.0 + 4.5 * speed).min(2.2);
+            let inv_along = 1.0 / (r * stretch).max(0.001);
+            let inv_across = 1.0 / (r / stretch.sqrt()).max(0.001);
+            // Project (dx, dy) onto along/across velocity basis.
+            let speed_safe = speed.max(1e-6);
+            let along_x = b.vx / speed_safe;
+            let along_y = b.vy / speed_safe;
+            let along = dx * along_x + dy * along_y;
+            let across = dx * (-along_y) + dy * along_x;
+            let s = (along * inv_along).powi(2) + (across * inv_across).powi(2);
             let intensity = 0.30 + 0.65 * b.temp;
             value += intensity * (-s * 1.5).exp();
           }
