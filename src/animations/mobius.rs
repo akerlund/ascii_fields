@@ -288,7 +288,10 @@ impl Animation for Mobius3 {
     let (cy_rot, sy_rot) = (rot_y.cos(), rot_y.sin());
     let (cx_rot, sx_rot) = (rot_x.cos(), rot_x.sin());
 
-    let view_scale = 0.45;
+    // Fit the unit sphere to most of the screen height. With ax handling
+    // aspect, the sphere fills the visible window comfortably without
+    // clipping at the edges.
+    let view_scale = 0.92;
 
     let mut grid = vec![0.0_f64; w * h];
     let dw = (w.saturating_sub(1)).max(1) as f64;

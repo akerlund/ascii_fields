@@ -35,10 +35,23 @@ const TH: &[(f64, char)] = &[
   (1.01, '@'),
 ];
 
-const MAX_CIRCLES: usize = 3000;
+const MAX_CIRCLES: usize = 1500;
 /// Stop subdividing once a child circle's radius drops below this fraction
 /// of the enclosing circle. Keeps the recursion finite.
-const MIN_RADIUS: f64 = 0.004;
+const MIN_RADIUS: f64 = 0.006;
+
+/// Sample-time view of a circle: pre-computed band sigma and extent so the
+/// inner loop is a pair of abs-comparisons plus (for circles that survive)
+/// one sqrt + one exp, instead of the expensive ops for every circle.
+#[derive(Clone, Copy)]
+struct CircleView {
+  x: f64,
+  y: f64,
+  r: f64,
+  band: f64,
+  extent: f64,
+  weight: f64,
+}
 
 #[derive(Clone, Copy)]
 struct Circle {
@@ -206,6 +219,23 @@ impl Animation for Apollonian {
     let view_scale = 0.42 / zoom;
     let (ct, st) = (theta.cos(), theta.sin());
 
+    // Pre-compute per-circle render parameters once per frame so the inner
+    // pixel loop never recomputes radius, band, weight, or extent.
+    let views: Vec<CircleView> = self
+      .gasket
+      .iter()
+      .map(|c| {
+        let r = c.radius();
+        let band = (r * 0.10).max(0.003);
+        // Extent: distance beyond which the Gaussian rim is negligible.
+        // 3 standard deviations covers ~99.7% of the weight; outside it
+        // we can safely skip the exp() call.
+        let extent = r + 3.0 * band;
+        let weight = (0.30_f64 + 0.55 * r.powf(0.4)).min(0.95);
+        CircleView { x: c.x, y: c.y, r, band, extent, weight }
+      })
+      .collect();
+
     let mut grid = vec![0.0_f64; w * h];
 
     for row in 0..h {
@@ -221,17 +251,20 @@ impl Animation for Apollonian {
         // to that circle's boundary. Inner circles (radius small) get a
         // sharper, brighter rim; outer enclosure gets a softer hint.
         let mut value = 0.0_f64;
-        for c in &self.gasket {
+        for c in &views {
+          // Fast axis-aligned bounding-box prune. Cheap to compute and
+          // throws out >95% of circles for any given pixel.
           let dx = zx - c.x;
+          if dx.abs() > c.extent {
+            continue;
+          }
           let dy = zy - c.y;
+          if dy.abs() > c.extent {
+            continue;
+          }
           let dist = (dx * dx + dy * dy).sqrt();
-          let r = c.radius();
-          let band = (r * 0.10).max(0.003);
-          // Gaussian rim centred on |z - c| = r.
-          let rim = (-((dist - r).powi(2)) / (band * band)).exp();
-          // Smaller circles brighter so the fractal detail reads.
-          let weight = (0.30 + 0.55 * r.powf(0.4)).min(0.95);
-          value = value.max(rim * weight);
+          let rim = (-((dist - c.r).powi(2)) / (c.band * c.band)).exp();
+          value = value.max(rim * c.weight);
         }
         grid[base + col] = clamp(value * contrast);
       }

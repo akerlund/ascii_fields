@@ -35,8 +35,11 @@ pub struct Newton;
 impl Animation for Newton {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let angle = ctx.elapsed * 0.25;
-    let log_z = 1.6 * 0.5 * (1.0 - (ctx.elapsed * 0.4 * 0.5).cos());
-    let scale = 1.7 * (-log_z).exp();
+    // Zoom much further into the basin boundaries. log_z amplitude tripled
+    // and scale base lowered so the deep zoom reaches the fine root-basin
+    // fractal detail instead of staying on the wide overview.
+    let log_z = 4.8 * 0.5 * (1.0 - (ctx.elapsed * 0.4 * 0.5).cos());
+    let scale = 1.4 * (-log_z).exp();
     let max_iter = (iteration_cap(ctx.width, ctx.height, 18, 40)).min(40);
     let target = ((3.0 * angle).cos(), (3.0 * angle).sin());
     let roots: [(f64, f64); 3] = [0, 1, 2].map(|k| {

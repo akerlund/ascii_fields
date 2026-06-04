@@ -42,6 +42,17 @@ impl Animation for Mach {
         let mut v = 0.0_f64;
         for (idx, &lane_y) in LANES.iter().enumerate() {
           let local = ((ctx.elapsed / CYCLE + idx as f64 * 0.50) % 1.0 + 1.0) % 1.0;
+          // Ease the source in for the first 6% of its lifetime and
+          // ease out over the last 18%, so the wave/cone/head all fade
+          // together as the source crosses the right edge instead of
+          // teleporting back to the left abruptly.
+          let fade = if local < 0.06 {
+            local / 0.06
+          } else if local > 0.82 {
+            ((1.0 - local) / 0.18).max(0.0)
+          } else {
+            1.0
+          };
           let seed = (idx + 1) as f64;
           let mach = mach_at(local, seed);
           let sx = (-1.45 + 3.10 * local) * ax;
@@ -50,15 +61,15 @@ impl Animation for Mach {
           let cone_slope = cone_angle.tan();
           let dist = ((px - sx).powi(2) + (py - sy).powi(2)).sqrt();
           let rings = ((dist - ctx.elapsed * WAVE_SPEED * (1.0 + idx as f64 * 0.1)) * 52.0).sin();
-          v += rings.max(0.0) * 0.12 * (-dist * 1.6).exp();
+          v += rings.max(0.0) * 0.12 * (-dist * 1.6).exp() * fade;
           if mach > 1.0 && px < sx {
             let behind = sx - px;
             let edge = (py - sy).abs() - behind * cone_slope;
             let cone = (-(edge * edge) / 0.0012).exp() * (-behind * 0.28).exp();
             let interior = smoothstep(0.10, 0.0, edge) * 0.14 * (-behind * 0.22).exp();
-            v += cone * (1.04 + idx as f64 * 0.15) + interior;
+            v += (cone * (1.04 + idx as f64 * 0.15) + interior) * fade;
           }
-          v += 0.86 * (-((px - sx).powi(2) + (py - sy).powi(2)) / 0.0008).exp();
+          v += 0.86 * (-((px - sx).powi(2) + (py - sy).powi(2)) / 0.0008).exp() * fade;
         }
         grid[base + col] = clamp(v * contrast);
       }

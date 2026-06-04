@@ -36,502 +36,661 @@
     "lorenz"
   ],
   "modes": {
+    "apollonian": {
+      "theme": "grayscale",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0,
+      "charset": "scene"
+    },
     "areas": {
       "theme": "ice",
       "scale": 1.0,
       "contrast": 1.6927,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "aurora": {
       "theme": "aurora",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "black-hole": {
       "theme": "fire",
       "scale": 1.0,
-      "contrast": 1.1562,
-      "brightness": 1.1033,
-      "speed": 1.0
+      "contrast": 1.1596720697562002,
+      "brightness": 1.1044033,
+      "speed": 1.0,
+      "charset": "scene"
     },
     "burning-ship": {
-      "theme": "grayscale",
+      "theme": "scene",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "braille"
     },
     "caustics": {
-      "theme": "grayscale",
+      "theme": "scene",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "chladni": {
       "theme": "fire",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "circuit": {
       "theme": "scene",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "clouds": {
       "theme": "ice",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "convection": {
-      "theme": "grayscale",
+      "theme": "scene",
       "scale": 1.0,
-      "contrast": 1.05,
-      "brightness": 1.0,
-      "speed": 1.0
+      "contrast": 1.0521010500000005,
+      "brightness": 1.0010000000000001,
+      "speed": 1.0,
+      "charset": "scene"
+    },
+    "cosmic-web": {
+      "theme": "xray",
+      "scale": 1.0,
+      "contrast": 4.559104550000001,
+      "brightness": 4.189792449845662,
+      "speed": 4.096000000000001,
+      "charset": "scene"
     },
     "cpu": {
       "theme": "scene",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 3.0518
+      "speed": 3.0518,
+      "charset": "scene"
     },
-    "curl": {
-      "theme": "aurora",
+    "cubic-roots": {
+      "theme": "fire",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
+    },
+    "curl": {
+      "theme": "amber",
+      "scale": 1.0,
+      "contrast": 2.1417886496495924,
+      "brightness": 2.139649000648943,
+      "speed": 1.0,
+      "charset": "scene"
     },
     "dla": {
       "theme": "scene",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "dna": {
       "theme": "fire",
       "scale": 1.0,
       "contrast": 3.7577,
       "brightness": 1.1166,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "doppler": {
-      "theme": "grayscale",
+      "theme": "scene",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "double-slit": {
       "theme": "amber",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "drops": {
       "theme": "amber",
       "scale": 1.0,
       "contrast": 0.9612,
       "brightness": 1.1077,
-      "speed": 1.0
+      "speed": 0.40960000000000013,
+      "charset": "scene"
     },
     "drum": {
       "theme": "fire",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "dunes": {
-      "theme": "grayscale",
+      "theme": "scene",
       "scale": 1.0,
-      "contrast": 1.05,
-      "brightness": 1.0,
-      "speed": 1.0
+      "contrast": 1.055260510505252,
+      "brightness": 1.0090360841261272,
+      "speed": 1.0,
+      "charset": "scene"
     },
     "ferrofluid": {
-      "theme": "grayscale",
+      "theme": "scene",
       "scale": 1.0,
-      "contrast": 1.05,
-      "brightness": 1.0,
-      "speed": 1.0
+      "contrast": 1.2755896280832715,
+      "brightness": 1.105511011005502,
+      "speed": 1.0,
+      "charset": "scene"
     },
     "feynman": {
-      "theme": "grayscale",
+      "theme": "scene",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 3.8147
+      "speed": 3.8147,
+      "charset": "scene"
     },
     "fire": {
       "theme": "fire",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "flares": {
       "theme": "fire",
       "scale": 1.0,
       "contrast": 1.691,
       "brightness": 1.4714,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "flower-sphere": {
       "theme": "fire",
       "scale": 1.0,
       "contrast": 1.4158,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "galaxy": {
       "theme": "plasma",
       "scale": 1.0,
       "contrast": 1.2718,
       "brightness": 1.3377,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "gwaves": {
       "theme": "fire",
       "scale": 1.0,
+      "contrast": 1.1561550000000005,
+      "brightness": 1.3310000000000004,
+      "speed": 1.0,
+      "charset": "scene"
+    },
+    "hopf": {
+      "theme": "scene",
+      "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "hypercube": {
       "theme": "fire",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "julia": {
-      "theme": "grayscale",
+      "theme": "scene",
       "scale": 1.0,
       "contrast": 1.6927,
       "brightness": 3.7754,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "karman": {
       "theme": "ice",
       "scale": 3.4523,
       "contrast": 2.2847,
       "brightness": 1.6299,
-      "speed": 1.5625
+      "speed": 1.5625,
+      "charset": "scene"
+    },
+    "kleinian": {
+      "theme": "scene",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0,
+      "charset": "scene"
     },
     "lava": {
       "theme": "scene",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "lensing": {
       "theme": "plasma",
       "scale": 1.0,
       "contrast": 1.0532,
       "brightness": 2.6041,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "life": {
-      "theme": "aurora",
+      "theme": "amber",
       "scale": 5.0,
       "contrast": 0.121,
       "brightness": 1.2297,
-      "speed": 1.0
+      "speed": 4.76837158203125,
+      "charset": "scene"
     },
     "lightning": {
       "theme": "ice",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "lightspeed": {
       "theme": "scene",
       "scale": 1.0,
       "contrast": 1.8601,
       "brightness": 1.7787,
-      "speed": 0.64
+      "speed": 0.64,
+      "charset": "scene"
     },
     "longitudinal": {
       "theme": "nebula",
       "scale": 1.0,
-      "contrast": 1.691,
-      "brightness": 1.6105,
-      "speed": 1.0
+      "contrast": 2.0481561100000008,
+      "brightness": 1.7715500000000002,
+      "speed": 0.13421772800000006,
+      "charset": "scene"
     },
     "lorenz": {
       "theme": "fire",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "mach": {
       "theme": "amber",
       "scale": 1.0,
       "contrast": 5.0,
       "brightness": 1.6202,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "magnetic": {
       "theme": "ice",
       "scale": 1.0,
       "contrast": 1.3432,
       "brightness": 1.8149,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "mandelbrot": {
       "theme": "ice",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
+    },
+    "mobius0": {
+      "theme": "scene",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0,
+      "charset": "scene"
+    },
+    "mobius1": {
+      "theme": "scene",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0,
+      "charset": "scene"
+    },
+    "mobius2": {
+      "theme": "scene",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0,
+      "charset": "scene"
+    },
+    "mobius3": {
+      "theme": "scene",
+      "scale": 1.0,
+      "contrast": 1.2717705000000006,
+      "brightness": 2.357947691000002,
+      "speed": 1.0,
+      "charset": "scene"
     },
     "moire": {
-      "theme": "grayscale",
-      "scale": 1.0061753507644,
+      "theme": "ice",
+      "scale": 5.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "molecule": {
-      "theme": "grayscale",
-      "scale": 1.0,
-      "contrast": 1.05,
+      "theme": "scene",
+      "scale": 2.1500260093400216,
+      "contrast": 2.4758450755500023,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "nbody": {
-      "theme": "grayscale",
+      "theme": "scene",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "network": {
       "theme": "copper",
       "scale": 1.6384,
       "contrast": 1.4865,
       "brightness": 3.1484,
-      "speed": 1.9531
+      "speed": 1.9531,
+      "charset": "scene"
     },
     "newton": {
-      "theme": "grayscale",
+      "theme": "aurora",
       "scale": 1.0,
-      "contrast": 1.05,
-      "brightness": 1.0,
-      "speed": 1.0
+      "contrast": 0.6578586213885249,
+      "brightness": 1.0040060040010006,
+      "speed": 2.621440000000001,
+      "charset": "braille"
     },
     "night-sky": {
-      "theme": "grayscale",
+      "theme": "scene",
       "scale": 1.0,
-      "contrast": 1.05,
-      "brightness": 1.0,
-      "speed": 1.0
+      "contrast": 1.4017468440475513,
+      "brightness": 1.7733325610000015,
+      "speed": 1.0,
+      "charset": "scene"
     },
     "orbitals": {
       "theme": "plasma",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "penrose": {
       "theme": "fire",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "phyllotaxis": {
       "theme": "nebula",
       "scale": 1.0,
-      "contrast": 1.05,
-      "brightness": 1.0,
-      "speed": 3.0518
+      "contrast": 2.5838050967865507,
+      "brightness": 0.927446495327768,
+      "speed": 3.0518,
+      "charset": "scene"
     },
     "plasma": {
       "theme": "amber",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "pulsar": {
       "theme": "grayscale",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "qfield": {
       "theme": "plasma",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "quasicrystal": {
-      "theme": "grayscale",
+      "theme": "scene",
       "scale": 1.0,
-      "contrast": 1.05,
-      "brightness": 1.0,
-      "speed": 1.0
+      "contrast": 1.0552605105052517,
+      "brightness": 1.1044066044011005,
+      "speed": 1.0,
+      "charset": "scene"
     },
     "rain": {
-      "theme": "grayscale",
+      "theme": "scene",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "rd": {
       "theme": "nebula",
       "scale": 1.0,
       "contrast": 0.4992,
       "brightness": 1.1066,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "reaction-rings": {
       "theme": "stellar",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "reconnection": {
-      "theme": "grayscale",
+      "theme": "scene",
       "scale": 1.0,
-      "contrast": 1.05,
-      "brightness": 1.0,
-      "speed": 1.0
+      "contrast": 0.9612473516243392,
+      "brightness": 1.1055110110055018,
+      "speed": 1.0,
+      "charset": "scene"
     },
     "schlieren": {
-      "theme": "grayscale",
+      "theme": "scene",
       "scale": 1.0,
-      "contrast": 1.05,
-      "brightness": 1.0,
-      "speed": 1.0
+      "contrast": 1.543463449980759,
+      "brightness": 1.4655641000000008,
+      "speed": 1.0,
+      "charset": "scene"
     },
     "seismograph": {
-      "theme": "grayscale",
+      "theme": "scene",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "sierpinski": {
-      "theme": "grayscale",
+      "theme": "scene",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
+    },
+    "soap-bubbles": {
+      "theme": "scene",
+      "scale": 1.0,
+      "contrast": 1.05,
+      "brightness": 1.0,
+      "speed": 1.0,
+      "charset": "scene"
     },
     "solar-wind": {
       "theme": "grayscale",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
+    },
+    "sphere-eversion": {
+      "theme": "lava",
+      "scale": 1.0,
+      "contrast": 0.37208710086185187,
+      "brightness": 0.6857496100000001,
+      "speed": 1.0,
+      "charset": "scene"
     },
     "starfield": {
-      "theme": "grayscale",
+      "theme": "scene",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "storm": {
       "theme": "scene",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "strange": {
-      "theme": "grayscale",
+      "theme": "lava",
       "scale": 1.0,
-      "contrast": 1.05,
-      "brightness": 1.0,
-      "speed": 1.0
+      "contrast": 4.55,
+      "brightness": 5.0,
+      "speed": 1.0,
+      "charset": "scene"
     },
     "supernova": {
       "theme": "scene",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "topography": {
-      "theme": "grayscale",
+      "theme": "scene",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "tunnel": {
       "theme": "fire",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 5.9605
+      "speed": 1.9531366400000003,
+      "charset": "scene"
     },
     "vax_lamp": {
       "theme": "scene",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "voronoi": {
-      "theme": "grayscale",
+      "theme": "scene",
       "scale": 1.0,
-      "contrast": 1.05,
-      "brightness": 1.0,
-      "speed": 1.0
+      "contrast": 0.5753876950827888,
+      "brightness": 3.8209492200834063,
+      "speed": 1.0,
+      "charset": "scene"
     },
     "wave-plane": {
       "theme": "fire",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.3323,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "wave-well": {
       "theme": "nebula",
       "scale": 1.0,
       "contrast": 0.792,
       "brightness": 1.003,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "waves": {
       "theme": "nebula",
       "scale": 1.0,
-      "contrast": 1.7736,
+      "contrast": 2.596727760000001,
       "brightness": 0.9173,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     },
     "whirlpool": {
       "theme": "ice",
       "scale": 1.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "charset": "scene"
     }
   }
 }

@@ -64,7 +64,9 @@ impl Animation for Molecule {
     let ax = ctx.elapsed * 0.37;
     let (cay, say) = (ay.cos(), ay.sin());
     let (cax, sax) = (ax.cos(), ax.sin());
-    let gain = w.min(h * 2) as f64 * 0.55;
+    // Fill close to the full available space (was 0.55, which left a lot of
+    // empty border on terminal-typical aspect ratios).
+    let gain = w.min(h * 2) as f64 * 0.95;
     let cx = w as f64 * 0.5;
     let cy = h as f64 * 0.5;
     let mut pts: Vec<(f64, f64, f64)> = Vec::with_capacity(self.atoms.len());

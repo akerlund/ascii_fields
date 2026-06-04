@@ -42,12 +42,17 @@ const TH: &[(f64, char)] = &[
 ];
 
 const N_SEEDS: usize = 120;
-const WALK_LENGTH: usize = 180;
-const TRANSIENT: usize = 40;
+const WALK_LENGTH: usize = 220;
+const TRANSIENT: usize = 50;
 const FADE_RATE: f64 = 1.4;
-/// The Maskit-slice limit set lives roughly in the strip |Re z| < 2,
-/// |Im z| < 1.5. Pick a screen scale that fits that without clipping.
-const VIEW_SCALE: f64 = 0.20;
+/// The Maskit-slice limit set lives roughly in the strip Re z ∈ [-2, 4],
+/// Im z ∈ [0, 1.8]. Pick a screen scale that fits that without clipping.
+const VIEW_SCALE: f64 = 0.22;
+/// Horizontal centre of the view (Re-axis offset). Limit set is asymmetric
+/// in Re, shift the view so it sits in frame.
+const VIEW_X_CENTER: f64 = 1.0;
+/// Vertical centre (Im-axis offset). Limit set lives in the upper half.
+const VIEW_Y_CENTER: f64 = 0.85;
 
 type Cx = (f64, f64);
 
@@ -88,35 +93,25 @@ impl Mob {
   }
 }
 
-/// Build the two generators using the Maskit-slice parameterization for the
-/// once-punctured torus group. For a complex parameter μ:
+/// Build the two generators using the classical Maskit-slice parameterization
+/// for the once-punctured torus group (Indra's Pearls, ch. 9). For a complex
+/// parameter k:
 ///
-///   T_a = ((−iμ − 1, −iμ), (i, 0))
-///   T_b = ((1, −2i), (0, 1))
+///   a(z) = z + 2                            ← parabolic at ∞, horizontal translation
+///   b(z) = (k·z + 1) / z = k + 1/z          ← non-trivial Möbius with two
+///                                             complex fixed points at
+///                                             (k ± √(k²+4)) / 2
 ///
-/// T_b is parabolic at infinity (translation by −2i). T_a is parabolic
-/// along the Maskit boundary; μ drifts slowly inside the slice so the
-/// limit set deforms continuously without leaving the discrete-group
-/// regime.
+/// k drifts slowly inside the discrete locus (≈ 1.91 + 0.05i) so the limit
+/// set morphs without leaving the regime where the orbit traces a fractal
+/// Jordan curve.
 fn generators(t: f64) -> [Mob; 4] {
-  // Maskit slice parameter -- staying around μ ≈ 1.9 + 0.05i keeps us inside
-  // the discrete locus where the limit set is a beautiful Apollonian-ish
-  // fractal curve rather than the degenerate two-attractor regime.
-  let mu_re = 1.92 + 0.06 * (t * 0.08).sin();
-  let mu_im = 0.05 + 0.04 * (t * 0.11).cos();
-  // i · μ = (−mu_im, mu_re)
-  let i_mu = (-mu_im, mu_re);
-  let neg_i_mu = (mu_im, -mu_re);
-  let neg_i_mu_minus_1 = (neg_i_mu.0 - 1.0, neg_i_mu.1);
-
-  let g1 = Mob { a: neg_i_mu_minus_1, b: neg_i_mu, c: (0.0, 1.0), d: (0.0, 0.0) };
-  // T_b = ((1, -2i), (0, 1)).
-  let g2 = Mob { a: (1.0, 0.0), b: (0.0, -2.0), c: (0.0, 0.0), d: (1.0, 0.0) };
-
-  // Silence the dead-code warning on the now-unused `i_mu` value -- kept
-  // visible above so the slice formula reads cleanly.
-  let _ = i_mu;
-
+  let k_re = 1.91 + 0.05 * (t * 0.08).sin();
+  let k_im = 0.05 + 0.04 * (t * 0.11).cos();
+  // a: ((1, 2), (0, 1)) -- z + 2 (horizontal translation).
+  let g1 = Mob { a: (1.0, 0.0), b: (2.0, 0.0), c: (0.0, 0.0), d: (1.0, 0.0) };
+  // b: ((k, 1), (1, 0)) -- z -> (k·z + 1) / z.
+  let g2 = Mob { a: (k_re, k_im), b: (1.0, 0.0), c: (1.0, 0.0), d: (0.0, 0.0) };
   [g1, g1.inverse(), g2, g2.inverse()]
 }
 
@@ -171,11 +166,11 @@ impl Animation for Kleinian {
 
     for seed_idx in 0..N_SEEDS {
       // Spread seed points across the strip where the Maskit-slice limit
-      // set lives. A wide rectangle (re ∈ [-2, 2], im ∈ [-1.5, 1.5])
-      // makes sure every iterate region of the limit set has a starter.
+      // set lives. Cover one fundamental domain horizontally + a band in
+      // the upper half-plane where the orbit fractal sits.
       let su = (seed_idx as f64 + 0.5) / N_SEEDS as f64;
-      let re = -2.0 + 4.0 * (su * 7.0).fract();
-      let im = -1.4 + 2.8 * su;
+      let re = -1.0 + 4.0 * (su * 7.0).fract();
+      let im = 0.30 + 1.30 * su;
       let mut z: Cx = (re, im);
       let mut prev: usize = usize::MAX;
 
@@ -200,9 +195,10 @@ impl Animation for Kleinian {
           break;
         }
 
-        // Map complex plane to screen.
-        let screen_u = 0.5 + VIEW_SCALE * z.0 / ax;
-        let screen_v = 0.5 - VIEW_SCALE * z.1;
+        // Map complex plane to screen with offset so the asymmetric limit
+        // set sits centred.
+        let screen_u = 0.5 + VIEW_SCALE * (z.0 - VIEW_X_CENTER) / ax;
+        let screen_v = 0.5 - VIEW_SCALE * (z.1 - VIEW_Y_CENTER);
         if !(0.0..1.0).contains(&screen_u) || !(0.0..1.0).contains(&screen_v) {
           continue;
         }

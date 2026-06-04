@@ -41,7 +41,10 @@ impl Animation for DoubleSlit {
     let k = 42.0_f64;
     let omega = 7.0_f64;
     let ax = w as f64 / (h as f64 * 2.0).max(1.0);
-    let detector_x = 0.93;
+    // Narrower detector strip so the accumulated fringe pattern reads as
+    // "the screen behind the slits" rather than a big vertical band that
+    // dominates the right third of the view.
+    let detector_x = 0.96;
     let s1x = barrier_x * ax;
     let s1y = slit_y1;
     let s2x = barrier_x * ax;

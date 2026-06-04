@@ -133,7 +133,7 @@ impl Animation for SphereEversion {
         return;
       }
       let depth_fade = 1.0 / (1.0 + 0.5 * s3 * s3);
-      let weight = 0.30 * depth_fade;
+      let weight = 0.07 * depth_fade;
       let cx_i = (screen_u * dw) as i64;
       let cy_i = (screen_v * dh) as i64;
       for dy in -1..=1_i64 {
@@ -173,10 +173,15 @@ impl Animation for SphereEversion {
       }
     }
 
+    // Log tone-map so the wireframe lines do not saturate to a single
+    // character where they cross or sample densely.
     let contrast = ctx.options.contrast;
+    let k: f64 = 5.0;
+    let norm = (1.0 + k).ln();
     let mut grid = vec![0.0_f64; w * h];
     for (g, &v) in grid.iter_mut().zip(self.accumulator.iter()) {
-      *g = clamp(v * contrast);
+      let compressed = (1.0 + k * v).ln() / norm;
+      *g = clamp(compressed * contrast);
     }
     render_field(ctx, &grid, TH, &STYLE, out);
   }

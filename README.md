@@ -5,7 +5,7 @@ Procedural ASCII animations for the terminal, now as a native Rust binary.
 `ascii-fields` renders animated scenes with ANSI escape codes: surf, solar
 flares, galaxies and black holes, quantum clouds, fractals, Game of Life,
 physics demos, DNA, molecules, reaction-diffusion, Chladni plates, curl-noise
-flow, DLA frost, the Lorenz attractor, drum eigenmodes, and more. There are 82
+flow, DLA frost, the Lorenz attractor, drum eigenmodes, and more. There are 81
 modes in all.
 
 ## Requirements
@@ -144,7 +144,7 @@ CLI options:
 | `--height` | `<HEIGHT>` | Render at this many terminal rows, with HUD rows reserved in interactive mode |
 | `--fps` | `<FPS>` | Desired frame rate; defaults to `24` |
 | `--seconds` | `<SECONDS>` | Per-scene duration for interactive playlists, or total duration for exports |
-| `--scale` | `<SCALE>` | Scene-specific scale or density multiplier |
+| `--scale` | `<SCALE>` | Scene-specific scale or density multiplier (only ~23 modes — see "Live Parameters" below) |
 | `--contrast` | `<CONTRAST>` | Multiply contrast before mapping brightness to glyphs/colors |
 | `--brightness` | `<BRIGHTNESS>` | Multiply final brightness |
 | `--speed` | `<SPEED>` | Animation time multiplier |
@@ -205,7 +205,6 @@ List everything:
 | `night-sky` | Twinkling stars, milky way, and shooting stars |
 | `aurora` | Northern lights curtains |
 | `clouds` | Drifting fractal-noise clouds |
-| `pulsar` | Rotating neutron-star beam sweep |
 | `supernova` | Overlapping stellar shock shells, each with a new seed |
 | `solar-wind` | Charged particles flowing around a magnetosphere |
 | `cosmic-web` | Large-scale filamentary structure of the universe |
@@ -404,6 +403,35 @@ Motion option:
 ./target/release/ascii-fields wave-plane --charset blocks
 ./target/release/ascii-fields wave-plane --scroll
 ```
+
+## Live Parameters
+
+Each animation reads zero or more of the live tunables from
+`RenderOptions` (`--scale`, `--contrast`, `--brightness`, `--speed`,
+`--theme`). The interactive HUD also exposes these on number keys. Not
+every mode consumes every parameter — most modes use **contrast** and
+**brightness** universally, but **scale** is opt-in and only the
+density-field and a few stateful modes act on it.
+
+**`--scale` is consumed by these modes** (everything else ignores it):
+
+```text
+areas      black-hole   clouds      cosmic-web   curl
+dla        dna          flower-sphere            lensing
+longitudinal             lorenz     night-sky    phyllotaxis
+plasma     quasicrystal moire       penrose      voronoi
+reaction-rings           rain       rd           starfield
+tunnel     wave-plane   waves       whirlpool
+```
+
+Other modes (the fractal zoomers, glyph-art modes, math viz like
+`hopf`/`mobius*`/`cubic-roots`, etc.) have their structure determined
+by formulas that do not have a single "scale knob" — for those, the
+`--width` / `--height` flags govern the rendered area instead.
+
+If you want to know whether a specific mode honours `--scale` without
+checking this list, grep for `options.scale` in
+`src/animations/<mode>.rs`.
 
 ## Interactive Controls
 

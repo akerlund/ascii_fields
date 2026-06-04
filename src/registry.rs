@@ -131,11 +131,6 @@ pub static MODES: &[ModeInfo] = &[
   },
   ModeInfo { name: "aurora", description: "Northern lights curtains", factory: || Box::new(aurora::Aurora) },
   ModeInfo {
-    name: "pulsar",
-    description: "Rotating neutron-star beam sweep",
-    factory: || Box::new(space::Pulsar::default()),
-  },
-  ModeInfo {
     name: "supernova",
     description: "Overlapping stellar shock shells, new seed each burst",
     factory: || Box::new(space::Supernova::default()),

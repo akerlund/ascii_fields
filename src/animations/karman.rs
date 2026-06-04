@@ -59,6 +59,12 @@ impl Animation for Karman {
         let dx_obs = px - OBSTACLE_X;
         let d_obs = (dx_obs * dx_obs + py * py).sqrt();
         if d_obs < OBSTACLE_R {
+          // Render the obstacle as a solid disk with a soft inner shading
+          // so it reads as a cylinder. Without this the obstacle is just
+          // a black hole punched through the flow field.
+          let depth = 1.0 - (d_obs / OBSTACLE_R);
+          let solid = 0.55 + 0.35 * depth;
+          grid[base + col] = clamp(solid * contrast);
           continue;
         }
         let bg = 0.10 + 0.04 * (8.0 * py + 0.6 * ctx.elapsed).sin();

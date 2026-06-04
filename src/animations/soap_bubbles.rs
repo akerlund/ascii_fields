@@ -57,6 +57,7 @@ struct Bubble {
   phase_seed: f64,  // per-bubble iridescence phase
   wobble_amp: f64,  // sideways wobble amplitude
   wobble_freq: f64, // wobble frequency in Hz
+  tone_offset: f64, // per-bubble brightness offset -> palette colour shift
 }
 
 pub struct SoapBubbles {
@@ -84,21 +85,28 @@ impl Animation for SoapBubbles {
 
     // Spawn new bubbles at jittered intervals until we have caught up to now.
     while ctx.elapsed >= self.next_spawn {
-      let r_target: f64 = self.rng.gen_range(0.06..0.16);
-      // Smaller bubbles rise faster (less buoyancy mass, similar surface
-      // tension) -- this is the visible coupling between size and speed.
-      let size_factor = (0.06_f64 / r_target.max(0.04)).clamp(0.5, 2.0);
+      let r_target: f64 = self.rng.gen_range(0.05..0.16);
+      // Strong size -> speed coupling: tiny bubbles whoosh up, big ones
+      // lumber. Cubic scaling (0.05^3 / r^3) makes the difference
+      // visually obvious instead of subtle.
+      let size_speed = (0.07_f64 / r_target.max(0.04)).powi(2).clamp(0.5, 4.5);
       self.bubbles.push(Bubble {
         x: self.rng.gen_range(0.10..0.90),
-        y: self.rng.gen_range(0.90..1.05),
+        y: self.rng.gen_range(0.95..1.10),
         vx: self.rng.gen_range(-0.010..0.010),
-        vy: -self.rng.gen_range(0.025..0.055) * size_factor,
+        // Base rise speed bumped from 0.025..0.055 to 0.060..0.110 so even
+        // big bubbles cross the screen on a reasonable timescale.
+        vy: -self.rng.gen_range(0.060..0.110) * size_speed,
         r_target,
         t0: self.next_spawn,
         lifetime: self.rng.gen_range(LIFETIME_MIN..LIFETIME_MAX),
         phase_seed: self.rng.gen_range(0.0..TAU),
         wobble_amp: self.rng.gen_range(0.005..0.018),
         wobble_freq: self.rng.gen_range(0.7..1.6),
+        // Brightness offset shifts each bubble into a different region of
+        // the spectrum palette so bubbles look like a multi-colour mix
+        // rather than 16 copies of the same rainbow.
+        tone_offset: self.rng.gen_range(-0.18..0.18),
       });
       self.next_spawn += SPAWN_DT_BASE * self.rng.gen_range(0.6..1.4);
     }
@@ -116,7 +124,7 @@ impl Animation for SoapBubbles {
 
     // Precompute the per-bubble live geometry once, so the inner cell loop is
     // a tight sum over a small Vec.
-    let visible: Vec<(f64, f64, f64, f64)> = self
+    let visible: Vec<(f64, f64, f64, f64, f64)> = self
       .bubbles
       .iter()
       .filter_map(|b| {
@@ -139,7 +147,7 @@ impl Animation for SoapBubbles {
         if r < 1e-3 || !(-0.25..1.25).contains(&by) {
           return None;
         }
-        Some((bx, by, r, b.phase_seed))
+        Some((bx, by, r, b.phase_seed, b.tone_offset))
       })
       .collect();
 
@@ -154,7 +162,7 @@ impl Animation for SoapBubbles {
       for col in 0..ctx.width {
         let u = col as f64 / dw;
         let mut value = 0.0_f64;
-        for &(bx, by, r, phase) in &visible {
+        for &(bx, by, r, phase, tone) in &visible {
           let dx = (u - bx) * ax;
           let dy = v - by;
           let dist = (dx * dx + dy * dy).sqrt();
@@ -189,7 +197,10 @@ impl Animation for SoapBubbles {
           let spec_gauss = (-(spec_dx * spec_dx + spec_dy * spec_dy) / (spec_sigma * spec_sigma)).exp();
           let specular = if dist < r { spec_gauss * 0.55 } else { 0.0 };
 
-          let contribution = rim * (0.40 + 0.55 * iridescence) + halo + interior + specular;
+          // tone shifts the bubble's average brightness, biasing where in
+          // the palette the iridescent rim peaks. The shift is clamped to
+          // stay inside the displayable [0, 1] range.
+          let contribution = (rim * (0.40 + 0.55 * iridescence) + halo + interior + specular + tone).max(0.0);
           value = value.max(contribution);
         }
         grid[base + col] = clamp(value * contrast);

@@ -1,8 +1,6 @@
-use std::f64::consts::{PI, TAU};
-
 use crate::animation::{Animation, FrameContext};
 use crate::core::{clamp, density_char, render_field, render_glyph_field, FieldStyle};
-use crate::noise::{fbm_seeded, star_noise};
+use crate::noise::fbm_seeded;
 
 use super::field_common::{aspect, dims, pulse, put, FrameScratch, FIELD_TH, LINE_TH};
 
@@ -54,37 +52,6 @@ impl Animation for NBody {
       );
     }
     render_glyph_field(ctx, grid, glyphs, &NBODY_STYLE, out);
-  }
-}
-
-#[derive(Default)]
-pub struct Pulsar {
-  scratch: FrameScratch,
-}
-impl Animation for Pulsar {
-  fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    let (w, h, dw, dh) = dims(ctx);
-    let ax = aspect(ctx);
-    let t = ctx.elapsed;
-    let beam = t * 2.8;
-    let grid = self.scratch.grid(w * h);
-    for row in 0..h {
-      let v = row as f64 / dh;
-      let base = row * w;
-      for col in 0..w {
-        let u = col as f64 / dw;
-        let dx = (u - 0.5) * ax;
-        let dy = v - 0.5;
-        let r = (dx * dx + dy * dy).sqrt();
-        let a = dy.atan2(dx);
-        let da = (a - beam + PI).rem_euclid(TAU) - PI;
-        let beam_level = pulse(da, 0.020) * (1.0 - r * 1.6).max(0.0);
-        let star = if star_noise(col as i64, row as i64) > 0.997 { 0.8 } else { 0.0 };
-        let core = pulse(r, 0.0018);
-        grid[base + col] = clamp((beam_level + star + core) * ctx.options.contrast);
-      }
-    }
-    render_field(ctx, grid, LINE_TH, &STELLAR_STYLE, out);
   }
 }
 
