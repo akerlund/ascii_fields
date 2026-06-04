@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Pre-commit hook: clippy must be clean before any commit.
+#
+# Skips when no Rust-relevant files are staged (docs-only / config-only
+# commits run instantly). Use `git commit --no-verify` to bypass in an
+# emergency, but please don't make a habit of it.
+
+set -e
+
+CHANGED=$(git diff --cached --name-only)
+if ! grep -qE '\.rs$|^Cargo\.toml$|^Cargo\.lock$|^rustfmt\.toml$|^benches/' <<<"$CHANGED"; then
+  exit 0
+fi
+
+# Make sure rustup-managed cargo is on PATH (the hook runs in a non-interactive
+# shell that does not source ~/.bashrc).
+if [ -f "$HOME/.cargo/env" ]; then
+  . "$HOME/.cargo/env"
+fi
+export RUSTUP_HOME="${RUSTUP_HOME:-$HOME/.rustup}"
+export CARGO_HOME="${CARGO_HOME:-$HOME/.cargo}"
+
+echo "[pre-commit] cargo clippy --release -- -D warnings"
+if ! cargo clippy --release -- -D warnings; then
+  echo
+  echo "[pre-commit] FAIL: clippy reported warnings."
+  echo "Fix them, or rerun with --no-verify to skip (please don't)."
+  exit 1
+fi
+
+echo "[pre-commit] OK"

@@ -621,6 +621,30 @@ let (cw, ch, ax, t) = (
 The header comment inside `rustfmt.toml` documents this so the convention is
 discoverable from the file itself.
 
+### Pre-commit Hook
+
+The repo ships a [`.githooks/pre-commit`](.githooks/pre-commit) script that
+runs `cargo clippy --release -- -D warnings` and blocks the commit if it
+fails. It skips when no Rust-relevant files are staged, so docs-only commits
+are still instant.
+
+`.git/hooks/` is per-clone and not under version control, so each clone needs
+the one-time setup:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+After that, `git commit` runs the hook automatically. If you ever need to
+bypass it in an emergency:
+
+```bash
+git commit --no-verify
+```
+
+…but please fix the warnings instead. The hook is what keeps the working tree
+from drifting back into "30 small lints" territory.
+
 ### Benchmarking
 
 The renderer is benched with [`criterion`](https://github.com/bheisler/criterion.rs)
