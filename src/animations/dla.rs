@@ -17,6 +17,19 @@ const TH: &[(f64, char)] = &[
 ];
 const MAX_WALK: i32 = 1500;
 
+/// Two-phase lifecycle to avoid the "expanding then noise" problem the
+/// continuous-decay version had: walkers attaching to fragmented dying
+/// cells produced sparse scatter instead of a coherent dendrite.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Phase {
+  /// Cluster is growing toward cap_size. Walkers attach as usual.
+  Growing,
+  /// Cluster has reached cap; oldest cells (deepest interior, near the
+  /// seed) are removed each frame. No new walkers; the dendrite visibly
+  /// melts from the inside out until very small, then we restart growth.
+  Melting,
+}
+
 pub struct Dla {
   w: usize,
   h: usize,
@@ -24,11 +37,21 @@ pub struct Dla {
   age: Vec<i32>,
   gen: i32,
   last: f64,
+  phase: Phase,
   rng: Pcg32,
 }
 impl Default for Dla {
   fn default() -> Self {
-    Self { w: 0, h: 0, cluster: Vec::new(), age: Vec::new(), gen: 0, last: 0.0, rng: Pcg32::from_entropy() }
+    Self {
+      w: 0,
+      h: 0,
+      cluster: Vec::new(),
+      age: Vec::new(),
+      gen: 0,
+      last: 0.0,
+      phase: Phase::Growing,
+      rng: Pcg32::from_entropy(),
+    }
   }
 }
 
@@ -43,6 +66,7 @@ impl Dla {
     self.cluster[cy * w + cx] = true;
     self.age[cy * w + cx] = 1;
     self.gen = 1;
+    self.phase = Phase::Growing;
   }
   fn walk_one(&mut self) {
     let w = self.w;
@@ -84,34 +108,65 @@ impl Animation for Dla {
     let scale = ctx.options.scale.max(1.0) as usize;
     let walkers = (40.max(self.w * self.h / 40)) * scale;
 
-    // Continuous growth + continuous decay rather than grow-then-reset.
-    //
-    // Lifetime is measured in generations (i.e. growth steps). When the
-    // cluster has reached steady-state size, each frame's growth balances
-    // an equal number of deaths at the tail of the age window, so the
-    // dendrite gracefully wanders -- new tips form, old branches melt --
-    // instead of the picture going fully black.
-    let target_size = (self.w as f64 * self.h as f64 * 0.32) as usize;
-    let lifetime: i32 = (target_size as i32 * 8).max(2000);
-    for _ in 0..walkers {
-      self.walk_one();
-    }
-    let cutoff = self.gen - lifetime;
-    if cutoff > 0 {
-      for idx in 0..self.cluster.len() {
-        if self.cluster[idx] && self.age[idx] < cutoff {
+    let cap = (self.w as f64 * self.h as f64 * 0.42) as usize;
+    let restart_size = (self.w as f64 * self.h as f64 * 0.02) as usize;
+    let size: usize = self.cluster.iter().filter(|&&b| b).count();
+
+    match self.phase {
+      Phase::Growing => {
+        for _ in 0..walkers {
+          self.walk_one();
+        }
+        if size >= cap {
+          self.phase = Phase::Melting;
+        }
+      }
+      Phase::Melting => {
+        // Remove the oldest cells first (interior, deepest in the
+        // dendrite) so the structure visibly melts from the seed
+        // outward, peeling back the branches.
+        //
+        // Death rate: ~3% of current size per frame so the melt lasts a
+        // couple of seconds rather than blinking off in one step.
+        let to_kill = (size / 35).max(60);
+        let mut targets: Vec<(i32, usize)> = self
+          .cluster
+          .iter()
+          .enumerate()
+          .filter(|(_, &alive)| alive)
+          .map(|(idx, _)| (self.age[idx], idx))
+          .collect();
+        targets.sort_by_key(|(age, _)| *age);
+        for (_, idx) in targets.into_iter().take(to_kill) {
           self.cluster[idx] = false;
           self.age[idx] = 0;
+        }
+        if size <= restart_size {
+          // Re-seed from a new random point on the screen so successive
+          // dendrites look different from each other.
+          let mut x = self.rng.gen_range(0..self.w);
+          let mut y = self.rng.gen_range(0..self.h);
+          if x.abs_diff(self.w / 2) < 4 && y.abs_diff(self.h / 2) < 4 {
+            // Steer the new seed away from where the previous one was so
+            // consecutive dendrites do not just retrace.
+            x = (x + self.w / 3) % self.w;
+            y = (y + self.h / 3) % self.h;
+          }
+          let idx = y * self.w + x;
+          self.cluster.iter_mut().for_each(|b| *b = false);
+          self.age.iter_mut().for_each(|a| *a = 0);
+          self.cluster[idx] = true;
+          self.gen += 1;
+          self.age[idx] = self.gen;
+          self.phase = Phase::Growing;
         }
       }
     }
 
-    // Brightness: freshness within the current age window. Newest cells
-    // are brightest; old cells about to die are dimmest. With the
-    // continuous lifecycle this gives a moving "tip lit, trunk dim"
-    // gradient that travels through the dendrite.
+    // Brightness: freshness within the current age window so the newest
+    // branches glow brightest and the trunk dims toward the seed.
     let max_age = self.gen as f64;
-    let min_age = cutoff.max(0) as f64;
+    let min_age = (self.gen - (cap as i32 * 8).max(2000)).max(0) as f64;
     let span = (max_age - min_age).max(1.0);
     let contrast = ctx.options.contrast;
     let mut grid = vec![0.0_f64; ctx.width * ctx.height];

@@ -214,10 +214,10 @@
     },
     "feynman": {
       "theme": "scene",
-      "scale": 1.0,
+      "scale": 5.0,
       "contrast": 1.05,
       "brightness": 1.0,
-      "speed": 3.8147,
+      "speed": 0.8000005734400004,
       "charset": "scene"
     },
     "fire": {
@@ -408,7 +408,7 @@
       "theme": "xray",
       "scale": 1.0,
       "contrast": 1.2781420829290666,
-      "brightness": 2.1478781312088118,
+      "brightness": 2.147878131208812,
       "speed": 1.0,
       "charset": "scene"
     },
@@ -479,8 +479,8 @@
     "phyllotaxis": {
       "theme": "nebula",
       "scale": 1.0,
-      "contrast": 2.5838050967865507,
-      "brightness": 0.927446495327768,
+      "contrast": 5.0,
+      "brightness": 0.8516025516926489,
       "speed": 3.0518,
       "charset": "scene"
     },
@@ -558,9 +558,9 @@
     },
     "sierpinski": {
       "theme": "scene",
-      "scale": 1.0,
-      "contrast": 1.05,
-      "brightness": 1.0,
+      "scale": 2.3512626380757613,
+      "contrast": 0.23242650602657644,
+      "brightness": 2.357947691000002,
       "speed": 1.0,
       "charset": "scene"
     },
@@ -573,10 +573,10 @@
       "charset": "scene"
     },
     "solar-wind": {
-      "theme": "grayscale",
+      "theme": "fire",
       "scale": 1.0,
-      "contrast": 1.05,
-      "brightness": 1.0,
+      "contrast": 1.276865217711355,
+      "brightness": 1.1,
       "speed": 1.0,
       "charset": "scene"
     },
