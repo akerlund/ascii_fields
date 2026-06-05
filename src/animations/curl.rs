@@ -47,8 +47,23 @@ impl Curl {
 
 impl Animation for Curl {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    if self.particles.is_empty() || ctx.width != self.w || ctx.height != self.h || ctx.elapsed < self.last {
+    if self.particles.is_empty() || ctx.elapsed < self.last {
+      // First frame or rewind: fresh seed.
       self.seed(ctx.width, ctx.height);
+    } else if ctx.width != self.w || ctx.height != self.h {
+      // Resize: rescale particle positions proportionally so they keep
+      // their relative location in the field, and rebuild the trail
+      // buffer (the previous trail history is lost but the particles
+      // keep flowing).
+      let sx = ctx.width as f64 / self.w.max(1) as f64;
+      let sy = ctx.height as f64 / self.h.max(1) as f64;
+      for p in &mut self.particles {
+        p.0 *= sx;
+        p.1 *= sy;
+      }
+      self.trail = vec![0.0; ctx.width * ctx.height];
+      self.w = ctx.width;
+      self.h = ctx.height;
     }
     let dt = (ctx.elapsed - self.last).clamp(0.0, 0.1);
     let dt = if dt == 0.0 { 0.04 } else { dt };

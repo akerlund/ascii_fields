@@ -34,8 +34,15 @@ impl Starfield {
 
 impl Animation for Starfield {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
-    if self.stars.is_empty() || ctx.width != self.w || ctx.height != self.h || ctx.elapsed < self.last {
+    if self.stars.is_empty() || ctx.elapsed < self.last {
+      // First frame or rewind: seed a fresh starfield.
       self.seed(ctx.width, ctx.height);
+    } else if ctx.width != self.w || ctx.height != self.h {
+      // Resize: stars live in normalized (-1..1) coords so they project
+      // correctly into any screen size. Just update the cached
+      // dimensions; the stars themselves keep flying.
+      self.w = ctx.width;
+      self.h = ctx.height;
     }
     let dt = (ctx.elapsed - self.last).clamp(0.0, 0.1);
     self.last = ctx.elapsed;

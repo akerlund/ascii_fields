@@ -457,6 +457,7 @@ live-editable parameters, and CPU usage. Toggle it with `i`, or start hidden:
 | `+` `-` | Motion speed up / down |
 | `s` | Save the current animation's settings to `ascii_fields.json` |
 | `f` | Add the current animation to favorites in `ascii_fields.json` |
+| `r` | Reset current animation state (re-seed particles, clear accumulators, restart chaos divergence, etc.) |
 | `q` / `Esc` | Quit |
 
 Edits to `scale`, `contrast`, `brightness`, `speed`, `theme`, and `charset` are

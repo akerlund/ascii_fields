@@ -208,13 +208,21 @@ const STRANGE_FADE: f64 = 1.6;
 impl Animation for Strange {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let (w, h, dw, dh) = dims(ctx);
-    if w != self.w || h != self.h || ctx.elapsed < self.last_elapsed {
+    if ctx.elapsed < self.last_elapsed {
+      // Rewind: full reset of attractor orbit + accumulator.
       self.accumulator = vec![0.0_f64; w * h];
       self.last_touch = vec![ctx.elapsed - 100.0; w * h];
       self.w = w;
       self.h = h;
       self.x = 0.1;
       self.y = 0.0;
+    } else if w != self.w || h != self.h {
+      // Resize: rebuild the buffers but keep the orbit position, so
+      // the attractor's next iteration continues seamlessly.
+      self.accumulator = vec![0.0_f64; w * h];
+      self.last_touch = vec![ctx.elapsed - 100.0; w * h];
+      self.w = w;
+      self.h = h;
     }
     let dt = (ctx.elapsed - self.last_elapsed).clamp(0.0, 0.2);
     self.last_elapsed = ctx.elapsed;

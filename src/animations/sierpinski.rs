@@ -62,11 +62,19 @@ impl Animation for Sierpinski {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let w = ctx.width;
     let h = ctx.height;
-    if w != self.w || h != self.h || ctx.elapsed < self.last_elapsed {
+    if ctx.elapsed < self.last_elapsed {
+      // Rewind: full reset.
       self.accumulator = vec![0.0_f64; w * h];
       self.w = w;
       self.h = h;
       self.point = (0.5, 0.5);
+    } else if w != self.w || h != self.h {
+      // Resize: rebuild the accumulator buffer but preserve the chaos-
+      // game iterate so the point of the next splat continues from where
+      // it was.
+      self.accumulator = vec![0.0_f64; w * h];
+      self.w = w;
+      self.h = h;
     }
     let dt = (ctx.elapsed - self.last_elapsed).clamp(0.0, 0.2);
     self.last_elapsed = ctx.elapsed;

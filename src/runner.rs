@@ -290,7 +290,7 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
           cell(" [i] Menu [q]quit", 22),
           cell(" [s]save", 20),
           cell(" [f] Favorite", 15),
-          cell("", 17),
+          cell(" [r] reset", 17),
           cell("", 14),
           cell("", 18),
           " [_]pause",
