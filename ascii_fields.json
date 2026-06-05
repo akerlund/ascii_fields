@@ -87,8 +87,8 @@
     "chaos": {
       "theme": "ice",
       "scale": 1.0,
-      "contrast": 2.146074368737542,
-      "brightness": 5.0,
+      "contrast": 5.0,
+      "brightness": 1.3567340870502749,
       "speed": 1.0,
       "charset": "scene"
     },
@@ -655,8 +655,8 @@
     "vax_lamp": {
       "theme": "scene",
       "scale": 1.0,
-      "contrast": 1.05,
-      "brightness": 1.0,
+      "contrast": 1.6910355000000008,
+      "brightness": 1.483247919581321,
       "speed": 1.0,
       "charset": "scene"
     },

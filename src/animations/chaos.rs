@@ -140,17 +140,20 @@ impl Animation for Chaos {
     let dw = (w.saturating_sub(1)).max(1) as f64;
     let dh = (h.saturating_sub(1)).max(1) as f64;
     let cx = 0.5;
-    // Pivot a bit above centre so the pendulums have room to swing down,
-    // and a generous arm_scale so they sweep across most of the screen.
-    let cy = 0.42;
-    let arm_scale = 0.30;
+    // Pivot in the upper third so the pendulum's resting position
+    // (hanging straight down) is near the bottom of the screen, and
+    // the inverted swing reaches close to the top.
+    let cy = 0.30;
+    let arm_scale = 0.28;
 
     for (i, p) in self.pendulums.iter().enumerate() {
-      // Position of the second-arm tip in world coords.
+      // Position of the second-arm tip in world coords. tip_y is the
+      // mathematical y-coordinate (positive = up, negative = down). To
+      // map to screen (where positive y is DOWN), subtract.
       let tip_x = L1 * p.theta1.sin() + L2 * p.theta2.sin();
       let tip_y = -L1 * p.theta1.cos() - L2 * p.theta2.cos();
       let su = cx + (tip_x * arm_scale) / ax;
-      let sv = cy + tip_y * arm_scale;
+      let sv = cy - tip_y * arm_scale;
       if !(0.0..1.0).contains(&su) || !(0.0..1.0).contains(&sv) {
         continue;
       }

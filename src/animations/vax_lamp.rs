@@ -142,7 +142,12 @@ impl Animation for VaxLamp {
     //     accumulates into visible side travel instead of being damped.
     //   * Larger jiggle range so the side motion is meaningful, not noise.
     for (i, b) in self.blobs.iter_mut().enumerate() {
-      let buoyancy = -(b.temp - 0.45) * 0.80;
+      // Buoyancy is now PROPORTIONAL TO MASS: bigger blobs accelerate
+      // harder, smaller blobs rise lazily. Real fluid physics would say
+      // acceleration is mass-invariant, but for the visual the user
+      // wants (small lumbering, big sweeping), scaling by mass gives
+      // the right feel.
+      let buoyancy = -(b.temp - 0.45) * 0.55 * b.mass;
       b.vy += buoyancy * dt;
 
       let jiggle: f64 = self.rng.gen_range(-0.30..0.30);
@@ -314,26 +319,36 @@ impl Animation for VaxLamp {
             value += 0.20 * ((v - HEATER_Y) / (1.0 - HEATER_Y)).powi(2);
           }
           // Blob contributions: Gaussian weighted by temperature, with
-          // velocity-driven stretching so fast-moving blobs deform
-          // toward elongated tear-drop shapes. The radial direction
-          // (relative to velocity) gives orthogonal axes for the
-          // anisotropic Gaussian.
+          // strong velocity-driven stretching so fast-moving blobs
+          // deform into clear teardrop shapes. The "along" axis goes
+          // with velocity (elongated), the "across" axis is squashed.
+          // Also offsets the bright centre slightly opposite the
+          // motion direction so each blob has a visible "trailing tail"
+          // -- the bulk-of-mass sits behind the leading edge, like a
+          // real rising wax blob.
           for b in &self.blobs {
             let dx = (u - b.x) * ax;
             let dy = v - b.y;
             let r = b.radius();
-            // Speed -> stretch factor. At rest the blob is round; at top
-            // speed it's about 2:1 elongated along its velocity.
+            // Speed -> stretch factor. Much more dramatic than before
+            // (max stretch 3.0 instead of 2.2, scale coefficient 7.0
+            // instead of 4.5). Resting blobs are still round, but any
+            // meaningful motion now produces a visibly elongated shape.
             let speed = (b.vx * b.vx + b.vy * b.vy).sqrt();
-            let stretch = (1.0 + 4.5 * speed).min(2.2);
+            let stretch = (1.0 + 7.0 * speed).min(3.0);
             let inv_along = 1.0 / (r * stretch).max(0.001);
             let inv_across = 1.0 / (r / stretch.sqrt()).max(0.001);
-            // Project (dx, dy) onto along/across velocity basis.
             let speed_safe = speed.max(1e-6);
             let along_x = b.vx / speed_safe;
             let along_y = b.vy / speed_safe;
-            let along = dx * along_x + dy * along_y;
-            let across = dx * (-along_y) + dy * along_x;
+            // Shift the projection so the bright centre is offset behind
+            // the motion -- the blob looks like a teardrop with a tail
+            // pointing back where it came from.
+            let trail_offset = r * 0.5 * (stretch - 1.0);
+            let shifted_dx = dx + along_x * trail_offset;
+            let shifted_dy = dy + along_y * trail_offset;
+            let along = shifted_dx * along_x + shifted_dy * along_y;
+            let across = shifted_dx * (-along_y) + shifted_dy * along_x;
             let s = (along * inv_along).powi(2) + (across * inv_across).powi(2);
             let intensity = 0.30 + 0.65 * b.temp;
             value += intensity * (-s * 1.5).exp();
