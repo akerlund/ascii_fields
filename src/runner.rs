@@ -258,7 +258,14 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
           "{}|{}|{}|{}|{}|{}| {}",
           cell(&format!(" {}", playlist.title()), 22),
           cell(&format!(" theme = {}", active.options.theme), 20),
-          cell(&format!(" scale = {:>4.2}", active.options.scale), 15),
+          cell(
+            &if registry::supports_scale(playlist.name()) {
+              format!(" scale = {:>4.2}", active.options.scale)
+            } else {
+              " scale = N/A".to_string()
+            },
+            15,
+          ),
           cell(&format!(" contrast = {:>4.2}", active.options.contrast), 17),
           cell(&format!(" Bright = {:>4.2}", active.options.brightness), 14),
           cell(&format!(" Charset = {}", active.options.charset), 18),
