@@ -32,7 +32,10 @@ const TH: &[(f64, char)] = &[
 ];
 
 const N_PENDULUMS: usize = 12;
-const SUB_STEPS: usize = 8;
+/// RK4 keeps energy stable enough that 4 sub-steps per frame is plenty
+/// (forward Euler at 8 sub-steps still leaked energy and decayed into a
+/// small-amplitude arc within a minute or two).
+const SUB_STEPS: usize = 4;
 const G: f64 = 9.81;
 const L1: f64 = 1.0;
 const L2: f64 = 1.0;
@@ -51,34 +54,57 @@ struct DoublePendulum {
   omega2: f64,
 }
 
+/// State as a 4-tuple (theta1, theta2, omega1, omega2) so the RK4
+/// integrator can sample derivatives at intermediate points without
+/// mutating the pendulum.
+type PendulumState = (f64, f64, f64, f64);
+
+/// Derivatives of the state: (d_theta1, d_theta2, d_omega1, d_omega2)
+/// where d_theta = omega, and d_omega = alpha computed from the standard
+/// double-pendulum equations. Pure function so the RK4 loop can call it
+/// on four intermediate states per step.
+fn derivatives(s: PendulumState) -> PendulumState {
+  let (theta1, theta2, omega1, omega2) = s;
+  let s1 = theta1.sin();
+  let s12 = (theta1 - theta2).sin();
+  let c12 = (theta1 - theta2).cos();
+  let two_diff_cos = (2.0 * (theta1 - theta2)).cos();
+
+  let denom1 = L1 * (2.0 * M1 + M2 - M2 * two_diff_cos);
+  let num1 = -G * (2.0 * M1 + M2) * s1
+    - M2 * G * (theta1 - 2.0 * theta2).sin()
+    - 2.0 * s12 * M2 * (omega2.powi(2) * L2 + omega1.powi(2) * L1 * c12);
+  let alpha1 = num1 / denom1;
+
+  let denom2 = L2 * (2.0 * M1 + M2 - M2 * two_diff_cos);
+  let num2 = 2.0
+    * s12
+    * (omega1.powi(2) * L1 * (M1 + M2) + G * (M1 + M2) * theta1.cos() + omega2.powi(2) * L2 * M2 * c12);
+  let alpha2 = num2 / denom2;
+  (omega1, omega2, alpha1, alpha2)
+}
+
+#[inline]
+fn add_scaled(s: PendulumState, k: PendulumState, factor: f64) -> PendulumState {
+  (s.0 + k.0 * factor, s.1 + k.1 * factor, s.2 + k.2 * factor, s.3 + k.3 * factor)
+}
+
 impl DoublePendulum {
-  /// One forward Euler integration step on the standard double-pendulum
-  /// equations.
+  /// One classical RK4 integration step. Energy stays effectively bounded
+  /// over many minutes of simulation, so the chaotic regime is preserved
+  /// indefinitely instead of decaying into the small-amplitude arc that
+  /// forward Euler produced.
   fn step(&mut self, dt: f64) {
-    let s1 = self.theta1.sin();
-    let s2 = self.theta2.sin();
-    let s12 = (self.theta1 - self.theta2).sin();
-    let c12 = (self.theta1 - self.theta2).cos();
-
-    let denom1 = L1 * (2.0 * M1 + M2 - M2 * (2.0 * (self.theta1 - self.theta2)).cos());
-    let num1 = -G * (2.0 * M1 + M2) * s1
-      - M2 * G * (self.theta1 - 2.0 * self.theta2).sin()
-      - 2.0 * s12 * M2 * (self.omega2.powi(2) * L2 + self.omega1.powi(2) * L1 * c12);
-    let alpha1 = num1 / denom1;
-
-    let denom2 = L2 * (2.0 * M1 + M2 - M2 * (2.0 * (self.theta1 - self.theta2)).cos());
-    let num2 = 2.0
-      * s12
-      * (self.omega1.powi(2) * L1 * (M1 + M2)
-        + G * (M1 + M2) * self.theta1.cos()
-        + self.omega2.powi(2) * L2 * M2 * c12);
-    let alpha2 = num2 / denom2;
-    let _ = s2;
-
-    self.omega1 += alpha1 * dt;
-    self.omega2 += alpha2 * dt;
-    self.theta1 += self.omega1 * dt;
-    self.theta2 += self.omega2 * dt;
+    let s = (self.theta1, self.theta2, self.omega1, self.omega2);
+    let k1 = derivatives(s);
+    let k2 = derivatives(add_scaled(s, k1, dt * 0.5));
+    let k3 = derivatives(add_scaled(s, k2, dt * 0.5));
+    let k4 = derivatives(add_scaled(s, k3, dt));
+    let inv6 = 1.0 / 6.0;
+    self.theta1 += dt * (k1.0 + 2.0 * k2.0 + 2.0 * k3.0 + k4.0) * inv6;
+    self.theta2 += dt * (k1.1 + 2.0 * k2.1 + 2.0 * k3.1 + k4.1) * inv6;
+    self.omega1 += dt * (k1.2 + 2.0 * k2.2 + 2.0 * k3.2 + k4.2) * inv6;
+    self.omega2 += dt * (k1.3 + 2.0 * k2.3 + 2.0 * k3.3 + k4.3) * inv6;
   }
 }
 
