@@ -38,7 +38,10 @@ const L1: f64 = 1.0;
 const L2: f64 = 1.0;
 const M1: f64 = 1.0;
 const M2: f64 = 1.0;
-const FADE_RATE: f64 = 0.6;
+/// Per-second decay applied to the trail accumulator. Slower than the
+/// initial value so trails persist long enough to be bright without the
+/// user cranking --contrast.
+const FADE_RATE: f64 = 0.3;
 
 #[derive(Clone, Copy)]
 struct DoublePendulum {
@@ -137,8 +140,10 @@ impl Animation for Chaos {
     let dw = (w.saturating_sub(1)).max(1) as f64;
     let dh = (h.saturating_sub(1)).max(1) as f64;
     let cx = 0.5;
-    let cy = 0.35;
-    let arm_scale = 0.15;
+    // Pivot a bit above centre so the pendulums have room to swing down,
+    // and a generous arm_scale so they sweep across most of the screen.
+    let cy = 0.42;
+    let arm_scale = 0.30;
 
     for (i, p) in self.pendulums.iter().enumerate() {
       // Position of the second-arm tip in world coords.
@@ -153,7 +158,7 @@ impl Animation for Chaos {
       // each pendulum's trail in a different colour band -- divergence
       // becomes visible as the previously-overlapping rainbows peel
       // apart.
-      let band_centre = 0.30 + 0.55 * (i as f64 / (N_PENDULUMS - 1) as f64);
+      let band_centre = 0.35 + 0.55 * (i as f64 / (N_PENDULUMS - 1) as f64);
       let cxi = (su * dw) as i64;
       let cyi = (sv * dh) as i64;
       for dy in -1..=1_i64 {
@@ -169,11 +174,12 @@ impl Animation for Chaos {
           let dist2 = (dx * dx + dy * dy) as f64;
           let g = (-dist2 / 0.65).exp();
           let idx = yy as usize * w + xx as usize;
-          let contribution = band_centre * g * 0.15;
+          // Each visit sets the cell to at least the pendulum's band
+          // centre weighted by the Gaussian footprint. With slow fade,
+          // trails are bright enough at default contrast.
+          let contribution = band_centre * g;
           if self.accumulator[idx] < contribution {
             self.accumulator[idx] = contribution;
-          } else {
-            self.accumulator[idx] += contribution * 0.3;
           }
         }
       }

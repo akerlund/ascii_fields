@@ -50,10 +50,13 @@ const TH: &[(f64, char)] = &[
   (1.01, '@'),
 ];
 
-const MAX_BLOBS: usize = 10;
-const MIN_BLOBS: usize = 3;
-const SPLIT_THRESHOLD: f64 = 1.4;
-const HEATER_Y: f64 = 0.85; // y > this is in the heater zone
+const MAX_BLOBS: usize = 12;
+const MIN_BLOBS: usize = 5;
+// Blob can split once it has roughly twice the starting mass. Earlier
+// threshold means the population dynamics turn over fast enough to be
+// visible -- waiting for mass 1.4 meant blobs rarely got there.
+const SPLIT_THRESHOLD: f64 = 0.9;
+const HEATER_Y: f64 = 0.82; // y > this is in the heater zone (y=1.0 is bottom)
 
 #[derive(Clone, Copy)]
 struct Blob {
@@ -87,19 +90,23 @@ impl Default for VaxLamp {
 impl VaxLamp {
   fn lamp_width(&self, y: f64) -> f64 {
     // Lamp profile: pinched at top and bottom, fattest in the middle.
+    // Widened from the previous 0.13 base + 0.08 bell so blobs have room
+    // to move sideways instead of being trapped in a narrow column.
     let bell = (1.0 - (y - 0.5).powi(2) * 4.0).clamp(0.05, 1.0);
-    0.13 + 0.08 * bell
+    0.20 + 0.14 * bell
   }
 
   fn spawn_fresh(&mut self) {
-    let x = self.rng.gen_range(0.35..0.65);
-    let y = 0.92;
+    // Wide x range and meaningful initial vx so fresh blobs don't all
+    // pile up in the centre and stay there.
+    let x = self.rng.gen_range(0.30..0.70);
+    let y = self.rng.gen_range(0.80..0.95);
     self.blobs.push(Blob {
       x,
       y,
-      vx: self.rng.gen_range(-0.02..0.02),
+      vx: self.rng.gen_range(-0.08..0.08),
       vy: 0.0,
-      mass: self.rng.gen_range(0.30..0.60),
+      mass: self.rng.gen_range(0.35..0.70),
       temp: self.rng.gen_range(0.85..1.00),
     });
   }
@@ -122,38 +129,41 @@ impl Animation for VaxLamp {
     // resolution below; capture by index to avoid borrow conflicts.
     let widths: Vec<f64> = self.blobs.iter().map(|b| self.lamp_width(b.y)).collect();
 
-    // Physics integration.
+    // Physics integration. Tuned so blobs actually reach the top, move
+    // sideways visibly, and collide before merging:
+    //
+    //   * Stronger buoyancy (0.45 -> 0.80) so hot blobs accelerate enough to
+    //     traverse the lamp before cooling.
+    //   * Slower cooling (0.25 -> 0.12) so they retain heat past the
+    //     midpoint and finish the trip up.
+    //   * Stronger heater (0.90 -> 1.60) so cold blobs reheat fast at the
+    //     bottom and start the cycle again.
+    //   * Much lower drag (0.60 -> 0.18) so horizontal Brownian motion
+    //     accumulates into visible side travel instead of being damped.
+    //   * Larger jiggle range so the side motion is meaningful, not noise.
     for (i, b) in self.blobs.iter_mut().enumerate() {
-      // Buoyancy: positive force pushes upward (negative y in screen-down
-      // convention). Hot up, cool down.
-      let buoyancy = -(b.temp - 0.45) * 0.45;
+      let buoyancy = -(b.temp - 0.45) * 0.80;
       b.vy += buoyancy * dt;
 
-      // Brownian horizontal jiggle.
-      let jiggle: f64 = self.rng.gen_range(-0.04..0.04);
+      let jiggle: f64 = self.rng.gen_range(-0.30..0.30);
       b.vx += jiggle * dt;
 
-      // Drag.
-      b.vx *= 1.0 - 0.6 * dt;
-      b.vy *= 1.0 - 0.6 * dt;
+      b.vx *= 1.0 - 0.18 * dt;
+      b.vy *= 1.0 - 0.18 * dt;
 
-      // Temperature: continuous cooling, with replenishment if close to
-      // the heater at the bottom.
-      let cooling = 0.25 * dt;
+      let cooling = 0.12 * dt;
       let heating = if b.y > HEATER_Y {
         let heat_proximity = ((b.y - HEATER_Y) / (1.0 - HEATER_Y)).clamp(0.0, 1.0);
-        0.9 * heat_proximity * dt
+        1.60 * heat_proximity * dt
       } else {
         0.0
       };
       b.temp = (b.temp - cooling + heating).clamp(0.0, 1.0);
 
-      // Advance position.
       b.x += b.vx * dt;
       b.y += b.vy * dt;
 
-      // Bounce off lamp walls (cosine-restitution = 0.4 so it does not look
-      // like a billiard ball).
+      // Bounce off lamp walls (restitution 0.4).
       let lw = widths[i];
       if b.x < 0.5 - lw {
         b.x = 0.5 - lw;
@@ -197,7 +207,10 @@ impl Animation for VaxLamp {
       self.blobs[i].temp = (self.blobs[i].temp + dt_val).clamp(0.0, 1.0);
     }
 
-    // Merge pairs that overlap by more than 30% of their combined radius.
+    // Merge pairs only when they overlap significantly (centres within
+    // 50% of combined radii). Earlier they merged the moment their
+    // edges touched, so the viewer never saw them deform around each
+    // other -- they just instantly combined.
     let mut i = 0;
     while i < self.blobs.len() {
       let mut merged = false;
@@ -205,7 +218,7 @@ impl Animation for VaxLamp {
         let bi = self.blobs[i];
         let bj = self.blobs[j];
         let d = ((bi.x - bj.x).powi(2) + (bi.y - bj.y).powi(2)).sqrt();
-        let r_total = (bi.radius() + bj.radius()) * 0.7;
+        let r_total = (bi.radius() + bj.radius()) * 0.5;
         if d < r_total {
           let m = bi.mass + bj.mass;
           self.blobs[i] = Blob {
