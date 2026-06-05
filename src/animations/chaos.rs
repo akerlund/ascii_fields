@@ -114,12 +114,19 @@ impl Animation for Chaos {
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     let w = ctx.width;
     let h = ctx.height;
-    if w != self.w || h != self.h || ctx.elapsed < self.last {
+    // Time rewind = full reset (export, HUD scrub). A simple size change
+    // (HUD toggle, terminal resize) only rebuilds the buffer so the
+    // pendulums keep their state -- pressing `i` no longer means the
+    // chaos has to seed all over again.
+    if ctx.elapsed < self.last {
+      *self = Self::default();
       self.accumulator = vec![0.0_f64; w * h];
       self.w = w;
       self.h = h;
-      // Re-init pendulums on a reset so the divergence reseeds visibly.
-      *self = Self { accumulator: vec![0.0_f64; w * h], w, h, last: ctx.elapsed, ..Default::default() };
+    } else if w != self.w || h != self.h {
+      self.accumulator = vec![0.0_f64; w * h];
+      self.w = w;
+      self.h = h;
     }
     let dt = (ctx.elapsed - self.last).clamp(0.0, 0.1);
     self.last = ctx.elapsed;
@@ -140,11 +147,14 @@ impl Animation for Chaos {
     let dw = (w.saturating_sub(1)).max(1) as f64;
     let dh = (h.saturating_sub(1)).max(1) as f64;
     let cx = 0.5;
-    // Pivot in the upper third so the pendulum's resting position
-    // (hanging straight down) is near the bottom of the screen, and
-    // the inverted swing reaches close to the top.
-    let cy = 0.30;
-    let arm_scale = 0.28;
+    // The double pendulum tip can reach any point within a circle of
+    // radius (L1 + L2) = 2.0 world units around the pivot. To fit that
+    // circle vertically we need 2 * arm_scale <= 0.96 of the screen and
+    // the pivot dead-centre, otherwise the inverted swing clips at one
+    // edge. arm_scale = 0.24 gives a bounding circle of 0.48 with the
+    // pivot at 0.50, leaving 0.02 margin top and bottom.
+    let cy = 0.50;
+    let arm_scale = 0.24;
 
     for (i, p) in self.pendulums.iter().enumerate() {
       // Position of the second-arm tip in world coords. tip_y is the

@@ -186,11 +186,15 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
         last_dims = (0, 0);
       }
 
-      // dimensions + HUD reserve
+      // Dimensions. The animation is given the FULL terminal size
+      // unconditionally -- the HUD draws on top of the bottom rows as
+      // an overlay rather than reserving space below the animation.
+      // This avoids resize events when the HUD is toggled with `i`, so
+      // stateful animations (chaos, dla, kleinian, ...) keep their
+      // state through a HUD toggle.
       let (cols, rows) = terminal::size().unwrap_or((100, 40));
-      let hud_lines: u16 = if hud_visible { 4 } else { 0 };
       let drawable_cols = cols.max(1) as usize;
-      let drawable_rows = rows.saturating_sub(hud_lines).max(1) as usize;
+      let drawable_rows = rows.max(1) as usize;
       let cw = cfg.width.unwrap_or(drawable_cols).clamp(1, drawable_cols);
       let ch = cfg.height.unwrap_or(drawable_rows).clamp(1, drawable_rows);
 
