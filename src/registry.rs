@@ -151,6 +151,16 @@ pub static MODES: &[ModeInfo] = &[
     factory: || Box::new(soap_bubbles::SoapBubbles::default()),
   },
   ModeInfo {
+    name: "ocean",
+    description: "Open ocean: rolling swells receding to a horizon with foam crests",
+    factory: || Box::new(ocean::Ocean),
+  },
+  ModeInfo {
+    name: "chaos",
+    description: "Double-pendulum ensemble visibly diverging from near-identical initial conditions",
+    factory: || Box::new(chaos::Chaos::default()),
+  },
+  ModeInfo {
     name: "whirlpool",
     description: "Swirling vortex / maelstrom",
     factory: || Box::new(whirlpool::Whirlpool),
