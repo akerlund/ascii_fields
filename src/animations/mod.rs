@@ -59,6 +59,7 @@ pub mod qfield;
 pub mod rain;
 pub mod rd;
 pub mod sierpinski;
+pub mod snowflake;
 pub mod soap_bubbles;
 pub mod space;
 pub mod sphere_eversion;

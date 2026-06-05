@@ -156,6 +156,11 @@ pub static MODES: &[ModeInfo] = &[
     factory: || Box::new(ocean::Ocean),
   },
   ModeInfo {
+    name: "snowflake",
+    description: "Hexagonal snowflake grown live via 6-fold-symmetric DLA, cycling through morphologies",
+    factory: || Box::new(snowflake::Snowflake::default()),
+  },
+  ModeInfo {
     name: "chaos",
     description: "Double-pendulum ensemble visibly diverging from near-identical initial conditions",
     factory: || Box::new(chaos::Chaos::default()),
