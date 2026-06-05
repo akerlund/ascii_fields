@@ -74,6 +74,10 @@ impl Default for SoapBubbles {
 }
 
 impl Animation for SoapBubbles {
+  fn status(&self) -> Option<String> {
+    Some(format!("{} bubbles", self.bubbles.len()))
+  }
+
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     // Time-rewind reset (export, HUD scrub).
     if ctx.elapsed < self.last_elapsed {

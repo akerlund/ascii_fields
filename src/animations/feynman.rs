@@ -152,6 +152,18 @@ impl Feynman {
 }
 
 impl Animation for Feynman {
+  fn status(&self) -> Option<String> {
+    let (mut f, mut p, mut g) = (0usize, 0usize, 0usize);
+    for particle in &self.particles {
+      match particle.kind {
+        Kind::Fermion => f += 1,
+        Kind::Photon => p += 1,
+        Kind::Gluon => g += 1,
+      }
+    }
+    Some(format!("{} particles ({}f / {}γ / {}g)", self.particles.len(), f, p, g))
+  }
+
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     // Reset on time rewind (export, HUD scrub).
     if ctx.elapsed < self.last {

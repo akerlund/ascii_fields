@@ -100,6 +100,15 @@ impl Dla {
 }
 
 impl Animation for Dla {
+  fn status(&self) -> Option<String> {
+    let size: usize = self.cluster.iter().filter(|&&b| b).count();
+    let phase = match self.phase {
+      Phase::Growing => "growing",
+      Phase::Melting => "melting",
+    };
+    Some(format!("{} cells, {}", size, phase))
+  }
+
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     if self.cluster.is_empty() || ctx.width != self.w || ctx.height != self.h || ctx.elapsed < self.last {
       self.seed(ctx.width, ctx.height);

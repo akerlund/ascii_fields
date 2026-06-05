@@ -112,7 +112,29 @@ impl VaxLamp {
   }
 }
 
+impl VaxLamp {
+  /// Count of blobs currently above HEATER_Y (cool, sinking) vs. below
+  /// (warming, on their way up). Just for the HUD's mode-specific status.
+  fn hot_cool_split(&self) -> (usize, usize) {
+    let mut hot = 0;
+    let mut cool = 0;
+    for b in &self.blobs {
+      if b.temp > 0.55 {
+        hot += 1;
+      } else {
+        cool += 1;
+      }
+    }
+    (hot, cool)
+  }
+}
+
 impl Animation for VaxLamp {
+  fn status(&self) -> Option<String> {
+    let (hot, cool) = self.hot_cool_split();
+    Some(format!("{} blobs ({} hot, {} cool)", self.blobs.len(), hot, cool))
+  }
+
   fn render(&mut self, ctx: &FrameContext, out: &mut String) {
     if ctx.elapsed < self.last {
       self.blobs.clear();

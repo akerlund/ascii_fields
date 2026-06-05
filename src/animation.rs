@@ -17,4 +17,12 @@ pub struct FrameContext<'a> {
 /// because some scenes carry per-frame state (life, dla, drops, …).
 pub trait Animation: Send {
   fn render(&mut self, ctx: &FrameContext, out: &mut String);
+
+  /// One-line mode-specific status the HUD shows on tall terminals.
+  /// Animations override this to expose live state (blob count for
+  /// vax_lamp, particle count for feynman, generation for life, etc.).
+  /// Default empty so most modes do not need to opt in.
+  fn status(&self) -> Option<String> {
+    None
+  }
 }

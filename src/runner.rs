@@ -306,25 +306,58 @@ pub fn run(mut playlist: Playlist, cfg: RunConfig) -> io::Result<()> {
           "",
         );
 
-        let row1 = rows.saturating_sub(4);
-        let row2 = rows.saturating_sub(3);
-        let row3 = rows.saturating_sub(2);
-        let row4 = rows.saturating_sub(1);
-        let _ = write!(
-          hud_buf,
-          "\x1b[{};1H\x1b[48;2;0;0;0m{}\x1b[0m\
-           \x1b[{};1H\x1b[48;2;0;0;0m{}\x1b[0m\
-           \x1b[{};1H\x1b[48;2;0;0;0m{}\x1b[0m\
-           \x1b[{};1H\x1b[48;2;0;0;0m{}\x1b[0m",
-          row1 + 1,
-          fit(&line1, cw),
-          row2 + 1,
-          fit(&line2, cw),
-          row3 + 1,
-          fit(&line3, cw),
-          row4 + 1,
-          fit(&line4, cw),
-        );
+        // Decide which rows to render. On narrow terminals the
+        // control-hint rows are dropped in favour of a compact status
+        // line that just shows the live-tunable values, plus the perf
+        // row.
+        let scale_value = if registry::supports_scale(playlist.name()) {
+          format!("{:.2}", active.options.scale)
+        } else {
+          "N/A".to_string()
+        };
+        // Optional mode-specific status row (e.g., "12 blobs | 5 hot, 7 cool"
+        // for vax_lamp). Most animations return None. When present, and
+        // the terminal is tall enough, it slots in just above the standard
+        // HUD rows.
+        let mode_status = playlist.current().status();
+        let hud_rows: Vec<String> = if cw >= 90 {
+          // Wide terminal: always show the 4 rows. If the animation
+          // exposes mode-specific state and the terminal has the
+          // vertical room, add it as a 5th row above the standard ones.
+          let want_status_row = rows >= 35 && mode_status.is_some();
+          let mut v = if want_status_row {
+            vec![format!(" status: {}", mode_status.unwrap_or_default())]
+          } else {
+            Vec::new()
+          };
+          v.push(line1);
+          v.push(line2);
+          v.push(line3);
+          v.push(line4);
+          v
+        } else if cw >= 50 {
+          let compact_status = format!(
+            " {} | th={} sc={} co={:.2} br={:.2} | {}",
+            playlist.title(),
+            active.options.theme,
+            scale_value,
+            active.options.contrast,
+            active.options.brightness,
+            shown_state,
+          );
+          let compact_perf = format!(" cpu={:.1}% fps={:.0}/{:.0}", cpu_pct, fps_actual, cfg.fps);
+          vec![compact_status, compact_perf]
+        } else {
+          // Very narrow: single line with the bare essentials.
+          let single = format!(" {} {:.0}fps cpu{:.0}%", playlist.name(), fps_actual, cpu_pct,);
+          vec![single]
+        };
+
+        let hud_count = hud_rows.len() as u16;
+        for (i, row) in hud_rows.iter().enumerate() {
+          let abs_row = rows.saturating_sub(hud_count - i as u16);
+          let _ = write!(hud_buf, "\x1b[{};1H\x1b[48;2;0;0;0m{}\x1b[0m", abs_row + 1, fit(row, cw),);
+        }
       }
 
       // write
