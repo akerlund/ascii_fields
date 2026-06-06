@@ -43,9 +43,19 @@ const TH: &[(f64, char)] = &[
 
 const MAX_WALK: i64 = 6000;
 const WALKERS_PER_FRAME: usize = 28;
-const DISPLAY_SECONDS: f64 = 3.0;
+/// Seconds the crystal spends in the dynamic-equilibrium "stable" phase
+/// after initial growth completes. During this phase tips continuously
+/// erode and regrow so the crystal never looks frozen-in-time.
+const STABLE_SECONDS: f64 = 8.0;
 const DISSOLVE_SECONDS: f64 = 2.0;
 const DISSOLVE_RATE: f64 = 2.0;
+/// Per-frame counts during the Stable phase. Equilibrium adds and removals
+/// roughly balance so the cell count hovers near `max_cells`.
+const STABLE_WALKERS_PER_FRAME: usize = 8;
+const STABLE_ERODE_ATTEMPTS: usize = 8;
+/// Cells within this many cells of the centre are immune to erosion so
+/// the seed never disappears.
+const CORE_PROTECTION_RADIUS: i64 = 3;
 
 /// Cells are ~2:1 (twice as tall as wide), so screen-space distances need
 /// to be multiplied by this when going to cell-x and divided when going
@@ -74,8 +84,13 @@ const MORPHOLOGIES: &[Morphology] = &[
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Phase {
+  /// Walkers attach until cell_count >= max_cells.
   Growing,
-  Holding,
+  /// Continuous tip-evolution. Boundary cells erode each frame and a
+  /// smaller number of walkers add new ones, so the crystal looks like
+  /// it's being continuously sculpted -- never frozen-in-time.
+  Stable,
+  /// Glow buffer fades out before the next morphology starts.
   Dissolving,
 }
 
@@ -88,7 +103,7 @@ pub struct Snowflake {
   w: usize,
   h: usize,
   last: f64,
-  hold_until: f64,
+  stable_until: f64,
   dissolve_until: f64,
   rng: Pcg32,
   phase: Phase,
@@ -105,7 +120,7 @@ impl Default for Snowflake {
       w: 0,
       h: 0,
       last: 0.0,
-      hold_until: 0.0,
+      stable_until: 0.0,
       dissolve_until: 0.0,
       rng: Pcg32::seed_from_u64(0x5F0C_1ADE_BABE),
       phase: Phase::Growing,
@@ -211,6 +226,83 @@ impl Snowflake {
     false
   }
 
+  /// Pick a random ice cell that's on the boundary (has at least one
+  /// non-ice neighbour). Melt it and its 5 rotational copies so the C6
+  /// symmetry is preserved. Returns true if anything actually melted.
+  fn try_erode_boundary(&mut self) -> bool {
+    if self.ice.is_empty() {
+      return false;
+    }
+    // Try several random cells; first one that's both ice AND on the
+    // boundary AND outside the core protection zone wins.
+    let cx_cell = self.w as i64 / 2;
+    let cy_cell = self.h as i64 / 2;
+    for _ in 0..16 {
+      let idx: usize = self.rng.gen_range(0..self.ice.len());
+      if !self.ice[idx] {
+        continue;
+      }
+      let xi = (idx % self.w) as i64;
+      let yi = (idx / self.w) as i64;
+      // Don't erode the protected core -- the seed has to survive so the
+      // crystal doesn't disintegrate.
+      let core_dx = xi - cx_cell;
+      let core_dy = yi - cy_cell;
+      if core_dx * core_dx + core_dy * core_dy < CORE_PROTECTION_RADIUS * CORE_PROTECTION_RADIUS * 2 {
+        continue;
+      }
+      if !self.is_boundary(xi, yi) {
+        continue;
+      }
+      self.melt_six(xi, yi);
+      return true;
+    }
+    false
+  }
+
+  fn is_boundary(&self, xi: i64, yi: i64) -> bool {
+    for dy in -1..=1_i64 {
+      for dx in -1..=1_i64 {
+        if dx == 0 && dy == 0 {
+          continue;
+        }
+        let nx = xi + dx;
+        let ny = yi + dy;
+        if nx < 0 || nx >= self.w as i64 || ny < 0 || ny >= self.h as i64 {
+          return true;
+        }
+        if !self.ice[ny as usize * self.w + nx as usize] {
+          return true;
+        }
+      }
+    }
+    false
+  }
+
+  fn melt_six(&mut self, cell_x: i64, cell_y: i64) {
+    let cx_cell = self.w as f64 * 0.5;
+    let cy_cell = self.h as f64 * 0.5;
+    let dx_screen = (cell_x as f64 - cx_cell) / CELL_X_PER_SCREEN;
+    let dy_screen = cell_y as f64 - cy_cell;
+    for k in 0..6 {
+      let phi = TAU * k as f64 / 6.0;
+      let (cs, sn) = (phi.cos(), phi.sin());
+      let rx_screen = dx_screen * cs - dy_screen * sn;
+      let ry_screen = dx_screen * sn + dy_screen * cs;
+      let sx = (cx_cell + rx_screen * CELL_X_PER_SCREEN).round() as i64;
+      let sy = (cy_cell + ry_screen).round() as i64;
+      if sx < 0 || sx >= self.w as i64 || sy < 0 || sy >= self.h as i64 {
+        continue;
+      }
+      let idx = sy as usize * self.w + sx as usize;
+      if self.ice[idx] {
+        self.ice[idx] = false;
+        self.glow[idx] = 0.0;
+        self.cell_count = self.cell_count.saturating_sub(1);
+      }
+    }
+  }
+
   fn freeze_six(&mut self, cell_x: i64, cell_y: i64, t: f64) {
     let cx_cell = self.w as f64 * 0.5;
     let cy_cell = self.h as f64 * 0.5;
@@ -259,12 +351,21 @@ impl Animation for Snowflake {
           self.launch_walker(ctx.elapsed);
         }
         if self.cell_count >= m.max_cells {
-          self.phase = Phase::Holding;
-          self.hold_until = ctx.elapsed + DISPLAY_SECONDS;
+          self.phase = Phase::Stable;
+          self.stable_until = ctx.elapsed + STABLE_SECONDS;
         }
       }
-      Phase::Holding => {
-        if ctx.elapsed >= self.hold_until {
+      Phase::Stable => {
+        // Dynamic equilibrium: continuous tip evolution. Erode boundary
+        // cells AND attach new ones each frame so the crystal looks alive
+        // -- tips appear and disappear instead of sitting frozen.
+        for _ in 0..STABLE_ERODE_ATTEMPTS {
+          self.try_erode_boundary();
+        }
+        for _ in 0..STABLE_WALKERS_PER_FRAME {
+          self.launch_walker(ctx.elapsed);
+        }
+        if ctx.elapsed >= self.stable_until {
           self.phase = Phase::Dissolving;
           self.dissolve_until = ctx.elapsed + DISSOLVE_SECONDS;
         }
@@ -291,7 +392,7 @@ impl Animation for Snowflake {
       for col in 0..w {
         let idx = base + col;
         let bright = match self.phase {
-          Phase::Growing | Phase::Holding => {
+          Phase::Growing | Phase::Stable => {
             if !self.ice[idx] {
               0.0
             } else {
@@ -319,7 +420,7 @@ impl Animation for Snowflake {
   fn status(&self) -> Option<String> {
     let phase = match self.phase {
       Phase::Growing => "growing",
-      Phase::Holding => "holding",
+      Phase::Stable => "stable",
       Phase::Dissolving => "dissolving",
     };
     Some(format!("{} | {} | {} cells", self.morphology().name, phase, self.cell_count))
