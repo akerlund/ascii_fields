@@ -1,25 +1,24 @@
-//! Single hexagonal snowflake grown live via 6-fold-symmetric DLA.
+//! Single hexagonal snowflake grown live via 6-fold-symmetric DLA, cycling
+//! through morphologies that are visibly distinct.
 //!
-//! Algorithm: a walker spawns at a random angle within one 60° sector at the
-//! current spawn radius, then random-walks until it touches an existing ice
-//! cell. On attachment its position (relative to the centre) is mirrored to
-//! all six rotational copies — that's the explicit C6 symmetry every real
-//! snowflake exhibits because of the hexagonal packing of water ice.
+//! Algorithm: a walker spawns at a random angle in one 60° sector at the
+//! crystal's outer edge, then random-walks in cell coordinates until it
+//! touches an existing ice cell. On attachment its position is converted to
+//! screen units (terminal cells are 2:1 so cell-x distance is halved),
+//! rotated by k·60° for k = 0..5, converted back to cells, and frozen.
+//! That C6 mirroring is what gives a real snowflake's six-fold symmetry.
 //!
-//! Different crystal morphologies emerge from different parameter sets:
+//! Three morphologies are cycled so different crystal types are clearly
+//! visible within a minute or two of watching:
 //!
-//! * Plate: close spawn radius, low stickiness; walkers fill in gaps, giving
-//!   solid sectors.
-//! * Stellar: medium spawn radius, high stickiness; clean six-arm star.
-//! * Fern: far spawn radius, high stickiness; thin highly-branched arms.
+//! * Stellar dendrite -- the classic six-armed star.
+//! * Fern dendrite -- very fine, highly branched arms.
+//! * Plate -- compact hexagonal disk with thick arms.
 //!
-//! We cycle through three parameter sets back-to-back so a viewer sees the
-//! three classical crystal types within a couple of minutes.
-//!
-//! Aspect: terminal cells are about 2:1 (wider than tall). The walker math
-//! works in world coordinates with `ax = w / (h * 2)` correction so the
-//! crystal looks geometrically symmetric on screen instead of horizontally
-//! stretched.
+//! Aspect: terminal cells are taller than wide (~2:1). All rotation /
+//! distance math happens in *screen* units so the six-fold symmetry is
+//! geometrically correct; cell units are used only for walker stepping and
+//! grid indexing.
 
 use std::f64::consts::{PI, TAU};
 
@@ -42,37 +41,35 @@ const TH: &[(f64, char)] = &[
   (1.01, '@'),
 ];
 
-/// One walker's max steps before we give up and pretend it never attached.
-const MAX_WALK: i64 = 4000;
-/// How many walkers per frame -- determines crystal growth rate.
-const WALKERS_PER_FRAME: usize = 18;
-/// Seconds the crystal stays visible after it has stopped growing, before
-/// dissolving and starting the next morphology.
-const DISPLAY_SECONDS: f64 = 4.0;
-/// Per-second decay applied during the dissolve phase so the previous
-/// crystal fades away cleanly before the new one starts.
-const DISSOLVE_RATE: f64 = 1.6;
+const MAX_WALK: i64 = 6000;
+const WALKERS_PER_FRAME: usize = 28;
+const DISPLAY_SECONDS: f64 = 3.0;
+const DISSOLVE_SECONDS: f64 = 2.0;
+const DISSOLVE_RATE: f64 = 2.0;
+
+/// Cells are ~2:1 (twice as tall as wide), so screen-space distances need
+/// to be multiplied by this when going to cell-x and divided when going
+/// from cell-x to screen-x.
+const CELL_X_PER_SCREEN: f64 = 2.0;
 
 #[derive(Clone, Copy)]
 struct Morphology {
-  /// Walker spawn distance from centre, as a fraction of the available
-  /// crystal radius. Closer = denser, farther = sparser dendrites.
+  name: &'static str,
+  /// Walker spawn distance from centre as fraction of the crystal radius.
+  /// Close (small) -> dense, far (large) -> sparse.
   spawn_fraction: f64,
-  /// Probability of attaching when adjacent to ice (vs. bouncing). Higher
-  /// = thinner more-branched dendrites; lower = thicker plates.
+  /// Probability of attaching when adjacent to existing ice. Low ->
+  /// walker bounces back and explores further, filling gaps; high ->
+  /// walker sticks at first contact, producing thin branches.
   stickiness: f64,
-  /// Maximum cells in the crystal before we declare it done. Sets the
-  /// crystal's overall size.
+  /// Target crystal cell count before declaring done.
   max_cells: usize,
 }
 
 const MORPHOLOGIES: &[Morphology] = &[
-  // Stellar dendrite -- the classic snowflake.
-  Morphology { spawn_fraction: 0.95, stickiness: 0.90, max_cells: 2200 },
-  // Fern dendrite -- very fine branching.
-  Morphology { spawn_fraction: 0.98, stickiness: 0.98, max_cells: 1600 },
-  // Plate -- compact six-petalled crystal.
-  Morphology { spawn_fraction: 0.65, stickiness: 0.45, max_cells: 3000 },
+  Morphology { name: "stellar dendrite", spawn_fraction: 0.95, stickiness: 0.85, max_cells: 1800 },
+  Morphology { name: "fern dendrite", spawn_fraction: 0.97, stickiness: 0.99, max_cells: 1200 },
+  Morphology { name: "plate", spawn_fraction: 0.50, stickiness: 0.30, max_cells: 2800 },
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -85,9 +82,8 @@ enum Phase {
 pub struct Snowflake {
   ice: Vec<bool>,
   age: Vec<f64>,
-  /// Brightness field that lingers during the Dissolving phase, kept
-  /// separately from `age` so we can decay it without forgetting which
-  /// cells were once ice.
+  /// Brightness buffer for the dissolve phase; decays per frame so the
+  /// previous crystal fades cleanly before the next starts.
   glow: Vec<f64>,
   w: usize,
   h: usize,
@@ -128,7 +124,6 @@ impl Snowflake {
     self.h = h;
     self.phase = Phase::Growing;
     self.cell_count = 0;
-    // Seed the centre cell as ice so walkers have something to attach to.
     let cx = w / 2;
     let cy = h / 2;
     let idx = cy * w + cx;
@@ -141,77 +136,95 @@ impl Snowflake {
     MORPHOLOGIES[self.morph_idx % MORPHOLOGIES.len()]
   }
 
-  /// Crystal radius in world (aspect-corrected) units. Walkers spawn at a
-  /// fraction of this, and we use it to gate when the crystal is "full".
-  fn crystal_radius(&self, ax: f64) -> f64 {
-    0.42 * (self.w as f64 * 0.5 / ax).min(self.h as f64 * 0.5)
+  /// (radius in cell-x, radius in cell-y) so the result is a circle in
+  /// screen units. Picks whichever screen dimension is smaller as the
+  /// constraint, taking 40% of it so the crystal fits with margin.
+  fn crystal_radius_cells(&self) -> (f64, f64) {
+    // 1 cell-y = 1 screen unit (cells are 2:1).
+    // 1 screen unit horizontally = CELL_X_PER_SCREEN cell-x.
+    let max_screen_units = (self.w as f64 * 0.42 / CELL_X_PER_SCREEN).min(self.h as f64 * 0.42);
+    let r_cell_x = max_screen_units * CELL_X_PER_SCREEN;
+    let r_cell_y = max_screen_units;
+    (r_cell_x, r_cell_y)
   }
 
-  /// One walker. Returns true if it attached.
-  fn launch_walker(&mut self, t: f64, ax: f64) -> bool {
+  /// Spawn one walker, walk it, attempt to attach. Returns true if it stuck.
+  fn launch_walker(&mut self, t: f64) -> bool {
     let m = self.morphology();
+    let (rx, ry) = self.crystal_radius_cells();
     let cx = self.w as f64 * 0.5;
     let cy = self.h as f64 * 0.5;
-    let radius = self.crystal_radius(ax) * m.spawn_fraction;
 
-    // Spawn at a random angle in the first 60° sector.
-    let sector_a: f64 = self.rng.gen_range(0.0..PI / 3.0);
-    let dx_world = radius * sector_a.cos();
-    let dy_world = radius * sector_a.sin();
-    let mut x = cx + dx_world / ax;
-    let mut y = cy + dy_world;
+    // Spawn at random angle in the first 60° sector.
+    let theta: f64 = self.rng.gen_range(0.0..PI / 3.0);
+    let mut x = cx + rx * m.spawn_fraction * theta.cos();
+    let mut y = cy + ry * m.spawn_fraction * theta.sin();
 
     for _ in 0..MAX_WALK {
-      // Random walk step, isotropic in world coords.
-      let step_angle: f64 = self.rng.gen_range(0.0..TAU);
-      x += step_angle.cos() / ax;
-      y += step_angle.sin();
+      // 8-neighbour random step in cell coords.
+      let dx_step: i64 = self.rng.gen_range(-1..=1);
+      let dy_step: i64 = self.rng.gen_range(-1..=1);
+      if dx_step == 0 && dy_step == 0 {
+        continue;
+      }
+      x += dx_step as f64;
+      y += dy_step as f64;
       let xi = x.round() as i64;
       let yi = y.round() as i64;
       if xi < 1 || xi >= self.w as i64 - 1 || yi < 1 || yi >= self.h as i64 - 1 {
         return false;
       }
-      // Touch test: any of the 8 neighbours is ice?
-      let touched = (-1..=1_i64).any(|dy| {
-        (-1..=1_i64).any(|dx| {
-          if dx == 0 && dy == 0 {
-            return false;
-          }
-          let nx = xi + dx;
-          let ny = yi + dy;
-          self.ice[ny as usize * self.w + nx as usize]
-        })
-      });
-      if touched {
-        // Stickiness gate: maybe bounce instead of attaching.
-        if self.rng.gen::<f64>() > m.stickiness {
-          // Bounce back along the step direction.
-          x -= step_angle.cos() / ax;
-          y -= step_angle.sin();
+      if !self.touches_ice(xi, yi) {
+        continue;
+      }
+      // Stickiness gate.
+      if self.rng.gen::<f64>() > m.stickiness {
+        // Bounce back one step and keep walking.
+        x -= dx_step as f64;
+        y -= dy_step as f64;
+        continue;
+      }
+      // Attach. Mirror to all 6 sectors via screen-space rotation so the
+      // C6 symmetry is geometrically correct.
+      self.freeze_six(xi, yi, t);
+      return true;
+    }
+    false
+  }
+
+  fn touches_ice(&self, xi: i64, yi: i64) -> bool {
+    for dy in -1..=1_i64 {
+      for dx in -1..=1_i64 {
+        if dx == 0 && dy == 0 {
           continue;
         }
-        // Attach: freeze this position and its 5 rotational copies for
-        // C6 symmetry.
-        let local_dx_world = (x - cx) * ax;
-        let local_dy_world = y - cy;
-        self.freeze_six(local_dx_world, local_dy_world, ax, t);
-        return true;
+        let nx = xi + dx;
+        let ny = yi + dy;
+        if nx < 0 || nx >= self.w as i64 || ny < 0 || ny >= self.h as i64 {
+          continue;
+        }
+        if self.ice[ny as usize * self.w + nx as usize] {
+          return true;
+        }
       }
     }
     false
   }
 
-  /// Freeze the cell at (dx_world, dy_world) relative to centre, plus its
-  /// 5 rotational copies (60° apart).
-  fn freeze_six(&mut self, dx: f64, dy: f64, ax: f64, t: f64) {
-    let cx = self.w as f64 * 0.5;
-    let cy = self.h as f64 * 0.5;
+  fn freeze_six(&mut self, cell_x: i64, cell_y: i64, t: f64) {
+    let cx_cell = self.w as f64 * 0.5;
+    let cy_cell = self.h as f64 * 0.5;
+    // Offset in screen units (cell-x scaled down because cells are 2:1).
+    let dx_screen = (cell_x as f64 - cx_cell) / CELL_X_PER_SCREEN;
+    let dy_screen = cell_y as f64 - cy_cell;
     for k in 0..6 {
-      let theta = TAU * (k as f64) / 6.0;
-      let rdx = dx * theta.cos() - dy * theta.sin();
-      let rdy = dx * theta.sin() + dy * theta.cos();
-      let sx = (cx + rdx / ax).round() as i64;
-      let sy = (cy + rdy).round() as i64;
+      let phi = TAU * k as f64 / 6.0;
+      let (cs, sn) = (phi.cos(), phi.sin());
+      let rx_screen = dx_screen * cs - dy_screen * sn;
+      let ry_screen = dx_screen * sn + dy_screen * cs;
+      // Convert back to cell coords.
+      let sx = (cx_cell + rx_screen * CELL_X_PER_SCREEN).round() as i64;
+      let sy = (cy_cell + ry_screen).round() as i64;
       if sx < 0 || sx >= self.w as i64 || sy < 0 || sy >= self.h as i64 {
         continue;
       }
@@ -231,22 +244,19 @@ impl Animation for Snowflake {
     let w = ctx.width;
     let h = ctx.height;
     if self.ice.is_empty() || ctx.elapsed < self.last {
-      // Rewind or first frame: full reset.
       self.reseed(w, h);
     } else if w != self.w || h != self.h {
-      // Resize: rebuild buffers and reseed (the previous crystal would not
-      // fit cleanly into the new aspect).
+      // Crystal would be at the wrong scale -- restart cleanly.
       self.reseed(w, h);
     }
     let dt = (ctx.elapsed - self.last).clamp(0.0, 0.1);
     self.last = ctx.elapsed;
-    let ax = w as f64 / (h as f64 * 2.0).max(1.0);
     let m = self.morphology();
 
     match self.phase {
       Phase::Growing => {
         for _ in 0..WALKERS_PER_FRAME {
-          self.launch_walker(ctx.elapsed, ax);
+          self.launch_walker(ctx.elapsed);
         }
         if self.cell_count >= m.max_cells {
           self.phase = Phase::Holding;
@@ -256,7 +266,7 @@ impl Animation for Snowflake {
       Phase::Holding => {
         if ctx.elapsed >= self.hold_until {
           self.phase = Phase::Dissolving;
-          self.dissolve_until = ctx.elapsed + 2.5;
+          self.dissolve_until = ctx.elapsed + DISSOLVE_SECONDS;
         }
       }
       Phase::Dissolving => {
@@ -265,7 +275,6 @@ impl Animation for Snowflake {
           *g *= decay;
         }
         if ctx.elapsed >= self.dissolve_until {
-          // Advance to the next crystal morphology and start growing again.
           self.morph_idx = self.morph_idx.wrapping_add(1);
           self.reseed(w, h);
         }
@@ -274,12 +283,9 @@ impl Animation for Snowflake {
 
     let contrast = ctx.options.contrast;
     let mut grid = vec![0.0_f64; w * h];
-    // Brightness during Growing/Holding: ice cells light up, freshly-frozen
-    // a touch brighter so the growth front leads the eye. During Dissolving
-    // we use the decaying glow buffer directly.
     let cx_f = w as f64 * 0.5;
     let cy_f = h as f64 * 0.5;
-    let max_r = self.crystal_radius(ax).max(1.0);
+    let (max_rx, _) = self.crystal_radius_cells();
     for row in 0..h {
       let base = row * w;
       for col in 0..w {
@@ -290,14 +296,16 @@ impl Animation for Snowflake {
               0.0
             } else {
               let recency = (ctx.elapsed - self.age[idx]).max(0.0);
+              // Freshly-grown cells flash brighter so the growth front is
+              // visible.
               let freshness = (1.0 - recency / 1.5).clamp(0.0, 1.0);
-              // Radial darkening so the centre reads as solid ice and the
-              // tips as freshly-grown spikes.
-              let dx = (col as f64 - cx_f) * ax;
+              // Mild radial darkening so the core reads as solid and the
+              // tips as the brightest point.
+              let dx = (col as f64 - cx_f) / CELL_X_PER_SCREEN;
               let dy = row as f64 - cy_f;
-              let r = (dx * dx + dy * dy).sqrt() / max_r;
-              let radial = (1.0 - 0.35 * r).clamp(0.3, 1.0);
-              (0.65 + 0.30 * freshness) * radial
+              let r = (dx * dx + dy * dy).sqrt() / (max_rx / CELL_X_PER_SCREEN).max(1.0);
+              let radial = (1.0 - 0.25 * r).clamp(0.45, 1.0);
+              (0.70 + 0.30 * freshness) * radial
             }
           }
           Phase::Dissolving => self.glow[idx],
@@ -309,16 +317,11 @@ impl Animation for Snowflake {
   }
 
   fn status(&self) -> Option<String> {
-    let name = match self.morph_idx % MORPHOLOGIES.len() {
-      0 => "stellar dendrite",
-      1 => "fern dendrite",
-      _ => "plate",
-    };
     let phase = match self.phase {
       Phase::Growing => "growing",
       Phase::Holding => "holding",
       Phase::Dissolving => "dissolving",
     };
-    Some(format!("{} | {} | {} cells", name, phase, self.cell_count))
+    Some(format!("{} | {} | {} cells", self.morphology().name, phase, self.cell_count))
   }
 }
