@@ -213,7 +213,7 @@ List everything:
 | `caustics` | Underwater light caustics rippling over a surface |
 | `soap-bubbles` | Iridescent soap bubbles drifting upward |
 | `ocean` | Open ocean with rolling swells receding to a horizon, foam crests on the peaks |
-| `snowflake` | Single hexagonal snowflake grown live via 6-fold-symmetric DLA, cycling stellar / fern / plate morphologies |
+| `snowflake` | Falling snow: many procedurally-generated hex-lattice snowflakes drifting and rotating with parallax depth |
 | `chaos` | Double pendulum ensemble: ~12 pendulums diverging from nearly identical starts |
 
 ### Life, Light, And Weather

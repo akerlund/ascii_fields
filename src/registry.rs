@@ -157,7 +157,7 @@ pub static MODES: &[ModeInfo] = &[
   },
   ModeInfo {
     name: "snowflake",
-    description: "Hexagonal snowflake grown live via 6-fold-symmetric DLA, cycling through morphologies",
+    description: "Falling snow: many procedurally-generated hex-lattice snowflakes drifting and rotating",
     factory: || Box::new(snowflake::Snowflake::default()),
   },
   ModeInfo {
