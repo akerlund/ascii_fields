@@ -5,7 +5,7 @@ Procedural ASCII animations for the terminal, now as a native Rust binary.
 `ascii-fields` renders animated scenes with ANSI escape codes: surf, solar
 flares, galaxies and black holes, quantum clouds, fractals, Game of Life,
 physics demos, DNA, molecules, reaction-diffusion, Chladni plates, curl-noise
-flow, DLA frost, the Lorenz attractor, drum eigenmodes, and more. There are 84
+flow, DLA frost, the Lorenz attractor, drum eigenmodes, and more. There are 83
 modes in all.
 
 ## Requirements
@@ -213,7 +213,6 @@ List everything:
 | `caustics` | Underwater light caustics rippling over a surface |
 | `soap-bubbles` | Iridescent soap bubbles drifting upward |
 | `ocean` | Open ocean with rolling swells receding to a horizon, foam crests on the peaks |
-| `snowflake` | Falling snow: many procedurally-generated hex-lattice snowflakes drifting and rotating with parallax depth |
 | `chaos` | Double pendulum ensemble: ~12 pendulums diverging from nearly identical starts |
 
 ### Life, Light, And Weather
